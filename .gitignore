@@ -4,3 +4,9 @@ dist/
 # very important
 /**/.env*.local
 /**/.env
+
+# logs
+logs
+
+# runtime data
+data
