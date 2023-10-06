@@ -1,10 +1,10 @@
-import fsPromises from "node:fs/promises";
+import fs from "node:fs/promises";
 import { chromium } from "playwright";
 import { config } from "./config.js";
 import { authenticateScraper, saveCollection } from "./scraper.js";
 
-await fsPromises.mkdir(config.storage.imagesDir, { recursive: true });
-await fsPromises.mkdir(config.storage.gameboardsDir, { recursive: true });
+await fs.mkdir(config.storage.imagesDir, { recursive: true });
+await fs.mkdir(config.storage.gameboardsDir, { recursive: true });
 
 const browser = await chromium.launch({
   headless: config.isHeadless,

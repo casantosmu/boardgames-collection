@@ -1,17 +1,16 @@
-import fsPromises from "node:fs/promises";
 import fs from "node:fs";
 import path from "node:path";
 import util from "node:util";
-import axios from "axios";
 import type { Page } from "playwright";
 import type { Gameboard } from "./interfaces.js";
+import { config } from "./config.js";
 import {
   coerceIntNumber,
   coerceNumber,
+  downloadImage,
   parseIdFromUrl,
   parseRange,
 } from "./helpers.js";
-import { config } from "./config.js";
 
 export const authenticateScraper = async (
   page: Page,
@@ -32,7 +31,7 @@ export const getGameboardsUrlsFromCollection = async (
 
   const collection = await page.locator(".collection_objectname").all();
 
-  const urls = collection.map(async (rowElement) => {
+  const urlsPromises = collection.map(async (rowElement) => {
     const linkElement = rowElement.locator("a");
     const text = await linkElement.textContent();
     const url = await linkElement.getAttribute("href");
@@ -44,7 +43,7 @@ export const getGameboardsUrlsFromCollection = async (
     return url.replaceAll(config.baseUrl, "");
   });
 
-  return Promise.all(urls);
+  return Promise.all(urlsPromises);
 };
 
 export const getGameboardData = async (
@@ -394,18 +393,11 @@ export const saveCollection = async (
     );
   }
 
-  const downloadImages = results.map(async ({ gameboard, imageSrc }) => {
-    const { data } = await axios.get<ArrayBuffer>(imageSrc, {
-      responseType: "arraybuffer",
-    });
-
-    await fsPromises.writeFile(
-      path.join(storage.imagesDir, gameboard.img.name),
-      Buffer.from(data),
-    );
-  });
-
-  await Promise.all(downloadImages);
+  await Promise.all(
+    results.map(({ gameboard, imageSrc }) =>
+      downloadImage(imageSrc, path.join(storage.imagesDir, gameboard.img.name)),
+    ),
+  );
 
   const collectionFilename = path.join(
     storage.gameboardsDir,

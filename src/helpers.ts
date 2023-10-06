@@ -1,21 +1,26 @@
+import fs from "node:fs/promises";
+import axios from "axios";
 import { z } from "zod";
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const coerceNumber = (value: unknown) =>
-  z.coerce.number().safeParse(value);
+export const coerceNumber = (
+  value: unknown,
+): z.SafeParseReturnType<number, number> => z.coerce.number().safeParse(value);
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const coerceIntNumber = (value: unknown) =>
+export const coerceIntNumber = (
+  value: unknown,
+): z.SafeParseReturnType<number, number> =>
   z.coerce.number().int().safeParse(value);
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const parseIdFromUrl = (url: string | null | undefined) => {
+export const parseIdFromUrl = (
+  url: string | null | undefined,
+): z.SafeParseReturnType<number, number> => {
   const urlParts = url?.split("/");
   return coerceIntNumber(urlParts?.[urlParts.length - 2]);
 };
 
-// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
-export const parseRange = (value: string | null | undefined) => {
+export const parseRange = (
+  value: string | null | undefined,
+): z.SafeParseReturnType<number, readonly [number, number]> => {
   const split = value?.split("–", 2);
 
   const tupleResult = z
@@ -33,4 +38,15 @@ export const parseRange = (value: string | null | undefined) => {
     .safeParse(value);
 
   return numberResult;
+};
+
+export const downloadImage = async (
+  imageSrc: string,
+  filePath: string,
+): Promise<void> => {
+  const { data } = await axios.get<ArrayBuffer>(imageSrc, {
+    responseType: "arraybuffer",
+  });
+
+  await fs.writeFile(filePath, Buffer.from(data));
 };
