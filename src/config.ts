@@ -34,7 +34,7 @@ export const config = {
     password: env.data.AUTH_PASSWORD,
   },
   storage: {
-    imagesDir: path.join(process.cwd(), "data", "images"),
-    gameboardsDir: path.join(process.cwd(), "data", "gameboards"),
+    imagesDir: path.join(process.cwd(), "data", "scraper", "images"),
+    collectionsDir: path.join(process.cwd(), "data", "scraper", "collections"),
   },
 };

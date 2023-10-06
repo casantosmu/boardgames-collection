@@ -12,16 +12,18 @@ interface Rating {
   count: number;
 }
 
-interface Players {
-  min: number;
-  max: number;
+interface Player {
+  official: {
+    players: number[];
+    more: boolean;
+  };
   community: {
-    min: number;
-    max: number;
+    players: number[];
+    more: boolean;
   };
   best: {
-    min: number;
-    max: number;
+    players: number[];
+    more: boolean;
   };
 }
 
@@ -55,7 +57,7 @@ export interface Gameboard {
   description: Description;
   img: Image;
   rating: Rating;
-  players: Players;
+  players: Player;
   duration: Duration;
   complexity: number;
   types: Type[];

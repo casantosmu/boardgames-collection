@@ -1,15 +1,13 @@
-import fs from "node:fs";
 import path from "node:path";
 import util from "node:util";
 import type { Page } from "playwright";
 import type { Gameboard } from "./interfaces.js";
-import { config } from "./config.js";
 import {
   coerceIntNumber,
   coerceNumber,
-  downloadImage,
   parseIdFromUrl,
-  parseRange,
+  parsePlayers,
+  parseDuration,
 } from "./helpers.js";
 
 export const authenticateScraper = async (
@@ -23,10 +21,13 @@ export const authenticateScraper = async (
   await page.getByRole("button", { name: "Sign In" }).click();
 };
 
-export const getGameboardsUrlsFromCollection = async (
+const getGameboardsUrlsFromCollection = async (
   page: Page,
   collectionPage: number,
 ): Promise<string[]> => {
+  await page.goto("/");
+  const baseUrl = page.url();
+
   await page.goto(`/browse/boardgame/page/${collectionPage}`);
 
   const collection = await page.locator(".collection_objectname").all();
@@ -40,13 +41,13 @@ export const getGameboardsUrlsFromCollection = async (
       throw new Error(`href not found for ${text}`);
     }
 
-    return url.replaceAll(config.baseUrl, "");
+    return url.replaceAll(baseUrl, "");
   });
 
   return Promise.all(urlsPromises);
 };
 
-export const getGameboardData = async (
+const getGameboardData = async (
   page: Page,
   gameboardUrl: string,
 ): Promise<Omit<Gameboard, "img">> => {
@@ -67,7 +68,7 @@ export const getGameboardData = async (
     throw new Error(`Invalid rank for game: '${gameboardUrl}'`);
   }
 
-  const players = parseRange(
+  const players = parsePlayers(
     await page.locator(".gameplay-item-primary span").first().textContent(),
   );
 
@@ -75,7 +76,7 @@ export const getGameboardData = async (
     throw new Error(`Invalid players for game: '${gameboardUrl}'`);
   }
 
-  const communityPlayers = parseRange(
+  const communityPlayers = parsePlayers(
     await page.locator(".gameplay-item-secondary span").nth(2).textContent(),
   );
 
@@ -83,7 +84,7 @@ export const getGameboardData = async (
     throw new Error(`Invalid community players for game: '${gameboardUrl}'`);
   }
 
-  const bestPlayers = parseRange(
+  const bestPlayers = parsePlayers(
     (
       await page.locator(".gameplay-item-secondary span").nth(3).textContent()
     )?.replaceAll("— 								Best:", ""),
@@ -93,7 +94,7 @@ export const getGameboardData = async (
     throw new Error(`Invalid best players for game: '${gameboardUrl}'`);
   }
 
-  const duration = parseRange(
+  const duration = parseDuration(
     await page
       .locator(".gameplay-item-primary")
       .nth(1)
@@ -151,7 +152,7 @@ export const getGameboardData = async (
     throw new Error(`Short description not found for game: '${gameboardUrl}'`);
   }
 
-  await page.goto(gameboardUrl + "/credits");
+  await page.goto(`${gameboardUrl}/credits`);
 
   const creditsElements = page
     .locator(".panel")
@@ -243,7 +244,7 @@ export const getGameboardData = async (
   );
 
   // Get game stats
-  await page.goto(gameboardUrl + "/stats");
+  await page.goto(`${gameboardUrl}/stats`);
 
   const gameStatsElements = page.locator(".game-stats li");
 
@@ -300,15 +301,17 @@ export const getGameboardData = async (
       count: ratingsCount.data,
     },
     players: {
-      min: players.data[0],
-      max: players.data[1],
+      official: {
+        players: players.data.players,
+        more: players.data.more,
+      },
       community: {
-        min: communityPlayers.data[0],
-        max: communityPlayers.data[1],
+        players: communityPlayers.data.players,
+        more: communityPlayers.data.more,
       },
       best: {
-        min: bestPlayers.data[0],
-        max: bestPlayers.data[1],
+        players: bestPlayers.data.players,
+        more: bestPlayers.data.more,
       },
     },
     duration: {
@@ -331,7 +334,7 @@ export const getGameboardData = async (
   };
 };
 
-export const getGameboardImageSrc = async (
+const getGameboardImageSrc = async (
   page: Page,
   gameboardUrl: string,
 ): Promise<string> => {
@@ -349,17 +352,16 @@ export const getGameboardImageSrc = async (
   return src;
 };
 
-interface CollectionResult {
+export interface ScrapeCollectionResult {
   gameboard: Gameboard;
   imageSrc: string;
 }
 
-export const saveCollection = async (
+export const scrapeCollection = async (
   page: Page,
   collectionPage: number,
-  storage: { gameboardsDir: string; imagesDir: string },
-): Promise<void> => {
-  const results: CollectionResult[] = [];
+): Promise<ScrapeCollectionResult[]> => {
+  const results: ScrapeCollectionResult[] = [];
 
   const gameboardsUrls = await getGameboardsUrlsFromCollection(
     page,
@@ -372,7 +374,7 @@ export const saveCollection = async (
     const gameboardData = await getGameboardData(page, gameboardUrl);
     const imageSrc = await getGameboardImageSrc(page, gameboardUrl);
 
-    const imageFileName = Date.now() + "-" + path.basename(imageSrc);
+    const imageFileName = `${Date.now()}-${path.basename(imageSrc)}`;
 
     const gameboard = {
       ...gameboardData,
@@ -381,7 +383,7 @@ export const saveCollection = async (
       },
     };
 
-    const result: CollectionResult = {
+    const result: ScrapeCollectionResult = {
       gameboard,
       imageSrc,
     };
@@ -393,19 +395,5 @@ export const saveCollection = async (
     );
   }
 
-  await Promise.all(
-    results.map(({ gameboard, imageSrc }) =>
-      downloadImage(imageSrc, path.join(storage.imagesDir, gameboard.img.name)),
-    ),
-  );
-
-  const collectionFilename = path.join(
-    storage.gameboardsDir,
-    `${Date.now()}-${collectionPage}.json`,
-  );
-  const collectionJson = JSON.stringify(
-    results.map((result) => result.gameboard),
-  );
-
-  fs.writeFileSync(collectionFilename, collectionJson);
+  return results;
 };
