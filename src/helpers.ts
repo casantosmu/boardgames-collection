@@ -12,7 +12,7 @@ const createLogFn =
         : util.inspect(log, { depth: 25, colors: level === "debug" });
 
     // eslint-disable-next-line no-console
-    console[level](`[SCRAPER] ${message}`);
+    console[level](`[SCRAPER] ${level} - ${message}`);
   };
 
 export const logger = {
@@ -126,7 +126,7 @@ export const parsePlayers = (
   const tupleAndMoreResult = z
     .tuple([z.coerce.number().int(), z.string().trim().endsWith("+")])
     .transform(([min, maxAndMore]) => {
-      const withoutPlus = maxAndMore.slice(0, maxAndMore.length - 2);
+      const withoutPlus = maxAndMore.slice(0, maxAndMore.length - 1);
       const max = z.coerce.number().int().parse(withoutPlus);
 
       const players: number[] = [];
@@ -151,7 +151,7 @@ export const parsePlayers = (
     .trim()
     .endsWith("+")
     .transform((value) => {
-      const withoutPlus = value.slice(0, value.length - 2);
+      const withoutPlus = value.slice(0, value.length - 1);
       const number = z.coerce.number().int().parse(withoutPlus);
 
       return {
