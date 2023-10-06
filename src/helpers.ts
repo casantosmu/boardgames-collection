@@ -1,6 +1,25 @@
 import fs from "node:fs/promises";
+import util from "node:util";
 import axios from "axios";
 import { z } from "zod";
+
+const createLogFn =
+  (level: "debug" | "info" | "error") =>
+  (log: unknown): void => {
+    const message =
+      typeof log === "string"
+        ? log
+        : util.inspect(log, { depth: 25, colors: level === "debug" });
+
+    // eslint-disable-next-line no-console
+    console[level](`[SCRAPER] ${message}`);
+  };
+
+export const logger = {
+  debug: createLogFn("debug"),
+  info: createLogFn("info"),
+  error: createLogFn("error"),
+};
 
 export const coerceNumber = (
   value: unknown,

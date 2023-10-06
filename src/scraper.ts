@@ -1,5 +1,4 @@
 import path from "node:path";
-import util from "node:util";
 import type { Page } from "playwright";
 import type { Gameboard } from "./interfaces.js";
 import {
@@ -8,6 +7,7 @@ import {
   parseIdFromUrl,
   parsePlayers,
   parseDuration,
+  logger,
 } from "./helpers.js";
 
 export const authenticateScraper = async (
@@ -369,7 +369,7 @@ export const scrapeCollection = async (
   );
 
   for (const gameboardUrl of gameboardsUrls) {
-    console.debug(`[SCRAPER]: ${gameboardUrl}`);
+    logger.debug(gameboardUrl);
 
     const gameboardData = await getGameboardData(page, gameboardUrl);
     const imageSrc = await getGameboardImageSrc(page, gameboardUrl);
@@ -389,10 +389,7 @@ export const scrapeCollection = async (
     };
 
     results.push(result);
-
-    console.debug(
-      `[SCRAPER]: ${util.inspect(result, { depth: null, colors: true })}`,
-    );
+    logger.debug(result);
   }
 
   return results;

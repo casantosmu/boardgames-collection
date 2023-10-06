@@ -7,7 +7,7 @@ import {
   scrapeCollection,
   type ScrapeCollectionResult,
 } from "./scraper.js";
-import { downloadImage } from "./helpers.js";
+import { downloadImage, logger } from "./helpers.js";
 
 const saveCollection = async (
   collection: ScrapeCollectionResult[],
@@ -46,6 +46,8 @@ try {
     baseURL: config.baseUrl,
   });
 
+  logger.info("Scraping initiated...");
+
   await authenticateScraper(page, config.auth);
 
   for (let collectionPage = 1; collectionPage <= 50; collectionPage++) {
@@ -54,4 +56,5 @@ try {
   }
 } finally {
   await browser.close();
+  logger.info("Scraping completed.");
 }
