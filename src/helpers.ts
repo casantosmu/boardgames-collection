@@ -62,6 +62,7 @@ export const parseDuration = (
 /**
  * Players are represented as:
  * - Individual: 3
+ * - Individual and more: 3+
  * - Individuals: 2, 4, 7
  * - Range: 2-6
  * - Range and more: 2-6+
@@ -141,7 +142,26 @@ export const parsePlayers = (
     })
     .safeParse(split);
 
-  return tupleAndMoreResult;
+  if (tupleAndMoreResult.success) {
+    return tupleAndMoreResult;
+  }
+
+  const numberAndMoreResult = z
+    .string()
+    .trim()
+    .endsWith("+")
+    .transform((value) => {
+      const withoutPlus = value.slice(0, value.length - 2);
+      const number = z.coerce.number().int().parse(withoutPlus);
+
+      return {
+        players: [number],
+        more: true,
+      };
+    })
+    .safeParse(value);
+
+  return numberAndMoreResult;
 };
 
 export const downloadImage = async (

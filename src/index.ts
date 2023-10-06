@@ -56,5 +56,5 @@ try {
   }
 } finally {
   await browser.close();
-  logger.info("Scraping completed.");
+  logger.info("Scraping finished.");
 }
