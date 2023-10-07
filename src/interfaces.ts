@@ -12,19 +12,15 @@ interface Rating {
   count: number;
 }
 
+interface PlayerProps {
+  players: number[];
+  more: boolean;
+}
+
 interface Player {
-  official: {
-    players: number[];
-    more: boolean;
-  };
-  community: {
-    players: number[];
-    more: boolean;
-  };
-  best: {
-    players: number[];
-    more: boolean;
-  };
+  official: PlayerProps;
+  community: PlayerProps;
+  best: PlayerProps;
 }
 
 interface Duration {
@@ -63,4 +59,9 @@ export interface Gameboard {
   types: Type[];
   categories: Category[];
   mechanisms: Mechanism[];
+}
+
+export interface Collection {
+  gameboard: Omit<Gameboard, "img">;
+  imageSrc: string;
 }
