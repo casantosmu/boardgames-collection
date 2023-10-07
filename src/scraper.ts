@@ -1,6 +1,5 @@
-import path from "node:path";
 import type { Page } from "playwright";
-import type { Gameboard } from "./interfaces.js";
+import type { Collection, Gameboard } from "./interfaces.js";
 import {
   coerceIntNumber,
   coerceNumber,
@@ -218,7 +217,7 @@ const getGameboardData = async (
   const mechanisms = await Promise.all(
     (
       await creditsElements
-        .filter({ hasText: "Mechanisms" })
+        .filter({ hasText: /Mechanisms|Mechanism/ })
         .first()
         .locator(".outline-item-description a")
         .all()
@@ -352,16 +351,11 @@ const getGameboardImageSrc = async (
   return src;
 };
 
-export interface ScrapeCollectionResult {
-  gameboard: Gameboard;
-  imageSrc: string;
-}
-
 export const scrapeCollection = async (
   page: Page,
   collectionPage: number,
-): Promise<ScrapeCollectionResult[]> => {
-  const results: ScrapeCollectionResult[] = [];
+): Promise<Collection[]> => {
+  const results: Collection[] = [];
 
   const gameboardsUrls = await getGameboardsUrlsFromCollection(
     page,
@@ -371,19 +365,10 @@ export const scrapeCollection = async (
   for (const gameboardUrl of gameboardsUrls) {
     logger.debug(gameboardUrl);
 
-    const gameboardData = await getGameboardData(page, gameboardUrl);
+    const gameboard = await getGameboardData(page, gameboardUrl);
     const imageSrc = await getGameboardImageSrc(page, gameboardUrl);
 
-    const imageFileName = `${Date.now()}-${path.basename(imageSrc)}`;
-
-    const gameboard = {
-      ...gameboardData,
-      img: {
-        name: imageFileName,
-      },
-    };
-
-    const result: ScrapeCollectionResult = {
+    const result = {
       gameboard,
       imageSrc,
     };

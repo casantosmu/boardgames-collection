@@ -60,3 +60,8 @@ export interface Gameboard {
   categories: Category[];
   mechanisms: Mechanism[];
 }
+
+export interface Collection {
+  gameboard: Omit<Gameboard, "img">;
+  imageSrc: string;
+}
