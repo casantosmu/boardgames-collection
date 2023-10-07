@@ -3,24 +3,24 @@ import path from "node:path";
 import type { Collection, Gameboard } from "./interfaces.js";
 import { downloadImage } from "./helpers.js";
 
-interface Storage {
-  collectionsDir: string;
+interface Config {
+  gameboardsDir: string;
   imagesDir: string;
 }
 
 export const saveCollection = async (
   collection: Collection[],
   collectionPage: number,
-  storage: Storage,
+  config: Config,
 ): Promise<void> => {
-  await fs.mkdir(storage.imagesDir, { recursive: true });
-  await fs.mkdir(storage.collectionsDir, { recursive: true });
+  await fs.mkdir(config.imagesDir, { recursive: true });
+  await fs.mkdir(config.gameboardsDir, { recursive: true });
 
   const gameboards: Gameboard[] = [];
   await Promise.all(
     collection.map(async ({ gameboard, imageSrc }) => {
       const imageName = `${Date.now()}-${path.basename(imageSrc)}`;
-      const imagePath = path.join(storage.imagesDir, imageName);
+      const imagePath = path.join(config.imagesDir, imageName);
 
       await downloadImage(imageSrc, imagePath);
 
@@ -34,7 +34,7 @@ export const saveCollection = async (
   );
 
   const collectionName = `${Date.now()}-${collectionPage}.json`;
-  const collectionPath = path.join(storage.collectionsDir, collectionName);
+  const collectionPath = path.join(config.gameboardsDir, collectionName);
 
   const json = JSON.stringify(gameboards);
 

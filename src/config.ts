@@ -10,6 +10,7 @@ const envSchema = z.object({
   SLOWDOWN_MILLISECONDS: z.coerce.number().nonnegative().default(0),
   AUTH_USERNAME: z.string(),
   AUTH_PASSWORD: z.string(),
+  DATA_DIR: z.string().default(path.join(process.cwd(), "data")),
 });
 
 const env = envSchema.safeParse(process.env);
@@ -34,7 +35,7 @@ export const config = {
     password: env.data.AUTH_PASSWORD,
   },
   storage: {
-    imagesDir: path.join(process.cwd(), "data", "scraper", "images"),
-    collectionsDir: path.join(process.cwd(), "data", "scraper", "collections"),
+    imagesDir: path.join(env.data.DATA_DIR, "images"),
+    gameboardsDir: path.join(env.data.DATA_DIR, "gameboards"),
   },
 };
