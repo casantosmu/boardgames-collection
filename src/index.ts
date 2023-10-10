@@ -59,12 +59,10 @@ const scrapeGamesLinksByListLink = async (
 ): Promise<string[]> => {
   await page.goto(listLink);
 
-  const collectionElements = await page
-    .locator(".collection_objectname a")
-    .all();
+  const element = await page.locator(".collection_objectname a").all();
 
   return Promise.all(
-    collectionElements.map(async (element) => {
+    element.map(async (element) => {
       const href = await element.getAttribute("href");
       const text = await element.textContent();
       if (!href) {
@@ -77,7 +75,7 @@ const scrapeGamesLinksByListLink = async (
 
 const generateListsLinks = (): string[] => {
   const link: string[] = [];
-  for (let page = 1; page <= 2; page++) {
+  for (let page = 1; page <= 100; page++) {
     link.push(`/browse/boardgame/page/${page}`);
   }
   return link;
@@ -143,9 +141,9 @@ try {
   await authenticateScraper(page, config.playwright.auth);
 
   const listsLinks = generateListsLinks();
-  const listsDocuments: LinkDocument[] = listsLinks.map((link) => ({
+  const listsDocuments = listsLinks.map((link) => ({
     link,
-    type: "list",
+    type: "list" as const,
     visitedAt: null,
   }));
   await insertLinksIfNotExistsRepository(listsDocuments);
@@ -179,8 +177,8 @@ try {
         },
       },
     });
-
     await links.bulkWrite(operations);
+
     console.log(`Finished scraping collection link: ${list.link}`);
   }
 
