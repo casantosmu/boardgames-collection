@@ -5,6 +5,9 @@ dist/
 /**/.env*.local
 /**/.env
 
+# coverage
+coverage/
+
 # logs
 logs
 
