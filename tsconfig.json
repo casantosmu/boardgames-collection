@@ -23,5 +23,6 @@
     "noPropertyAccessFromIndexSignature": true,
     /* Completeness */
     "skipLibCheck": true
-  }
+  },
+  "include": ["src"]
 }
