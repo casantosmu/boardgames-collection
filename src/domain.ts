@@ -1,7 +1,7 @@
 export interface LinkDocument {
   link: string;
   type: "list" | "game";
-  data?: unknown;
+  data?: Record<string, unknown>;
   visitedAt: Date | null;
 }
 
@@ -27,5 +27,5 @@ export interface LinkRepository {
 export interface Scraper {
   authenticate(): Promise<void>;
   scrapeGamesLinksByListLink(listLink: string): Promise<string[]>;
-  scrapeGameDataByGameLink(gameLink: string): Promise<unknown>;
+  scrapeGameDataByGameLink(gameLink: string): Promise<Record<string, unknown>>;
 }

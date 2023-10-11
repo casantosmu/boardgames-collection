@@ -10,7 +10,7 @@ export const main = async (
   scraper: Scraper,
   linkRepository: LinkRepository,
 ): Promise<void> => {
-  console.log("Stating scraper process...");
+  console.log("Starting scraper process...");
 
   await scraper.authenticate();
 
