@@ -60,7 +60,7 @@ export class MongoLinkRepository implements LinkRepository {
 
   async insertLinksIfNotExists(documents: LinkDocument[]): Promise<void> {
     await this.collection.bulkWrite(
-      documents.map(function (document) {
+      documents.map((document) => {
         return {
           updateOne: {
             filter: {
@@ -98,11 +98,11 @@ export class MongoLinkRepository implements LinkRepository {
       .toArray();
   }
 
-  async updateLinkById(operation: UpdateByIdOperation): Promise<void> {
+  async updateLinkById({ id, document }: UpdateByIdOperation): Promise<void> {
     await this.collection.updateOne(
-      { _id: new ObjectId(operation.id) },
+      { _id: new ObjectId(id) },
       {
-        $set: operation.document,
+        $set: document,
       },
     );
   }
@@ -112,14 +112,14 @@ export class MongoLinkRepository implements LinkRepository {
     updates: UpdateByIdOperation[],
   ): Promise<void> {
     const operations: AnyBulkWriteOperation<LinkDocument>[] = [];
-    inserts.forEach(function (document) {
+    inserts.forEach((document) => {
       operations.push({
         insertOne: {
           document,
         },
       });
     });
-    updates.forEach(function ({ id, document: document }) {
+    updates.forEach(({ id, document }) => {
       operations.push({
         updateOne: {
           filter: {
