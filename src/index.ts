@@ -7,9 +7,7 @@ const db = await MongoDb.create(config.mongoDb.url);
 const linkRepository = await MongoLinkRepository.create(db);
 const scraper = await PlaywrightScraper.create(config.scraper);
 
-const maxListsToScrape = 2;
-
-await main(maxListsToScrape, scraper, linkRepository);
+await main(100, scraper, linkRepository);
 
 await db.close();
 await scraper.close();
