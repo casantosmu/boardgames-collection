@@ -46,17 +46,21 @@ export class PlaywrightScraper implements Scraper {
       .getByPlaceholder("Password")
       .fill(this.config.auth.password);
     await this.page.getByRole("button", { name: "Sign In" }).click();
+    await this.page.getByPlaceholder("Username").waitFor({ state: "hidden" });
+    console.log("Authentication successful");
   }
 
   async scrapeGamesLinksByListLink(listLink: string): Promise<string[]> {
     try {
       await this.page.goto(listLink);
-      const element = await this.page.locator(".collection_objectname a").all();
-      if (!element.length) {
+      const elements = await this.page
+        .locator(".collection_objectname a")
+        .all();
+      if (!elements.length) {
         throw new Error("Anchor elements not found");
       }
       return await Promise.all(
-        element.map(async (element) => {
+        elements.map(async (element) => {
           const href = await element.getAttribute("href");
           const text = await element.textContent();
           if (!href) {

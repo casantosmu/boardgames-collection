@@ -29,6 +29,8 @@ export const main = async (
   const nonVisitedLists = await linkRepository.findNonVisitedLinks("list");
 
   for (const list of nonVisitedLists) {
+    console.log(`Scraping boardgame list: ${list.link}`);
+
     const gamesLinks = await scraper.scrapeGamesLinksByListLink(list.link);
 
     const newGamesLinks: LinkDocument[] = gamesLinks.map((link) => ({
@@ -49,7 +51,7 @@ export const main = async (
       updateListToVisited,
     );
 
-    console.log(`Finished scraping collection link: ${list.link}`);
+    console.log(`Finished scraping boardgame list: ${list.link}`);
   }
 
   const nonVisitedGames = await linkRepository.findNonVisitedLinks("game");
