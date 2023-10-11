@@ -1,16 +1,15 @@
-import path from "node:path";
 import { z } from "zod";
 
 const envSchema = z.object({
-  BASE_URL: z.string().url(),
-  IS_HEADLESS: z
+  SCRAPER_BASE_URL: z.string().url(),
+  SCRAPER_IS_HEADLESS: z
     .union([z.literal("true"), z.literal("false")])
     .transform((value) => value === "true")
     .default("true"),
-  SLOWDOWN_MILLISECONDS: z.coerce.number().nonnegative().default(0),
-  AUTH_USERNAME: z.string(),
-  AUTH_PASSWORD: z.string(),
-  DATA_DIR: z.string().default(path.join(process.cwd(), "data")),
+  SCRAPER_SLOWDOWN_MILLISECONDS: z.coerce.number().nonnegative().default(0),
+  SCRAPER_AUTH_USERNAME: z.string(),
+  SCRAPER_AUTH_PASSWORD: z.string(),
+  MONGODB_URL: z.string().url(),
 });
 
 const env = envSchema.safeParse(process.env);
@@ -27,15 +26,16 @@ if (!env.success) {
 }
 
 export const config = {
-  baseUrl: env.data.BASE_URL,
-  isHeadless: env.data.IS_HEADLESS,
-  slowdownMilliseconds: env.data.SLOWDOWN_MILLISECONDS,
-  auth: {
-    username: env.data.AUTH_USERNAME,
-    password: env.data.AUTH_PASSWORD,
+  scraper: {
+    baseUrl: env.data.SCRAPER_BASE_URL,
+    isHeadless: env.data.SCRAPER_IS_HEADLESS,
+    slowdownMilliseconds: env.data.SCRAPER_SLOWDOWN_MILLISECONDS,
+    auth: {
+      username: env.data.SCRAPER_AUTH_USERNAME,
+      password: env.data.SCRAPER_AUTH_PASSWORD,
+    },
   },
-  storage: {
-    imagesDir: path.join(env.data.DATA_DIR, "images"),
-    gameboardsDir: path.join(env.data.DATA_DIR, "gameboards"),
+  mongoDb: {
+    url: env.data.MONGODB_URL,
   },
 };

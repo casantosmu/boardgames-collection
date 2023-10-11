@@ -1,28 +1,15 @@
-import { chromium } from "playwright";
 import { config } from "./config.js";
-import { saveCollection } from "./data-access.js";
-import { authenticateScraper, scrapeCollection } from "./scraper.js";
-import { logger } from "./helpers.js";
+import { PlaywrightScraper } from "./scraper.js";
+import { MongoDb, MongoLinkRepository } from "./db.js";
+import { main } from "./main.js";
 
-const browser = await chromium.launch({
-  headless: config.isHeadless,
-  slowMo: config.slowdownMilliseconds,
-});
+const db = await MongoDb.create(config.mongoDb.url);
+const linkRepository = await MongoLinkRepository.create(db);
+const scraper = await PlaywrightScraper.create(config.scraper);
 
-try {
-  const page = await browser.newPage({
-    baseURL: config.baseUrl,
-  });
+const maxListsToScrape = 2;
 
-  logger.info("Scraping initiated...");
+await main(maxListsToScrape, scraper, linkRepository);
 
-  await authenticateScraper(page, config.auth);
-
-  for (let collectionPage = 1; collectionPage <= 50; collectionPage++) {
-    const collection = await scrapeCollection(page, collectionPage);
-    await saveCollection(collection, collectionPage, config.storage);
-  }
-} finally {
-  await browser.close();
-  logger.info("Scraping finished.");
-}
+await db.close();
+await scraper.close();
