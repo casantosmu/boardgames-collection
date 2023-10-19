@@ -8,22 +8,16 @@
     "typecheck": "pnpm --filter \"*\" typecheck",
     "prepare": "husky install"
   },
-  "dependencies": {
-    "mongodb": "^6.1.0",
-    "playwright": "^1.39.0",
-    "zod": "^3.22.4"
-  },
   "devDependencies": {
-    "@types/node": "^18.18.6",
-    "@typescript-eslint/eslint-plugin": "^6.8.0",
-    "@typescript-eslint/parser": "^6.8.0",
-    "dotenv": "^16.3.1",
     "eslint": "^8.51.0",
     "husky": "^8.0.3",
     "lint-staged": "^15.0.2",
-    "prettier": "3.0.3",
-    "tsx": "^3.14.0",
-    "typescript": "^5.2.2"
+    "prettier": "3.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "tsconfig-paths": "^4.0.0"
+    }
   },
   "lint-staged": {
     "**/*": "prettier --write --ignore-unknown"
