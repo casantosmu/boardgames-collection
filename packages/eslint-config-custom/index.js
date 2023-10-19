@@ -1,34 +1,36 @@
-{
-  "extends": [
+const project = require("node:path").join(process.cwd(), "tsconfig.json");
+
+module.exports = {
+  extends: [
     "eslint:recommended",
     "plugin:eslint-comments/recommended",
     "plugin:@typescript-eslint/strict-type-checked",
     "plugin:@typescript-eslint/stylistic-type-checked",
     "plugin:import/recommended",
-    "plugin:import/typescript"
+    "plugin:import/typescript",
   ],
-  "plugins": ["@typescript-eslint"],
-  "parser": "@typescript-eslint/parser",
-  "parserOptions": {
-    "project": true
+  plugins: ["@typescript-eslint"],
+  parser: "@typescript-eslint/parser",
+  parserOptions: {
+    project,
   },
-  "root": true,
-  "settings": {
+  settings: {
     "import/parsers": {
-      "@typescript-eslint/parser": [".ts"]
+      "@typescript-eslint/parser": [".ts"],
     },
     "import/resolver": {
-      "typescript": {
-        "alwaysTryTypes": true
-      }
-    }
+      typescript: {
+        alwaysTryTypes: true,
+        project,
+      },
+    },
   },
-  "rules": {
+  ignorePatterns: ["dist"],
+  rules: {
     "eslint-comments/no-unused-disable": "error",
     "import/no-default-export": "error",
     "import/order": "error",
     "@typescript-eslint/explicit-function-return-type": "error",
-    "prefer-template": "error"
+    "prefer-template": "error",
   },
-  "ignorePatterns": ["dist"]
-}
+};
