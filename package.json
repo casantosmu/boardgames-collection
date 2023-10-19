@@ -1,15 +1,11 @@
 {
-  "name": "boardgames-collection",
-  "version": "1.0.0",
-  "main": "dist/index.js",
-  "type": "module",
+  "private": true,
   "scripts": {
-    "start": "node .",
-    "build": "rm -fr dist && tsc",
-    "dev": "tsx watch -r dotenv/config --inspect src/index.ts",
-    "lint": "prettier . --check && eslint .",
+    "build": "pnpm --filter \"*\" build",
+    "dev": "pnpm --filter \"*\" --parallel dev",
     "format": "prettier . --write",
-    "typecheck": "tsc --noEmit",
+    "lint": "prettier . --check && pnpm --filter \"*\" lint",
+    "typecheck": "pnpm --filter \"*\" typecheck",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -18,18 +14,15 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
-    "@types/node": "^18.18.5",
+    "@types/node": "^18.18.6",
     "@typescript-eslint/eslint-plugin": "^6.8.0",
     "@typescript-eslint/parser": "^6.8.0",
     "dotenv": "^16.3.1",
     "eslint": "^8.51.0",
-    "eslint-import-resolver-typescript": "^3.6.0",
-    "eslint-plugin-eslint-comments": "^3.2.0",
-    "eslint-plugin-import": "^2.28.1",
     "husky": "^8.0.3",
-    "lint-staged": "^15.0.1",
+    "lint-staged": "^15.0.2",
     "prettier": "3.0.3",
-    "tsx": "^3.13.0",
+    "tsx": "^3.14.0",
     "typescript": "^5.2.2"
   },
   "lint-staged": {
