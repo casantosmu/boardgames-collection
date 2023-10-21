@@ -8,6 +8,7 @@ services:
     volumes:
       - mongodb:/data/db
       - mongodb_config:/data/configdb
+
   postgres:
     image: postgres:15.1
     environment:
