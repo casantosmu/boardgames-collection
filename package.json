@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "build": "pnpm --filter \"*\" build",
-    "dev": "pnpm --filter \"*\" --parallel dev",
+    "dev": "pnpm --filter api --parallel dev",
     "format": "prettier . --write",
     "lint": "prettier . --check && pnpm --filter \"*\" lint",
     "typecheck": "pnpm --filter \"*\" typecheck",

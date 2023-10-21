@@ -1,24 +1,11 @@
-import Fastify from "fastify";
-import {
-  Type,
-  type FastifyPluginAsyncTypebox,
-} from "@fastify/type-provider-typebox";
-import Swagger from "@fastify/swagger";
-import SwaggerUi from "@fastify/swagger-ui";
-import pgp from "pg-promise";
+import { fastify } from "fastify";
+import { pgPlugin } from "./plugins/pg.js";
+import { isAppError } from "./shared/errors.js";
+import { pingRoutes } from "./routes/ping.js";
+import { openapiPlugin } from "./plugins/openapi.js";
 
-interface AppErrorOptions {
-  cause?: unknown;
-  statusCode: number;
-}
-
-class AppError extends Error {
-  readonly statusCode: number;
-
-  constructor(message: string, options: AppErrorOptions) {
-    super(message, options);
-    this.statusCode = options.statusCode;
-  }
+if (!process.env["PG_URL"]) {
+  throw new Error("PG_URL env variable must be set");
 }
 
 const config = {
@@ -33,103 +20,37 @@ const config = {
   },
 };
 
-if (!config.pg.url) {
-  throw new Error("PG_URL env variable must be set");
-}
-
-const pg = pgp()({
-  connectionString: config.pg.url,
-});
-
-const startPgConnection = async (): Promise<void> => {
-  try {
-    fastify.log.info("Starting PostgreSQL");
-    await pg.query("SELECT 1+1");
-    fastify.log.info("Postgres is ready");
-  } catch (error) {
-    throw new Error("Postgres connection error", { cause: error });
-  }
-};
-
-const fastify = Fastify({
+const app = fastify({
   logger: {
     level: config.log.level,
   },
 });
 
-fastify.addHook("onClose", async () => {
-  await pg.$pool.end();
-  fastify.log.info("Postgres shut down");
-  fastify.log.info("Fastify shut down");
-});
-
-fastify.setErrorHandler(async (error, request, reply) => {
-  if (error instanceof AppError) {
-    fastify.log.warn(error);
+app.setErrorHandler(async (error, request, reply) => {
+  if (isAppError(error)) {
+    app.log.warn(error);
     return reply.code(error.statusCode).send({ error: error.message });
   }
 
   if (error.code === "FST_ERR_VALIDATION") {
-    fastify.log.warn(error);
+    app.log.warn(error);
     return reply.code(400).send({ error: error.message });
   }
 
-  fastify.log.error(error);
+  app.log.error(error);
   await reply.code(500).send({ error: "Internal Server Error" });
-  await fastify.close();
+  await app.close();
   process.exitCode = 1;
 });
 
-// eslint-disable-next-line @typescript-eslint/require-await
-const Routes: FastifyPluginAsyncTypebox = async (fastify) => {
-  fastify.get(
-    "/ping",
-    {
-      schema: {
-        querystring: Type.Object({
-          ok: Type.Boolean(),
-        }),
-        response: {
-          200: Type.Object({
-            message: Type.String(),
-          }),
-        },
-      },
-    },
-    async (response) => {
-      if (response.query.ok) {
-        return pg.one("SELECT 1+1 as message");
-      }
-
-      throw new AppError("Controlled error", {
-        statusCode: 418,
-      });
-    },
-  );
-};
-
-try {
-  await startPgConnection();
-  await fastify.register(Swagger);
-  await fastify.register(SwaggerUi);
-  await fastify.register(Routes);
-  await fastify.listen({ port: config.server.port });
-} catch (err) {
-  fastify.log.error(err);
-  await fastify.close();
-  process.exitCode = 1;
-}
-
 for (const event of ["SIGTERM", "SIGINT"]) {
   process.once(event, () => {
-    fastify.log.info(`Received ${event} signal`);
+    app.log.info(`Received ${event} signal`);
     const timeout = setTimeout(() => {
-      fastify.log.error(
-        `Grateful shutdown ${event} timed out. Exiting abruptly..`,
-      );
+      app.log.error(`Grateful shutdown ${event} timed out. Exiting abruptly..`);
       process.exit(1);
     }, 10000);
-    fastify.close(() => {
+    app.close(() => {
       clearTimeout(timeout);
     });
   });
@@ -137,16 +58,25 @@ for (const event of ["SIGTERM", "SIGINT"]) {
 
 for (const event of ["uncaughtException", "unhandledRejection"]) {
   process.once(event, (error) => {
-    fastify.log.error(error, `Received ${event} error`);
+    app.log.error(error, `Received ${event} error`);
     const timeout = setTimeout(() => {
-      fastify.log.error(
-        `Grateful shutdown ${event} timed out. Exiting abruptly..`,
-      );
+      app.log.error(`Grateful shutdown ${event} timed out. Exiting abruptly..`);
       process.exit(1);
     }, 10000);
-    fastify.close(() => {
+    app.close(() => {
       clearTimeout(timeout);
       process.exitCode = 1;
     });
   });
+}
+
+try {
+  await app.register(pgPlugin, { connection: config.pg.url });
+  await app.register(openapiPlugin, { prefix: "/v1/docs" });
+  await app.register(pingRoutes, { prefix: "/v1" });
+  await app.listen({ port: config.server.port });
+} catch (err) {
+  app.log.error(err);
+  await app.close();
+  process.exitCode = 1;
 }

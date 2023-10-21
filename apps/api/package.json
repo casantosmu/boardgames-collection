@@ -17,6 +17,7 @@
     "@fastify/type-provider-typebox": "^3.5.0",
     "@sinclair/typebox": "^0.31.18",
     "fastify": "^4.24.3",
+    "fastify-plugin": "^4.5.1",
     "pg-promise": "^11.5.4"
   },
   "devDependencies": {

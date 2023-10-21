@@ -41,6 +41,9 @@ importers:
       fastify:
         specifier: ^4.24.3
         version: 4.24.3
+      fastify-plugin:
+        specifier: ^4.5.1
+        version: 4.5.1
       pg-promise:
         specifier: ^11.5.4
         version: 11.5.4
