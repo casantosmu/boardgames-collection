@@ -1,16 +1,16 @@
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
+
 import {
   createKyselyInstance,
   sql,
-  type Kysely,
-  type DB,
+  type KyselyInstance,
   type PoolConfig,
 } from "db-main-kysely";
 
 declare module "fastify" {
   interface FastifyInstance {
-    kysely: Kysely<DB>;
+    kysely: KyselyInstance;
   }
 }
 

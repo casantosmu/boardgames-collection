@@ -3,7 +3,7 @@ import fp from "fastify-plugin";
 import { fastifySwagger } from "@fastify/swagger";
 import { fastifySwaggerUi } from "@fastify/swagger-ui";
 
-const pluginCb: FastifyPluginAsync<{ prefix: string }> = async (fastify) => {
+const pluginCb: FastifyPluginAsync = async (fastify) => {
   await fastify.register(fastifySwagger, {
     openapi: {
       info: {
