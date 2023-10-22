@@ -2,6 +2,8 @@
   "private": true,
   "scripts": {
     "build": "pnpm --filter \"*\" build",
+    "migrate": "pnpm --filter db-main-kysely migrate",
+    "codegen": "pnpm --filter db-main-kysely codegen",
     "dev": "pnpm --filter api --parallel dev",
     "format": "prettier . --write",
     "lint": "prettier . --check && pnpm --filter \"*\" lint",
