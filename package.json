@@ -6,6 +6,7 @@
     "format": "prettier . --write",
     "lint": "prettier . --check && pnpm --filter \"*\" lint",
     "typecheck": "pnpm --filter \"*\" typecheck",
+    "scrape": "pnpm --filter scraper start",
     "prepare": "husky install"
   },
   "devDependencies": {
