@@ -16,9 +16,9 @@
     "@fastify/swagger-ui": "^1.10.1",
     "@fastify/type-provider-typebox": "^3.5.0",
     "@sinclair/typebox": "^0.31.18",
+    "db-main-kysely": "workspace:^",
     "fastify": "^4.24.3",
-    "fastify-plugin": "^4.5.1",
-    "pg-promise": "^11.5.4"
+    "fastify-plugin": "^4.5.1"
   },
   "devDependencies": {
     "@types/node": "^18.18.6",

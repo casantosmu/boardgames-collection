@@ -1,8 +1,9 @@
 import { fastify } from "fastify";
-import { pgPlugin } from "./plugins/pg.js";
 import { isAppError } from "./shared/errors.js";
-import { pingRoutes } from "./routes/ping.js";
+import { kyselyPlugin } from "./plugins/kysely.js";
 import { openapiPlugin } from "./plugins/openapi.js";
+import { boardgamesRoutes } from "./routes/boardgames.js";
+import { pingRoutes } from "./routes/ping.js";
 
 if (!process.env["PG_URL"]) {
   throw new Error("PG_URL env variable must be set");
@@ -43,13 +44,15 @@ app.setErrorHandler(async (error, request, reply) => {
   process.exitCode = 1;
 });
 
+const GRATEFUL_SHUTDOWN_TIMEOUT = 10000;
+
 for (const event of ["SIGTERM", "SIGINT"]) {
   process.once(event, () => {
     app.log.info(`Received ${event} signal`);
     const timeout = setTimeout(() => {
       app.log.error(`Grateful shutdown ${event} timed out. Exiting abruptly..`);
       process.exit(1);
-    }, 10000);
+    }, GRATEFUL_SHUTDOWN_TIMEOUT);
     app.close(() => {
       clearTimeout(timeout);
     });
@@ -62,7 +65,7 @@ for (const event of ["uncaughtException", "unhandledRejection"]) {
     const timeout = setTimeout(() => {
       app.log.error(`Grateful shutdown ${event} timed out. Exiting abruptly..`);
       process.exit(1);
-    }, 10000);
+    }, GRATEFUL_SHUTDOWN_TIMEOUT);
     app.close(() => {
       clearTimeout(timeout);
       process.exitCode = 1;
@@ -71,8 +74,9 @@ for (const event of ["uncaughtException", "unhandledRejection"]) {
 }
 
 try {
-  await app.register(pgPlugin, { connection: config.pg.url });
-  await app.register(openapiPlugin, { prefix: "/v1/docs" });
+  await app.register(kyselyPlugin, { connectionString: config.pg.url });
+  await app.register(openapiPlugin);
+  await app.register(boardgamesRoutes, { prefix: "/v1" });
   await app.register(pingRoutes, { prefix: "/v1" });
   await app.listen({ port: config.server.port });
 } catch (err) {

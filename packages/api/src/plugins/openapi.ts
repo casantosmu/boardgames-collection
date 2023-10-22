@@ -3,20 +3,16 @@ import fp from "fastify-plugin";
 import { fastifySwagger } from "@fastify/swagger";
 import { fastifySwaggerUi } from "@fastify/swagger-ui";
 
-const pluginCb: FastifyPluginAsync<{ prefix: string }> = async (
-  fastify,
-  { prefix },
-) => {
+const pluginCb: FastifyPluginAsync<{ prefix: string }> = async (fastify) => {
   await fastify.register(fastifySwagger, {
     openapi: {
       info: {
         title: "Boardgames collection",
         version: "0.1.0",
       },
-      tags: [{ name: "ping", description: "Ping end-points" }],
     },
   });
-  await fastify.register(fastifySwaggerUi, { prefix });
+  await fastify.register(fastifySwaggerUi);
 };
 
 export const openapiPlugin = fp(pluginCb);

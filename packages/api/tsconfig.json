@@ -1,7 +1,10 @@
 {
   "extends": ["tsconfig/base.json", "tsconfig/node-esm.json"],
   "compilerOptions": {
-    "outDir": "dist"
+    "outDir": "dist",
+    "paths": {
+      "db-main-kysely": ["../db-main-kysely/src/index"]
+    }
   },
   "include": ["src"]
 }
