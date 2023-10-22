@@ -3,7 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "paths": {
-      "db-main-kysely": ["../db-main-kysely/src/index"]
+      "db-main-kysely": ["../db-main-kysely/index"]
     }
   },
   "include": ["src"]

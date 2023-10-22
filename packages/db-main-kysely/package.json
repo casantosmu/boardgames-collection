@@ -7,11 +7,9 @@
   "type": "module",
   "scripts": {
     "migrate": "tsx -r dotenv/config scripts/migrator.ts",
-    "codegen": "kysely-codegen --camel-case --dialect postgres --out-file src/generated/db.ts",
+    "codegen": "kysely-codegen --camel-case --dialect postgres --out-file generated/db.ts",
     "clear": "rm -r dist",
     "build": "tsc",
-    "dev": "tsx -r dotenv/config watch --inspect src/index.ts",
-    "emit-types": "tsc --declaration --emitDeclarationOnly",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
