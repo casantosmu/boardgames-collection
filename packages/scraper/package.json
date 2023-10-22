@@ -6,7 +6,6 @@
   "type": "module",
   "scripts": {
     "start": "playwright install chromium && tsx -r dotenv/config src/index.ts",
-    "dev": "tsx watch -r dotenv/config --inspect src/index.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
   },

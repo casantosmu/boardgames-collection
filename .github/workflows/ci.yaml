@@ -29,9 +29,6 @@ jobs:
       - name: Install Dependencies
         run: pnpm install
 
-      - name: Emit type files
-        run: pnpm emit-types
-
       - name: Run Prettier and ESLint
         run: pnpm lint
 
