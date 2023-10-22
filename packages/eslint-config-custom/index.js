@@ -1,5 +1,3 @@
-const project = require("node:path").join(process.cwd(), "tsconfig.json");
-
 module.exports = {
   extends: [
     "eslint:recommended",
@@ -12,7 +10,7 @@ module.exports = {
   plugins: ["@typescript-eslint"],
   parser: "@typescript-eslint/parser",
   parserOptions: {
-    project,
+    project: true,
   },
   settings: {
     "import/parsers": {
@@ -21,7 +19,6 @@ module.exports = {
     "import/resolver": {
       typescript: {
         alwaysTryTypes: true,
-        project,
       },
     },
   },

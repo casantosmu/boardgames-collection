@@ -2,10 +2,15 @@
   "private": true,
   "scripts": {
     "build": "pnpm --filter \"*\" build",
-    "dev": "pnpm --filter \"*\" --parallel dev",
+    "clear": "pnpm --filter \"*\" clear",
+    "migrate": "pnpm --filter db-main-kysely migrate",
+    "codegen": "pnpm --filter db-main-kysely codegen",
+    "dev": "pnpm --filter api",
     "format": "prettier . --write",
     "lint": "prettier . --check && pnpm --filter \"*\" lint",
+    "emit-types": "pnpm --filter \"*\" emit-types",
     "typecheck": "pnpm --filter \"*\" typecheck",
+    "scrape": "pnpm --filter scraper start",
     "prepare": "husky install"
   },
   "devDependencies": {
