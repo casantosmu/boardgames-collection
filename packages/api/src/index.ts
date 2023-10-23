@@ -1,5 +1,5 @@
 import { fastify } from "fastify";
-import { isAppError } from "./shared/errors.js";
+import { errorsPlugin } from "./plugins/errors.js";
 import { kyselyPlugin } from "./plugins/kysely.js";
 import { openapiPlugin } from "./plugins/openapi.js";
 import { boardgamesRoutes } from "./routes/boardgames.js";
@@ -25,23 +25,6 @@ const app = fastify({
   logger: {
     level: config.log.level,
   },
-});
-
-app.setErrorHandler(async (error, request, reply) => {
-  if (isAppError(error)) {
-    app.log.warn(error);
-    return reply.code(error.statusCode).send({ error: error.message });
-  }
-
-  if (error.code === "FST_ERR_VALIDATION") {
-    app.log.warn(error);
-    return reply.code(400).send({ error: error.message });
-  }
-
-  app.log.error(error);
-  await reply.code(500).send({ error: "Internal Server Error" });
-  await app.close();
-  process.exitCode = 1;
 });
 
 const GRATEFUL_SHUTDOWN_TIMEOUT = 10000;
@@ -74,6 +57,7 @@ for (const event of ["uncaughtException", "unhandledRejection"]) {
 }
 
 try {
+  await app.register(errorsPlugin);
   await app.register(kyselyPlugin, { connectionString: config.pg.url });
   await app.register(openapiPlugin);
   await app.register(boardgamesRoutes, { prefix: "/v1" });
