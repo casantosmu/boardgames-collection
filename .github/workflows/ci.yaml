@@ -59,8 +59,8 @@ jobs:
           echo "PG_URL=postgresql://postgres:postgres@localhost:5432/postgres" >> packages/api/.env
           echo "LOG_LEVEL=silent" >> packages/api/.env
 
-      - name: Start Postgres
-        run: docker compose run -d postgres
+      - name: Start docker compose
+        run: docker compose -d
 
       - name: Install Dependencies
         run: pnpm install
