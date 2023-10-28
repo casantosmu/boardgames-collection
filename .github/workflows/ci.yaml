@@ -54,6 +54,14 @@ jobs:
           node-version: "18.x"
           cache: "pnpm"
 
+      - name: Create API .env file
+        run: |
+          echo "PG_URL=postgresql://postgres:postgres@localhost:5432/postgres" >> packages/api/.env
+          echo "LOG_LEVEL=silent" >> packages/api/.env
+
+      - name: Start Postgres
+        run: docker compose run -d postgres
+
       - name: Install Dependencies
         run: pnpm install
 
