@@ -5,6 +5,7 @@
     "clear": "pnpm --filter \"*\" clear",
     "dev": "pnpm --filter api dev",
     "format": "prettier . --write",
+    "test": "pnpm --filter \"*\" test",
     "lint": "prettier . --check && pnpm --filter \"*\" lint",
     "typecheck": "pnpm --filter \"*\" typecheck",
     "scrape": "pnpm --filter scraper start",

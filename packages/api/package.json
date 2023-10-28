@@ -7,9 +7,10 @@
   "scripts": {
     "start": "node -r dotenv/config .",
     "clear": "rm -fr dist",
-    "build": "tsc",
+    "build": "tsc --project tsconfig.build.json",
     "dev": "tsx watch -r dotenv/config --inspect src/index.ts | pino-pretty",
     "lint": "eslint .",
+    "test": "vitest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -28,6 +29,7 @@
     "pino-pretty": "^10.2.3",
     "tsconfig": "workspace:^",
     "tsx": "^3.14.0",
-    "typescript": "^5.2.2"
+    "typescript": "^5.2.2",
+    "vitest": "^0.34.6"
   }
 }

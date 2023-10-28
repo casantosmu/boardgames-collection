@@ -34,3 +34,39 @@ jobs:
 
       - name: Run Typecheck
         run: pnpm typecheck
+
+  tests:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18.x"
+          cache: "pnpm"
+
+      - name: Create API .env file
+        run: |
+          echo "PG_URL=postgresql://postgres:postgres@localhost:5432/postgres" >> packages/api/.env
+          echo "LOG_LEVEL=silent" >> packages/api/.env
+
+      - name: Start Postgres
+        run: docker compose up -d postgres
+
+      - name: Install Dependencies
+        run: pnpm install
+
+      - name: Build packages
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
