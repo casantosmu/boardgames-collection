@@ -14,7 +14,9 @@ declare module "fastify" {
 }
 
 const pluginCb: FastifyPluginAsync<PoolConfig> = async (fastify, options) => {
-  const kysely = createKyselyInstance(options);
+  const kysely = createKyselyInstance(options, {
+    logger: fastify.log.debug,
+  });
 
   fastify.decorate("kysely", kysely);
 
