@@ -86,8 +86,8 @@ importers:
         specifier: ^18.18.7
         version: 18.18.7
       '@types/pg':
-        specifier: ^8.10.7
-        version: 8.10.7
+        specifier: ^8.10.8
+        version: 8.10.8
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
@@ -571,8 +571,8 @@ packages:
     dependencies:
       undici-types: 5.26.5
 
-  /@types/pg@8.10.7:
-    resolution: {integrity: sha512-ksJqHipwYaSEHz9e1fr6H6erjoEdNNaOxwyJgPx9bNeaqOW3iWBQgVHfpwiSAoqGzchfc+ZyRLwEfeCcyYD3uQ==}
+  /@types/pg@8.10.8:
+    resolution: {integrity: sha512-EqSUgXvnbEnMkIdffX1cDsmbvNt5Fzoim17JRwdaHaCpeTz440FocCxcStU9GgJvA+1aqtHEjHgFlH0d8ZCjAg==}
     dependencies:
       '@types/node': 18.18.7
       pg-protocol: 1.6.0
