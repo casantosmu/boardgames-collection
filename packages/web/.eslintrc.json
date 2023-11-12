@@ -1,0 +1,13 @@
+{
+  "root": true,
+  "extends": ["custom/base", "custom/react"],
+  "rules": {
+    "import/no-unresolved": [
+      "error",
+      {
+        "ignore": [".svg"]
+      }
+    ]
+  },
+  "ignorePatterns": ["/vite.config.ts"]
+}
