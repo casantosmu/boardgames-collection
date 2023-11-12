@@ -1,4 +1,5 @@
 import { fastify, type FastifyInstance } from "fastify";
+import { fastifyCors } from "@fastify/cors";
 import { errorsPlugin } from "./plugins/errors.js";
 import { kyselyPlugin } from "./plugins/kysely.js";
 import { openapiPlugin } from "./plugins/openapi.js";
@@ -45,6 +46,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
     });
   }
 
+  await app.register(fastifyCors);
   await app.register(errorsPlugin);
   await app.register(kyselyPlugin, {
     connectionString: process.env["PG_URL"],

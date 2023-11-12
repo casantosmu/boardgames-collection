@@ -1,0 +1,25 @@
+{
+  "name": "dtos",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./v1": {
+      "types": "./dist/v1/index.d.ts",
+      "import": "./dist/v1/index.js"
+    }
+  },
+  "scripts": {
+    "clear": "rm -fr dist",
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.31.22"
+  },
+  "devDependencies": {
+    "@types/node": "^18.18.7",
+    "tsconfig": "workspace:^",
+    "typescript": "^5.2.2"
+  }
+}
