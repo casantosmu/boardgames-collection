@@ -1,4 +1,4 @@
 {
   "root": true,
-  "extends": ["custom/base", "custom/vitest"]
+  "extends": ["custom/base"]
 }
