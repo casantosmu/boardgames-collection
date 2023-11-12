@@ -27,7 +27,10 @@ module.exports = {
     "eslint-comments/no-unused-disable": "error",
     "import/no-default-export": "error",
     "import/order": "error",
-    "@typescript-eslint/explicit-function-return-type": "error",
+    "@typescript-eslint/explicit-function-return-type": [
+      "error",
+      { allowExpressions: true },
+    ],
     "prefer-template": "error",
   },
 };
