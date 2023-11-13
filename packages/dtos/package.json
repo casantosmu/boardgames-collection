@@ -10,7 +10,7 @@
     }
   },
   "scripts": {
-    "clear": "rm -fr dist",
+    "clear": "rm -fr dist node_modules",
     "build": "tsc",
     "typecheck": "tsc --noEmit"
   },

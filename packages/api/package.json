@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node -r dotenv/config .",
-    "clear": "rm -fr dist",
+    "clear": "rm -fr dist node_modules",
     "build": "tsc --project tsconfig.build.json",
     "dev": "tsx watch -r dotenv/config --inspect src/index.ts | pino-pretty",
     "lint": "eslint .",

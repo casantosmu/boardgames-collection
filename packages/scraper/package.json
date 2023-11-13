@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "type": "module",
   "scripts": {
+    "clear": "rm -fr node_modules",
     "start": "playwright install chromium && tsx -r dotenv/config src/index.ts",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit"
