@@ -10,6 +10,7 @@
     "typecheck": "pnpm --filter \"*\" typecheck",
     "scrape": "pnpm --filter scraper start",
     "migrate": "pnpm --filter db-main-kysely migrate",
+    "seed": "pnpm --filter db-main-kysely seed",
     "codegen": "pnpm --filter db-main-kysely codegen",
     "prepare": "husky install"
   },

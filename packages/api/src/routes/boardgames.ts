@@ -15,26 +15,63 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async () => {
+      const boardgames = await fastify.kysely
+        .selectFrom("boardgames")
+        .select([
+          "boardgameId",
+          "rate",
+          "boardgameName",
+          "yearPublished",
+          "description",
+          "shortDescription",
+          "complexity",
+          "minAge",
+          "minPlayers",
+          "maxPlayers",
+          "minDuration",
+          "maxDuration",
+        ])
+        .limit(10)
+        .execute();
+
       return {
-        data: await fastify.kysely
-          .selectFrom("boardgames")
-          .select([
-            "boardgameId as id",
-            "rate",
-            "boardgameName as name",
-            "yearPublished",
-            "imagePath",
-            "description",
-            "shortDescription",
-            "complexity",
-            "minAge",
-            "minPlayers",
-            "maxPlayers",
-            "minDuration",
-            "maxDuration",
-          ])
-          .limit(10)
-          .execute(),
+        data: boardgames.map(
+          ({
+            boardgameId,
+            rate,
+            boardgameName,
+            yearPublished,
+            description,
+            shortDescription,
+            complexity,
+            minAge,
+            minPlayers,
+            maxPlayers,
+            minDuration,
+            maxDuration,
+          }) => ({
+            id: boardgameId,
+            rate,
+            name: boardgameName,
+            yearPublished,
+            images: {
+              original: `/static/images/boardgame-${boardgameId}-original.webp`,
+              "96x96": `/static/images/boardgame-${boardgameId}-96x96.webp`,
+            },
+            description,
+            shortDescription,
+            complexity,
+            minAge,
+            players: {
+              min: minPlayers,
+              max: maxPlayers,
+            },
+            duration: {
+              min: minDuration,
+              max: maxDuration,
+            },
+          }),
+        ),
       };
     },
   );

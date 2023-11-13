@@ -20,12 +20,12 @@ interface Options {
 export type KyselyInstance = Kysely<DB>;
 
 export const createKyselyInstance = (
-  config: pg.PoolConfig,
+  poolConfig: pg.PoolConfig,
   options: Options,
 ): KyselyInstance =>
   new Kysely<DB>({
     dialect: new PostgresDialect({
-      pool: new pg.Pool(config),
+      pool: new pg.Pool(poolConfig),
     }),
     plugins: [new CamelCasePlugin()],
     log: options.logger,

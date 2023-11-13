@@ -1,11 +1,32 @@
 import { useState, useEffect } from "react";
 import { Boardgames } from "dtos/v1";
+import {
+  Alert,
+  AlertTitle,
+  Box,
+  LinearProgress,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from "@mui/material";
 
-const API_BASE_URL: unknown = import.meta.env["VITE_API_BASE_URL"];
-
-if (typeof API_BASE_URL !== "string") {
+if (typeof import.meta.env["VITE_API_BASE_URL"] !== "string") {
   throw new Error("Must add VITE_API_BASE_URL env variable");
 }
+
+if (typeof import.meta.env["VITE_IMAGES_BASE_URL"] !== "string") {
+  throw new Error("Must add VITE_IMAGES_BASE_URL env variable");
+}
+
+const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"];
+const IMAGES_BASE_URL = import.meta.env["VITE_IMAGES_BASE_URL"];
+
+const getImageSrc = (url: string): string =>
+  new URL(url, IMAGES_BASE_URL).toString();
 
 type UseFetchResult<T> =
   | {
@@ -81,18 +102,62 @@ export function App(): JSX.Element {
     useFetch<Boardgames["response"]["200"]>("/v1/boardgames");
 
   if (error) {
-    return <>Error</>;
+    return (
+      <Alert severity="error">
+        <AlertTitle>Error</AlertTitle>
+        Something unexpected occurred. Please try refreshing the page.
+      </Alert>
+    );
   }
 
   if (loading) {
-    return <>Loading...</>;
+    return (
+      <Paper>
+        <Box
+          sx={{
+            paddingY: 6,
+            paddingX: 2,
+          }}
+        >
+          <LinearProgress />
+        </Box>
+      </Paper>
+    );
   }
 
   return (
-    <ul>
-      {data.data.map((boardgame) => (
-        <li key={boardgame.id}>{boardgame.name}</li>
-      ))}
-    </ul>
+    <TableContainer component={Paper}>
+      <Table aria-label="boardgames table">
+        <TableHead>
+          <TableRow>
+            <TableCell></TableCell>
+            <TableCell align="left">Title</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.data.map((boardgame) => (
+            <TableRow key={boardgame.id}>
+              <TableCell width={80}>
+                <img
+                  height={64}
+                  width={64}
+                  alt={boardgame.name}
+                  src={getImageSrc(boardgame.images["96x96"])}
+                />
+              </TableCell>
+              <TableCell component="th" scope="row">
+                {boardgame.name}{" "}
+                <Box sx={{ color: "text.secondary", display: "inline" }}>
+                  ({boardgame.yearPublished})
+                </Box>
+                <Box paddingBottom={boardgame.shortDescription ? 0 : "20px"}>
+                  {boardgame.shortDescription}
+                </Box>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 }

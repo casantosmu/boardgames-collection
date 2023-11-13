@@ -6,10 +6,14 @@ export async function up(db: Kysely<any>): Promise<void> {
     .addColumn("boardgame_id", "integer", (col) =>
       col.primaryKey().generatedByDefaultAsIdentity(),
     )
-    .addColumn("rate", "real", (col) => col.defaultTo(0).check(sql`rate >= 0`))
+    .addColumn("rate", "real", (col) =>
+      col
+        .notNull()
+        .defaultTo(0)
+        .check(sql`rate >= 0`),
+    )
     .addColumn("boardgame_name", "text", (col) => col.notNull())
     .addColumn("year_published", "int2", (col) => col.notNull())
-    .addColumn("image_path", "text", (col) => col.notNull())
     .addColumn("description", "text", (col) => col.notNull())
     .addColumn("short_description", "text")
     .addColumn("complexity", "real", (col) =>

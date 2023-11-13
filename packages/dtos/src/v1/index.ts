@@ -7,18 +7,25 @@ export const boardgames = {
         data: Type.Array(
           Type.Object({
             id: Type.Integer(),
-            rate: Type.Union([Type.Number(), Type.Null()]),
+            rate: Type.Number(),
             name: Type.String(),
             yearPublished: Type.Integer(),
-            imagePath: Type.String(),
+            images: Type.Object({
+              original: Type.String(),
+              "96x96": Type.String(),
+            }),
             description: Type.String(),
             shortDescription: Type.Union([Type.String(), Type.Null()]),
             complexity: Type.Number(),
             minAge: Type.Integer(),
-            minPlayers: Type.Integer(),
-            maxPlayers: Type.Union([Type.Integer(), Type.Null()]),
-            minDuration: Type.Integer(),
-            maxDuration: Type.Integer(),
+            players: Type.Object({
+              min: Type.Integer(),
+              max: Type.Union([Type.Integer(), Type.Null()]),
+            }),
+            duration: Type.Object({
+              min: Type.Integer(),
+              max: Type.Integer(),
+            }),
           }),
         ),
       },
