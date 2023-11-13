@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.31.22"
+    "@sinclair/typebox": "^0.31.23"
   },
   "devDependencies": {
     "@types/node": "^18.18.7",
