@@ -28,26 +28,32 @@ const IMAGES_BASE_URL = import.meta.env["VITE_IMAGES_BASE_URL"];
 const getImageSrc = (url: string): string =>
   new URL(url, IMAGES_BASE_URL).toString();
 
+class ApiError extends Error {
+  constructor(readonly statusCode: number) {
+    super();
+  }
+}
+
 type UseFetchResult<T> =
   | {
       loading: true;
-      error: false;
+      error: null;
       data: null;
     }
   | {
       loading: false;
-      error: true;
+      error: ApiError;
       data: null;
     }
   | {
       loading: false;
-      error: false;
+      error: null;
       data: T;
     };
 
 const useFetch = <T,>(url: string): UseFetchResult<T> => {
   const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<ApiError | null>(null);
 
   useEffect(() => {
     let ignore = false;
@@ -55,7 +61,7 @@ const useFetch = <T,>(url: string): UseFetchResult<T> => {
     fetch(new URL(url, API_BASE_URL))
       .then((response) => {
         if (!response.ok) {
-          throw new Error(`${response.status} (${response.statusText})`);
+          throw new ApiError(response.status);
         }
         return response.json();
       })
@@ -64,9 +70,9 @@ const useFetch = <T,>(url: string): UseFetchResult<T> => {
           setData(data);
         }
       })
-      .catch(() => {
+      .catch((error) => {
         if (!ignore) {
-          setError(true);
+          setError(error instanceof ApiError ? error : new ApiError(500));
         }
       });
     return () => {
@@ -77,7 +83,7 @@ const useFetch = <T,>(url: string): UseFetchResult<T> => {
   if (error) {
     return {
       loading: false,
-      error: true,
+      error,
       data: null,
     };
   }
@@ -85,15 +91,15 @@ const useFetch = <T,>(url: string): UseFetchResult<T> => {
   if (!data) {
     return {
       loading: true,
-      error: false,
+      error: null,
       data: null,
     };
   }
 
   return {
     loading: false,
-    error: false,
-    data: data,
+    error: null,
+    data,
   };
 };
 
