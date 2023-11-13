@@ -1,7 +1,5 @@
-import {
-  Type,
-  type FastifyPluginAsyncTypebox,
-} from "@fastify/type-provider-typebox";
+import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
+import { boardgames } from "dtos/v1";
 
 // eslint-disable-next-line @typescript-eslint/require-await
 export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -11,42 +9,19 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         description: "Get a list of boardgames in the collection",
         tags: ["boardgames"],
-        deprecated: true,
         response: {
-          200: Type.Array(
-            Type.Object(
-              {
-                id: Type.Integer(),
-                rate: Type.Union([Type.Number(), Type.Null()]),
-                name: Type.String(),
-                yearPublished: Type.Integer(),
-                imagePath: Type.String(),
-                description: Type.String(),
-                shortDescription: Type.Union([Type.String(), Type.Null()]),
-                complexity: Type.Number(),
-                minAge: Type.Integer(),
-                minPlayers: Type.Integer(),
-                maxPlayers: Type.Union([Type.Integer(), Type.Null()]),
-                minDuration: Type.Integer(),
-                maxDuration: Type.Integer(),
-              },
-              {
-                description: "Success",
-              },
-            ),
-          ),
+          200: boardgames.response[200],
         },
       },
     },
     async () => {
-      return fastify.kysely
+      const boardgames = await fastify.kysely
         .selectFrom("boardgames")
         .select([
-          "boardgameId as id",
+          "boardgameId",
           "rate",
-          "boardgameName as name",
+          "boardgameName",
           "yearPublished",
-          "imagePath",
           "description",
           "shortDescription",
           "complexity",
@@ -58,6 +33,46 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         ])
         .limit(10)
         .execute();
+
+      return {
+        data: boardgames.map(
+          ({
+            boardgameId,
+            rate,
+            boardgameName,
+            yearPublished,
+            description,
+            shortDescription,
+            complexity,
+            minAge,
+            minPlayers,
+            maxPlayers,
+            minDuration,
+            maxDuration,
+          }) => ({
+            id: boardgameId,
+            rate,
+            name: boardgameName,
+            yearPublished,
+            images: {
+              original: `/static/images/boardgame-${boardgameId}-original.webp`,
+              "96x96": `/static/images/boardgame-${boardgameId}-96x96.webp`,
+            },
+            description,
+            shortDescription,
+            complexity,
+            minAge,
+            players: {
+              min: minPlayers,
+              max: maxPlayers,
+            },
+            duration: {
+              min: minDuration,
+              max: maxDuration,
+            },
+          }),
+        ),
+      };
     },
   );
 };

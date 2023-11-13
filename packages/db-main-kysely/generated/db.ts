@@ -21,13 +21,12 @@ export interface Boardgames {
   boardgameName: string;
   complexity: number;
   description: string;
-  imagePath: string;
   maxDuration: number;
   maxPlayers: number | null;
   minAge: number;
   minDuration: number;
   minPlayers: number;
-  rate: Generated<number | null>;
+  rate: Generated<number>;
   shortDescription: string | null;
   yearPublished: number;
 }
