@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "build": "pnpm --filter \"*\" build",
-    "clear": "pnpm --filter \"*\" clear",
+    "clear": "rm -fr node_modules && pnpm --filter \"*\" clear",
     "dev": "pnpm --filter \"*\" --parallel dev",
     "format": "prettier . --write",
     "test": "pnpm --filter \"*\" test",
