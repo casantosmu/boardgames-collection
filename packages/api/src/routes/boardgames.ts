@@ -9,12 +9,13 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         description: "Get a list of boardgames in the collection",
         tags: ["boardgames"],
+        querystring: boardgames.querystring,
         response: {
           200: boardgames.response[200],
         },
       },
     },
-    async () => {
+    async (request) => {
       const boardgames = await fastify.kysely
         .selectFrom("boardgames")
         .select([
@@ -31,7 +32,8 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
           "minDuration",
           "maxDuration",
         ])
-        .limit(10)
+        .limit(request.query.limit)
+        .offset(request.query.offset)
         .execute();
 
       return {

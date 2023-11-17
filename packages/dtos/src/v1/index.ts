@@ -1,6 +1,10 @@
 import { Type, type Static } from "@sinclair/typebox";
 
 export const boardgames = {
+  querystring: Type.Object({
+    limit: Type.Integer({ minimum: 0, maximum: 100, default: 25 }),
+    offset: Type.Integer({ minimum: 0, default: 0 }),
+  }),
   response: {
     200: Type.Object(
       {
@@ -37,6 +41,7 @@ export const boardgames = {
 };
 
 export type Boardgames = {
+  querystring: Static<typeof boardgames.querystring>;
   response: {
     200: Static<(typeof boardgames.response)["200"]>;
   };
