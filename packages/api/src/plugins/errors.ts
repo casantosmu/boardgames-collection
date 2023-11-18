@@ -28,7 +28,6 @@ class ReplyErrors {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
 const pluginCb: FastifyPluginAsync = async (fastify) => {
   fastify.decorateRequest("errors", null);
   fastify.addHook("onRequest", async (request, reply) => {

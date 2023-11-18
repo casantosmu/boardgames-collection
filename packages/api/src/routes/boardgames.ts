@@ -1,7 +1,6 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { boardgames } from "dtos/v1";
 
-// eslint-disable-next-line @typescript-eslint/require-await
 export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.get(
     "/boardgames",

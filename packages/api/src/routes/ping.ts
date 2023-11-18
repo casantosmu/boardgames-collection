@@ -1,7 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { sql } from "db-main-kysely";
 
-// eslint-disable-next-line @typescript-eslint/require-await
 export const pingRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
     "/ping",
