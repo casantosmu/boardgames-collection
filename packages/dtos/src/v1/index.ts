@@ -2,12 +2,15 @@ import { Type, type Static } from "@sinclair/typebox";
 
 export const boardgames = {
   querystring: Type.Object({
-    limit: Type.Integer({ minimum: 0, maximum: 100, default: 25 }),
-    offset: Type.Integer({ minimum: 0, default: 0 }),
+    rowsPerPage: Type.Integer({ minimum: 0, maximum: 100, default: 25 }),
+    page: Type.Integer({ minimum: 0, default: 0 }),
   }),
   response: {
     200: Type.Object(
       {
+        metadata: Type.Object({
+          count: Type.Integer(),
+        }),
         data: Type.Array(
           Type.Object({
             id: Type.Integer(),

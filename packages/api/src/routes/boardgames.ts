@@ -15,65 +15,75 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       },
     },
     async (request) => {
-      const boardgames = await fastify.kysely
-        .selectFrom("boardgames")
-        .select([
-          "boardgameId",
-          "rate",
-          "boardgameName",
-          "yearPublished",
-          "description",
-          "shortDescription",
-          "complexity",
-          "minAge",
-          "minPlayers",
-          "maxPlayers",
-          "minDuration",
-          "maxDuration",
-        ])
-        .limit(request.query.limit)
-        .offset(request.query.offset)
-        .execute();
+      return fastify.kysely.transaction().execute(async (trx) => {
+        const boardgames = await trx
+          .selectFrom("boardgames")
+          .select([
+            "boardgameId",
+            "rate",
+            "boardgameName",
+            "yearPublished",
+            "description",
+            "shortDescription",
+            "complexity",
+            "minAge",
+            "minPlayers",
+            "maxPlayers",
+            "minDuration",
+            "maxDuration",
+          ])
+          .limit(request.query.rowsPerPage)
+          .offset(request.query.page * request.query.rowsPerPage)
+          .execute();
 
-      return {
-        data: boardgames.map(
-          ({
-            boardgameId,
-            rate,
-            boardgameName,
-            yearPublished,
-            description,
-            shortDescription,
-            complexity,
-            minAge,
-            minPlayers,
-            maxPlayers,
-            minDuration,
-            maxDuration,
-          }) => ({
-            id: boardgameId,
-            rate,
-            name: boardgameName,
-            yearPublished,
-            images: {
-              original: `/static/images/boardgame-${boardgameId}-original.webp`,
-              "96x96": `/static/images/boardgame-${boardgameId}-96x96.webp`,
-            },
-            description,
-            shortDescription,
-            complexity,
-            minAge,
-            players: {
-              min: minPlayers,
-              max: maxPlayers,
-            },
-            duration: {
-              min: minDuration,
-              max: maxDuration,
-            },
-          }),
-        ),
-      };
+        const { count } = await trx
+          .selectFrom("boardgames")
+          .select((eb) => eb.fn.countAll<number>().as("count"))
+          .executeTakeFirstOrThrow();
+
+        return {
+          metadata: {
+            count,
+          },
+          data: boardgames.map(
+            ({
+              boardgameId,
+              rate,
+              boardgameName,
+              yearPublished,
+              description,
+              shortDescription,
+              complexity,
+              minAge,
+              minPlayers,
+              maxPlayers,
+              minDuration,
+              maxDuration,
+            }) => ({
+              id: boardgameId,
+              rate,
+              name: boardgameName,
+              yearPublished,
+              images: {
+                original: `/static/images/boardgame-${boardgameId}-original.webp`,
+                "96x96": `/static/images/boardgame-${boardgameId}-96x96.webp`,
+              },
+              description,
+              shortDescription,
+              complexity,
+              minAge,
+              players: {
+                min: minPlayers,
+                max: maxPlayers,
+              },
+              duration: {
+                min: minDuration,
+                max: maxDuration,
+              },
+            }),
+          ),
+        };
+      });
     },
   );
 };
