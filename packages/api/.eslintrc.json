@@ -1,6 +1,14 @@
 {
   "root": true,
   "extends": ["custom/base", "custom/vitest"],
+  "overrides": [
+    {
+      "files": ["src/plugins/*", "src/routes/*"],
+      "rules": {
+        "@typescript-eslint/require-await": "off"
+      }
+    }
+  ],
   "rules": {
     "no-console": "error"
   }

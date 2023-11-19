@@ -1,8 +1,3 @@
 {
-  "extends": ["tsconfig/base.json", "tsconfig/node-esm.json"],
-  "compilerOptions": {
-    "paths": {
-      "db-main-kysely": ["../db-main-kysely/index"]
-    }
-  }
+  "extends": ["tsconfig/base.json", "tsconfig/node-esm.json"]
 }

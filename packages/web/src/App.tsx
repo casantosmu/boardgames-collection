@@ -11,8 +11,10 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
 } from "@mui/material";
+import { useLocation, useNavigate } from "react-router-dom";
 
 if (typeof import.meta.env["VITE_API_BASE_URL"] !== "string") {
   throw new Error("Must add VITE_API_BASE_URL env variable");
@@ -51,14 +53,29 @@ type UseFetchResult<T> =
       data: T;
     };
 
-const useFetch = <T,>(url: string): UseFetchResult<T> => {
+interface UseFetchOptions {
+  params?: Record<string, string | number | boolean>;
+}
+
+const useFetch = <T,>(
+  url: string,
+  options?: UseFetchOptions,
+): UseFetchResult<T> => {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
+
+  const urlBuilder = new URL(url, API_BASE_URL);
+  if (options?.params) {
+    for (const [key, value] of Object.entries(options.params)) {
+      urlBuilder.searchParams.append(key, value.toString());
+    }
+  }
+  const urlResult = urlBuilder.toString();
 
   useEffect(() => {
     let ignore = false;
     setData(null);
-    fetch(new URL(url, API_BASE_URL))
+    fetch(urlResult)
       .then((response) => {
         if (!response.ok) {
           throw new ApiError(response.status);
@@ -78,7 +95,7 @@ const useFetch = <T,>(url: string): UseFetchResult<T> => {
     return () => {
       ignore = true;
     };
-  }, [url]);
+  }, [urlResult]);
 
   if (error) {
     return {
@@ -103,9 +120,45 @@ const useFetch = <T,>(url: string): UseFetchResult<T> => {
   };
 };
 
+const useFetchBoardgames = (
+  params: Boardgames["querystring"],
+): UseFetchResult<Boardgames["response"]["200"]> => {
+  return useFetch("/v1/boardgames", {
+    params,
+  });
+};
+
+const useQueryParams = <T extends Record<string, string | number | boolean>>(
+  transform: (params: Record<string, unknown>) => T,
+): [T, (params: Partial<T>) => void] => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const queryParams = transform(
+    Object.fromEntries(new URLSearchParams(location.search)),
+  );
+
+  const setQueryParams = (params: Partial<T>): void => {
+    const urlSearchParams = new URLSearchParams(location.search);
+    for (const [key, value] of Object.entries(params)) {
+      urlSearchParams.set(key, String(value));
+    }
+    navigate(`?${urlSearchParams.toString()}`);
+  };
+
+  return [queryParams, setQueryParams];
+};
+
 export function App(): JSX.Element {
-  const { loading, error, data } =
-    useFetch<Boardgames["response"]["200"]>("/v1/boardgames");
+  const [queryParams, setQueryParams] = useQueryParams((params) => ({
+    page: Number(params["page"]) || 0,
+    rowsPerPage: Number(params["rowsPerPage"]) || 25,
+  }));
+
+  const { loading, error, data } = useFetchBoardgames({
+    page: queryParams.page,
+    rowsPerPage: queryParams.rowsPerPage,
+  });
 
   if (error) {
     return (
@@ -132,38 +185,61 @@ export function App(): JSX.Element {
   }
 
   return (
-    <TableContainer component={Paper}>
-      <Table aria-label="boardgames table">
-        <TableHead>
-          <TableRow>
-            <TableCell></TableCell>
-            <TableCell align="left">Title</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {data.data.map((boardgame) => (
-            <TableRow key={boardgame.id}>
-              <TableCell width={80}>
-                <img
-                  height={64}
-                  width={64}
-                  alt={boardgame.name}
-                  src={getImageSrc(boardgame.images["96x96"])}
-                />
-              </TableCell>
-              <TableCell component="th" scope="row">
-                {boardgame.name}{" "}
-                <Box sx={{ color: "text.secondary", display: "inline" }}>
-                  ({boardgame.yearPublished})
-                </Box>
-                <Box paddingBottom={boardgame.shortDescription ? 0 : "20px"}>
-                  {boardgame.shortDescription}
-                </Box>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+    <Box sx={{ width: "100%" }}>
+      <Paper sx={{ width: "100%", mb: 2 }}>
+        <TableContainer>
+          <Table /** sx={{ minWidth: 750 }} */ aria-label="boardgames">
+            <TableHead>
+              <TableRow>
+                <TableCell></TableCell>
+                <TableCell align="left">Title</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {data.data.map((boardgame) => (
+                <TableRow key={boardgame.id}>
+                  <TableCell width={80}>
+                    <img
+                      height={64}
+                      width={64}
+                      alt={boardgame.name}
+                      src={getImageSrc(boardgame.images["96x96"])}
+                    />
+                  </TableCell>
+                  <TableCell component="th" scope="row">
+                    {boardgame.name}{" "}
+                    <Box sx={{ color: "text.secondary", display: "inline" }}>
+                      ({boardgame.yearPublished})
+                    </Box>
+                    <Box
+                      paddingBottom={boardgame.shortDescription ? 0 : "20px"}
+                    >
+                      {boardgame.shortDescription}
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+        <TablePagination
+          rowsPerPageOptions={[10, 25, 50]}
+          count={data.metadata.count}
+          rowsPerPage={queryParams.rowsPerPage}
+          page={queryParams.page}
+          onPageChange={(_, newPage) => {
+            setQueryParams({
+              page: newPage,
+            });
+          }}
+          onRowsPerPageChange={(event) => {
+            setQueryParams({
+              rowsPerPage: parseInt(event.target.value, 10),
+              page: 0,
+            });
+          }}
+        />
+      </Paper>
+    </Box>
   );
 }

@@ -12,6 +12,7 @@
   "scripts": {
     "clear": "rm -fr dist node_modules",
     "build": "tsc",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
