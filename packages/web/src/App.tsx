@@ -14,7 +14,7 @@ import {
   TablePagination,
   TableRow,
 } from "@mui/material";
-import { useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 if (typeof import.meta.env["VITE_API_BASE_URL"] !== "string") {
   throw new Error("Must add VITE_API_BASE_URL env variable");
@@ -54,7 +54,7 @@ type UseFetchResult<T> =
     };
 
 interface UseFetchOptions {
-  params?: Record<string, string | number>;
+  params?: Record<string, string | number | boolean>;
 }
 
 const useFetch = <T,>(
@@ -128,20 +128,36 @@ const useFetchBoardgames = (
   });
 };
 
-export function App(): JSX.Element {
-  const [search, setSearch] = useSearchParams(
-    new URLSearchParams({
-      page: "0",
-      rowsPerPage: "25",
-    }),
+const useQueryParams = <T extends Record<string, string | number | boolean>>(
+  transform: (params: Record<string, unknown>) => T,
+): [T, (params: Partial<T>) => void] => {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const queryParams = transform(
+    Object.fromEntries(new URLSearchParams(location.search)),
   );
 
-  const page = Number(search.get("page"));
-  const rowsPerPage = Number(search.get("rowsPerPage"));
+  const setQueryParams = (params: Partial<T>): void => {
+    const urlSearchParams = new URLSearchParams(location.search);
+    for (const [key, value] of Object.entries(params)) {
+      urlSearchParams.set(key, String(value));
+    }
+    navigate(`?${urlSearchParams.toString()}`);
+  };
+
+  return [queryParams, setQueryParams];
+};
+
+export function App(): JSX.Element {
+  const [queryParams, setQueryParams] = useQueryParams((params) => ({
+    page: Number(params["page"]) || 0,
+    rowsPerPage: Number(params["rowsPerPage"]) || 25,
+  }));
 
   const { loading, error, data } = useFetchBoardgames({
-    page,
-    rowsPerPage,
+    page: queryParams.page,
+    rowsPerPage: queryParams.rowsPerPage,
   });
 
   if (error) {
@@ -209,18 +225,17 @@ export function App(): JSX.Element {
         <TablePagination
           rowsPerPageOptions={[10, 25, 50]}
           count={data.metadata.count}
-          rowsPerPage={rowsPerPage}
-          page={page}
+          rowsPerPage={queryParams.rowsPerPage}
+          page={queryParams.page}
           onPageChange={(_, newPage) => {
-            setSearch({
-              rowsPerPage: rowsPerPage.toString(),
-              page: newPage.toString(),
+            setQueryParams({
+              page: newPage,
             });
           }}
           onRowsPerPageChange={(event) => {
-            setSearch({
-              rowsPerPage: event.target.value,
-              page: "0",
+            setQueryParams({
+              rowsPerPage: parseInt(event.target.value, 10),
+              page: 0,
             });
           }}
         />
