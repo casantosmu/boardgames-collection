@@ -1,7 +1,7 @@
 import pg from "pg";
 import { Kysely, PostgresDialect, CamelCasePlugin } from "kysely";
 import type { DB } from "../generated/db.js";
-import boardgames from "../../../seeds/boardgames.json";
+import boardgames from "../seeds/boardgames.json";
 
 /** Seed data for development */
 
@@ -173,3 +173,5 @@ await db.transaction().execute(async (trx) => {
 
   await Promise.all(insertBoardgamesCategoriesPromise);
 });
+
+console.log(`Seed was executed successfully`);
