@@ -30,7 +30,7 @@ jobs:
         run: pnpm install
 
       - name: Build packages
-        run: pnpm build
+        run: pnpm build:packages
 
       - name: Run Prettier and ESLint
         run: pnpm lint
@@ -69,7 +69,7 @@ jobs:
         run: pnpm install
 
       - name: Build packages
-        run: pnpm build
+        run: pnpm build:packages
 
       - name: Run tests
         run: pnpm test

@@ -12,7 +12,7 @@
   "scripts": {
     "clear": "rm -fr dist node_modules",
     "build": "tsc",
-    "dev": "tsc --watch",
+    "dev": "tsc --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

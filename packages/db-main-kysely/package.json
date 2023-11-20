@@ -11,7 +11,7 @@
     "codegen": "kysely-codegen --camel-case --dialect postgres --out-file generated/db.ts",
     "clear": "rm -fr dist node_modules",
     "build": "tsc",
-    "dev": "tsc --watch",
+    "dev": "tsc --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
