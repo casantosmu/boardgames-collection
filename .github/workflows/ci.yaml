@@ -63,7 +63,7 @@ jobs:
           echo "LOG_LEVEL=silent" >> packages/api/.env
 
       - name: Start Postgres
-        run: docker compose up -d postgres
+        run: docker compose -f docker/dev/docker-compose.yaml up -d postgres
 
       - name: Install Dependencies
         run: pnpm install
