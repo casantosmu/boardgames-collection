@@ -2,7 +2,7 @@
   "private": true,
   "scripts": {
     "build": "pnpm -r build",
-    "build:packages": "pnpm --filter db-main-kysely --filter dtos build",
+    "build:packages": "pnpm --filter \"./packages/**\" build",
     "clear": "rm -fr node_modules && pnpm -r clear",
     "dev": "pnpm -r --parallel dev",
     "format": "prettier . --write",

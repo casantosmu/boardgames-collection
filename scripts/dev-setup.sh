@@ -12,9 +12,8 @@ check_command() {
 }
 
 copy_env_file() {
-    DIR="packages/$1"
-    ENV_FILE="$DIR/.env"
-    ENV_EXAMPLE_FILE="$DIR/.env.example"
+    ENV_FILE="$1/.env"
+    ENV_EXAMPLE_FILE="$1/.env.example"
 
     if [ ! -f "$ENV_FILE" ]; then
         cp "$ENV_EXAMPLE_FILE" "$ENV_FILE"
@@ -35,9 +34,9 @@ pnpm install
 log "Starting Docker services..."
 docker compose -f docker/dev/docker-compose.yaml up -d postgres nginx
 
-copy_env_file web
-copy_env_file db-main-kysely
-copy_env_file api
+copy_env_file apps/web
+copy_env_file packages/db-main-kysely
+copy_env_file apps/api
 
 log "Applying database schemas and seeds..."
 pnpm migrate
