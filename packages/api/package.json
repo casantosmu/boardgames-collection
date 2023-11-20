@@ -31,7 +31,7 @@
     "pino-pretty": "^10.2.3",
     "tsconfig": "workspace:^",
     "tsx": "^3.14.0",
-    "typescript": "^5.2.2",
+    "typescript": "^5.3.2",
     "vitest": "^0.34.6"
   }
 }
