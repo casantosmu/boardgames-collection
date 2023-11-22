@@ -16,7 +16,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
     async (request) => {
       return fastify.kysely.transaction().execute(async (trx) => {
-        const boardgames = await trx
+        let query = trx
           .selectFrom("boardgames")
           .select([
             "boardgameId",
@@ -31,21 +31,32 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
             "maxPlayers",
             "minDuration",
             "maxDuration",
-          ])
-          .limit(request.query.rowsPerPage)
-          .offset(request.query.page * request.query.rowsPerPage)
-          .execute();
+          ]);
 
-        const { count } = await trx
-          .selectFrom("boardgames")
-          .select((eb) => eb.fn.countAll<number>().as("count"))
-          .executeTakeFirstOrThrow();
+        if (request.query.search) {
+          query = query.where(
+            "boardgameName",
+            "ilike",
+            `%${request.query.search}%`,
+          );
+        }
+
+        const [data, metadata] = await Promise.all([
+          query
+            .limit(request.query.rowsPerPage)
+            .offset(request.query.page * request.query.rowsPerPage)
+            .execute(),
+          query
+            .clearSelect()
+            .select((eb) => eb.fn.countAll<number>().as("count"))
+            .executeTakeFirstOrThrow(),
+        ]);
 
         return {
           metadata: {
-            count,
+            count: metadata.count,
           },
-          data: boardgames.map(
+          data: data.map(
             ({
               boardgameId,
               rate,
