@@ -1,5 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
-import { Boardgames } from "dtos/v1";
+import { useState } from "react";
 import {
   Alert,
   AlertTitle,
@@ -25,144 +24,8 @@ import {
   Search as SearchIcon,
   FilterList as FilterListIcon,
 } from "@mui/icons-material";
-
-import { useLocation, useNavigate } from "react-router-dom";
-
-if (typeof import.meta.env["VITE_API_BASE_URL"] !== "string") {
-  throw new Error("Must add VITE_API_BASE_URL env variable");
-}
-
-if (typeof import.meta.env["VITE_IMAGES_BASE_URL"] !== "string") {
-  throw new Error("Must add VITE_IMAGES_BASE_URL env variable");
-}
-
-const API_BASE_URL = import.meta.env["VITE_API_BASE_URL"];
-const IMAGES_BASE_URL = import.meta.env["VITE_IMAGES_BASE_URL"];
-
-const getImageSrc = (url: string): string =>
-  new URL(url, IMAGES_BASE_URL).toString();
-
-class ApiError extends Error {
-  constructor(readonly statusCode: number) {
-    super();
-  }
-}
-
-type UseFetchResult<T> =
-  | {
-      loading: true;
-      error: null;
-      data: null;
-    }
-  | {
-      loading: false;
-      error: ApiError;
-      data: null;
-    }
-  | {
-      loading: false;
-      error: null;
-      data: T;
-    };
-
-interface UseFetchOptions {
-  params?: Record<string, string | number | boolean>;
-}
-
-const useFetch = <T,>(
-  url: string,
-  options?: UseFetchOptions,
-): UseFetchResult<T> => {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
-
-  const urlBuilder = new URL(url, API_BASE_URL);
-  if (options?.params) {
-    for (const [key, value] of Object.entries(options.params)) {
-      urlBuilder.searchParams.append(key, value.toString());
-    }
-  }
-  const urlResult = urlBuilder.toString();
-
-  useEffect(() => {
-    let ignore = false;
-    setData(null);
-    fetch(urlResult)
-      .then((response) => {
-        if (!response.ok) {
-          throw new ApiError(response.status);
-        }
-        return response.json();
-      })
-      .then((data: T) => {
-        if (!ignore) {
-          setData(data);
-        }
-      })
-      .catch((error) => {
-        if (!ignore) {
-          setError(error instanceof ApiError ? error : new ApiError(500));
-        }
-      });
-    return () => {
-      ignore = true;
-    };
-  }, [urlResult]);
-
-  if (error) {
-    return {
-      loading: false,
-      error,
-      data: null,
-    };
-  }
-
-  if (!data) {
-    return {
-      loading: true,
-      error: null,
-      data: null,
-    };
-  }
-
-  return {
-    loading: false,
-    error: null,
-    data,
-  };
-};
-
-const useFetchBoardgames = (
-  params: Boardgames["querystring"],
-): UseFetchResult<Boardgames["response"]["200"]> => {
-  return useFetch("/v1/boardgames", {
-    params,
-  });
-};
-
-const useQueryParams = <T extends Record<string, string | number | boolean>>(
-  transform: (params: Record<string, unknown>) => T,
-): [T, (params: Partial<T>) => void] => {
-  const location = useLocation();
-  const navigate = useNavigate();
-
-  const rawQueryParams = useMemo(
-    () => Object.fromEntries(new URLSearchParams(location.search)),
-    [location.search],
-  );
-
-  const queryParams = transform(rawQueryParams);
-
-  const setQueryParams = (params: Partial<T>): void => {
-    const urlSearchParams = new URLSearchParams(location.search);
-    for (const [key, value] of Object.entries(params)) {
-      urlSearchParams.set(key, String(value));
-    }
-    navigate(`?${urlSearchParams.toString()}`);
-  };
-
-  return [queryParams, setQueryParams];
-};
+import { useQueryParams } from "./queryParams";
+import { getImageSrc, useFetchBoardgames } from "./api";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -204,14 +67,66 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
+interface TableToolbarProps {
+  initialSearchValue: string;
+  onSearch: (searchValue: string) => void;
+}
+
+const TableToolbar = ({
+  initialSearchValue,
+  onSearch,
+}: TableToolbarProps): JSX.Element => {
+  const [search, setSearch] = useState(initialSearchValue);
+
+  return (
+    <Toolbar
+      sx={{
+        pl: { sm: 2 },
+        pr: { xs: 1, sm: 1 },
+      }}
+    >
+      <Typography
+        variant="h6"
+        id="tableTitle"
+        component="div"
+        sx={{ display: { xs: "none", sm: "block" } }}
+      >
+        Boardgames
+      </Typography>
+      <Search>
+        <SearchIconWrapper>
+          <SearchIcon />
+        </SearchIconWrapper>
+        <StyledInputBase
+          onKeyUp={(event) => {
+            if (event.key === "Enter") {
+              onSearch(search);
+            }
+          }}
+          onChange={(event) => {
+            setSearch(event.target.value);
+          }}
+          placeholder="Search…"
+          value={search}
+          inputProps={{ "aria-label": "search" }}
+        />
+      </Search>
+      <Box sx={{ flexGrow: 1 }} />
+      <Tooltip title="Filter list">
+        <IconButton>
+          <FilterListIcon />
+        </IconButton>
+      </Tooltip>
+    </Toolbar>
+  );
+};
+
 export function App(): JSX.Element {
   const [queryParams, setQueryParams] = useQueryParams((params) => ({
     page: Number(params["page"]) || 0,
     rowsPerPage: Number(params["rowsPerPage"]) || 25,
     search: String(params["search"] || ""),
   }));
-
-  const [search, setSearch] = useState(queryParams.search);
 
   const { loading, error, data } = useFetchBoardgames({
     page: queryParams.page,
@@ -246,48 +161,15 @@ export function App(): JSX.Element {
   return (
     <Box sx={{ width: "100%" }}>
       <Paper sx={{ width: "100%", mb: 2 }}>
-        <Toolbar
-          sx={{
-            pl: { sm: 2 },
-            pr: { xs: 1, sm: 1 },
+        <TableToolbar
+          initialSearchValue={queryParams.search}
+          onSearch={(searchValue) => {
+            setQueryParams({
+              search: searchValue,
+              page: 0,
+            });
           }}
-        >
-          <Typography
-            variant="h6"
-            id="tableTitle"
-            component="div"
-            sx={{ display: { xs: "none", sm: "block" } }}
-          >
-            Boardgames
-          </Typography>
-          <Search>
-            <SearchIconWrapper>
-              <SearchIcon />
-            </SearchIconWrapper>
-            <StyledInputBase
-              onKeyUp={(event) => {
-                if (event.key === "Enter") {
-                  setQueryParams({
-                    search: search,
-                    page: 0,
-                  });
-                }
-              }}
-              onChange={(event) => {
-                setSearch(event.target.value);
-              }}
-              placeholder="Search…"
-              value={search}
-              inputProps={{ "aria-label": "search" }}
-            />
-          </Search>
-          <Box sx={{ flexGrow: 1 }} />
-          <Tooltip title="Filter list">
-            <IconButton>
-              <FilterListIcon />
-            </IconButton>
-          </Tooltip>
-        </Toolbar>
+        />
         <TableContainer>
           <Table aria-labelledby="tableTitle">
             <TableHead>
