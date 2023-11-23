@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { CssBaseline } from "@mui/material";
 import { App } from "./App.tsx";
 
 import "@fontsource/roboto/300.css";
@@ -23,6 +24,7 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <React.StrictMode>
+    <CssBaseline />
     <RouterProvider router={router} />
   </React.StrictMode>,
 );

@@ -4,47 +4,33 @@ import {
   AlertTitle,
   Box,
   LinearProgress,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
   TablePagination,
-  TableRow,
-  alpha,
   styled,
   InputBase,
   Toolbar,
   Typography,
   Tooltip,
   IconButton,
+  Divider,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  List,
+  Drawer,
+  ListItemAvatar,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   FilterList as FilterListIcon,
+  Inbox as InboxIcon,
+  Mail as MailIcon,
 } from "@mui/icons-material";
+import { Link } from "react-router-dom";
 import { useQueryParams } from "./queryParams";
 import { getImageSrc, useFetchBoardgames } from "./api";
 
-const Search = styled("div")(({ theme }) => ({
-  position: "relative",
-  borderRadius: theme.shape.borderRadius,
-  backgroundColor: alpha(theme.palette.common.white, 0.15),
-  "&:hover": {
-    backgroundColor: alpha(theme.palette.common.white, 0.25),
-  },
-  marginRight: theme.spacing(2),
-  marginLeft: 0,
-  width: "100%",
-  [theme.breakpoints.up("sm")]: {
-    marginLeft: theme.spacing(3),
-    width: "auto",
-  },
-}));
-
-const SearchIconWrapper = styled("div")(({ theme }) => ({
-  padding: theme.spacing(0, 2),
+const SearchIconWrapper = styled("div")(() => ({
   height: "100%",
   position: "absolute",
   pointerEvents: "none",
@@ -56,9 +42,8 @@ const SearchIconWrapper = styled("div")(({ theme }) => ({
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: "inherit",
   "& .MuiInputBase-input": {
-    padding: theme.spacing(1, 1, 1, 0),
     // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
+    paddingLeft: `calc(1em + ${theme.spacing(2)})`,
     transition: theme.transitions.create("width"),
     width: "100%",
     [theme.breakpoints.up("md")]: {
@@ -67,33 +52,30 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-interface TableToolbarProps {
+interface ListToolbarProps {
   initialSearchValue: string;
   onSearch: (searchValue: string) => void;
+  onClickFiltersIcon: () => void;
 }
 
-const TableToolbar = ({
+const ListToolbar = ({
   initialSearchValue,
   onSearch,
-}: TableToolbarProps): JSX.Element => {
+  onClickFiltersIcon,
+}: ListToolbarProps): JSX.Element => {
   const [search, setSearch] = useState(initialSearchValue);
 
   return (
-    <Toolbar
-      sx={{
-        pl: { sm: 2 },
-        pr: { xs: 1, sm: 1 },
-      }}
-    >
+    <Toolbar>
       <Typography
         variant="h6"
-        id="tableTitle"
+        id="listTitle"
         component="div"
-        sx={{ display: { xs: "none", sm: "block" } }}
+        sx={{ display: { xs: "none", md: "block" }, paddingRight: 4 }}
       >
         Boardgames
       </Typography>
-      <Search>
+      <Box sx={{ position: "relative" }}>
         <SearchIconWrapper>
           <SearchIcon />
         </SearchIconWrapper>
@@ -110,14 +92,107 @@ const TableToolbar = ({
           value={search}
           inputProps={{ "aria-label": "search" }}
         />
-      </Search>
+      </Box>
       <Box sx={{ flexGrow: 1 }} />
-      <Tooltip title="Filter list">
-        <IconButton>
+      <Tooltip
+        title="Filter list"
+        onClick={() => {
+          onClickFiltersIcon();
+        }}
+        sx={{ display: { md: "none" } }}
+      >
+        <IconButton aria-label="open filters">
           <FilterListIcon />
         </IconButton>
       </Tooltip>
     </Toolbar>
+  );
+};
+
+const SIDEBAR_WITH = 240;
+
+interface FiltersSidebarProps {
+  open: boolean;
+  onClose: () => void;
+}
+
+const FiltersSidebar = ({
+  open,
+  onClose,
+}: FiltersSidebarProps): JSX.Element => {
+  const body = (
+    <div>
+      <Toolbar />
+      <Divider />
+      <List>
+        {["Inbox", "Starred", "Send email", "Drafts"].map((text, index) => (
+          <ListItem key={text} disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+              </ListItemIcon>
+              <ListItemText primary={text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+      <Divider />
+      <List>
+        {["All mail", "Trash", "Spam"].map((text, index) => (
+          <ListItem key={text} disablePadding>
+            <ListItemButton>
+              <ListItemIcon>
+                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
+              </ListItemIcon>
+              <ListItemText primary={text} />
+            </ListItemButton>
+          </ListItem>
+        ))}
+      </List>
+    </div>
+  );
+
+  return (
+    <Box
+      component="nav"
+      sx={{
+        width: { md: SIDEBAR_WITH },
+      }}
+      aria-label="Filters"
+    >
+      <Drawer
+        variant="temporary"
+        open={open}
+        onClose={() => {
+          onClose();
+        }}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
+            width: SIDEBAR_WITH,
+          },
+        }}
+      >
+        {body}
+      </Drawer>
+      <Drawer
+        variant="permanent"
+        sx={{
+          display: { xs: "none", md: "block" },
+          "& .MuiDrawer-paper": {
+            boxSizing: "border-box",
+            width: SIDEBAR_WITH,
+          },
+        }}
+        open
+      >
+        {body}
+      </Drawer>
+    </Box>
   );
 };
 
@@ -134,83 +209,76 @@ export function App(): JSX.Element {
     search: queryParams.search,
   });
 
+  const [filtersOpen, setFiltersOpen] = useState(false);
+
+  const handleToggleFilters = (): void => {
+    setFiltersOpen(!filtersOpen);
+  };
+
+  let body;
   if (error) {
-    return (
-      <Alert severity="error">
-        <AlertTitle>Error</AlertTitle>
-        Something unexpected occurred. Please try refreshing the page.
-      </Alert>
+    body = (
+      <Box
+        sx={{
+          paddingY: 5,
+          paddingX: 2,
+        }}
+      >
+        <Alert severity="error">
+          <AlertTitle>Error</AlertTitle>
+          Something unexpected occurred. Please try refreshing the page.
+        </Alert>
+      </Box>
     );
-  }
-
-  if (loading) {
-    return (
-      <Paper>
-        <Box
-          sx={{
-            paddingY: 6,
-            paddingX: 2,
-          }}
-        >
-          <LinearProgress />
-        </Box>
-      </Paper>
+  } else if (loading) {
+    body = (
+      <Box
+        sx={{
+          paddingY: 5,
+          paddingX: 2,
+        }}
+      >
+        <LinearProgress />
+      </Box>
     );
-  }
-
-  return (
-    <Box sx={{ width: "100%" }}>
-      <Paper sx={{ width: "100%", mb: 2 }}>
-        <TableToolbar
-          initialSearchValue={queryParams.search}
-          onSearch={(searchValue) => {
-            setQueryParams({
-              search: searchValue,
-              page: 0,
-            });
-          }}
-        />
-        <TableContainer>
-          <Table aria-labelledby="tableTitle">
-            <TableHead>
-              <TableRow>
-                <TableCell></TableCell>
-                <TableCell align="left">Title</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data.data.map((boardgame) => (
-                <TableRow
-                  key={boardgame.id}
-                  hover
-                  sx={{
-                    cursor: "pointer",
-                  }}
-                >
-                  <TableCell width={80}>
-                    <img
-                      height={64}
-                      width={64}
-                      alt={boardgame.name}
-                      src={getImageSrc(boardgame.images["96x96"])}
-                    />
-                  </TableCell>
-                  <TableCell component="th" scope="row">
-                    {boardgame.name}{" "}
-                    <Box sx={{ color: "text.secondary", display: "inline" }}>
-                      ({boardgame.yearPublished})
-                    </Box>
-                    <Box
-                      paddingBottom={boardgame.shortDescription ? 0 : "20px"}
-                    >
-                      {boardgame.shortDescription}
-                    </Box>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+  } else {
+    body = (
+      <>
+        <List aria-labelledby="listTitle">
+          {data.data.map((boardgame) => (
+            <ListItem key={boardgame.id}>
+              <ListItemButton
+                component={Link}
+                to={`/boardgames/${boardgame.id}`}
+              >
+                <ListItemAvatar sx={{ width: 80 }}>
+                  <img
+                    height={64}
+                    width={64}
+                    alt={boardgame.name}
+                    src={getImageSrc(boardgame.images["96x96"])}
+                  />
+                </ListItemAvatar>
+                <ListItemText
+                  primary={
+                    <>
+                      {boardgame.name}{" "}
+                      <Box
+                        sx={{
+                          color: "text.secondary",
+                          display: "inline",
+                        }}
+                      >
+                        ({boardgame.yearPublished})
+                      </Box>
+                    </>
+                  }
+                  secondary={boardgame.shortDescription}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
         <TablePagination
           component="div"
           rowsPerPageOptions={[10, 25, 50]}
@@ -229,7 +297,35 @@ export function App(): JSX.Element {
             });
           }}
         />
-      </Paper>
-    </Box>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <Box sx={{ ml: { md: `${SIDEBAR_WITH}px` } }}>
+        <Box sx={{ marginX: "auto", maxWidth: 800 }}>
+          <ListToolbar
+            initialSearchValue={queryParams.search}
+            onSearch={(searchValue) => {
+              setQueryParams({
+                search: searchValue,
+                page: 0,
+              });
+            }}
+            onClickFiltersIcon={() => {
+              handleToggleFilters();
+            }}
+          />
+          {body}
+        </Box>
+      </Box>
+      <FiltersSidebar
+        open={filtersOpen}
+        onClose={() => {
+          handleToggleFilters();
+        }}
+      />
+    </>
   );
 }
