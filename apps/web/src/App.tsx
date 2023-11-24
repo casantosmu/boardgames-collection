@@ -27,6 +27,7 @@ import {
   Mail as MailIcon,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import { Boardgames } from "dtos/v1";
 import { useQueryParams } from "./queryParams";
 import { getImageSrc, useFetchBoardgames } from "./api";
 
@@ -53,7 +54,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 interface ListToolbarProps {
-  initialSearchValue: string;
+  initialSearchValue: string | undefined;
   onSearch: (searchValue: string) => void;
   onClickFiltersIcon: () => void;
 }
@@ -63,7 +64,7 @@ const ListToolbar = ({
   onSearch,
   onClickFiltersIcon,
 }: ListToolbarProps): JSX.Element => {
-  const [search, setSearch] = useState(initialSearchValue);
+  const [search, setSearch] = useState(initialSearchValue ?? "");
 
   return (
     <Toolbar>
@@ -82,7 +83,9 @@ const ListToolbar = ({
         <StyledInputBase
           onKeyUp={(event) => {
             if (event.key === "Enter") {
+              const value = search.trim();
               onSearch(search);
+              setSearch(value);
             }
           }}
           onChange={(event) => {
@@ -154,7 +157,6 @@ const FiltersSidebar = ({
 
   return (
     <Box
-      component="nav"
       sx={{
         width: { md: SIDEBAR_WITH },
       }}
@@ -200,14 +202,18 @@ export function App(): JSX.Element {
   const [queryParams, setQueryParams] = useQueryParams((params) => ({
     page: Number(params["page"]) || 0,
     rowsPerPage: Number(params["rowsPerPage"]) || 25,
-    search: String(params["search"] || ""),
+    search: String(params["search"] ?? "").trim() || undefined,
   }));
 
-  const { loading, error, data } = useFetchBoardgames({
+  const fetchBoardgamesParams: Boardgames["querystring"] = {
     page: queryParams.page,
     rowsPerPage: queryParams.rowsPerPage,
-    search: queryParams.search,
-  });
+  };
+  if (queryParams.search !== undefined) {
+    fetchBoardgamesParams.search = queryParams.search;
+  }
+
+  const { loading, error, data } = useFetchBoardgames(fetchBoardgamesParams);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
