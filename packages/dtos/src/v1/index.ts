@@ -5,6 +5,10 @@ export const boardgames = {
     rowsPerPage: Type.Integer({ minimum: 1, maximum: 100, default: 25 }),
     page: Type.Integer({ minimum: 0, default: 0 }),
     search: Type.Optional(Type.String()),
+    minPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
+    maxPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
+    minBestPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
+    maxBestPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
   }),
   response: {
     200: Type.Object(
@@ -34,6 +38,12 @@ export const boardgames = {
               min: Type.Integer(),
               max: Type.Integer(),
             }),
+            bestPlayers: Type.Array(
+              Type.Object({
+                min: Type.Integer(),
+                max: Type.Union([Type.Null(), Type.Integer()]),
+              }),
+            ),
           }),
         ),
       },

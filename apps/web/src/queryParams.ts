@@ -18,11 +18,14 @@ export const useQueryParams = <
 
   const setQueryParams = (params: Partial<T>): void => {
     const urlSearchParams = new URLSearchParams(location.search);
-    for (const [key, value] of Object.entries(transform(params))) {
+    const queryParams = transform(
+      Object.assign(Object.fromEntries(urlSearchParams), params),
+    );
+    for (const [key, value] of Object.entries(queryParams)) {
       if (value === undefined) {
         urlSearchParams.delete(key);
       } else {
-        urlSearchParams.set(key, String(value));
+        urlSearchParams.set(key, value.toString());
       }
     }
     navigate(`?${urlSearchParams.toString()}`);
