@@ -2,7 +2,7 @@ import { Type, type Static } from "@sinclair/typebox";
 
 export const boardgames = {
   querystring: Type.Object({
-    rowsPerPage: Type.Integer({ minimum: 0, maximum: 100, default: 25 }),
+    rowsPerPage: Type.Integer({ minimum: 1, maximum: 100, default: 25 }),
     page: Type.Integer({ minimum: 0, default: 0 }),
     search: Type.Optional(Type.String()),
   }),

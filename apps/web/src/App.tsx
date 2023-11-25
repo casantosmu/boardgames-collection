@@ -28,8 +28,18 @@ import {
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { Boardgames } from "dtos/v1";
+import { z } from "zod";
 import { useQueryParams } from "./queryParams";
 import { getImageSrc, useFetchBoardgames } from "./api";
+
+const rowsPerPageValueSchema = z.coerce
+  .number()
+  .int()
+  .positive()
+  .max(100)
+  .catch(25);
+const pageValueSchema = z.coerce.number().int().nonnegative().catch(0);
+const searchValueSchema = z.string().trim().optional().catch(undefined);
 
 const SearchIconWrapper = styled("div")(() => ({
   height: "100%",
@@ -83,9 +93,7 @@ const ListToolbar = ({
         <StyledInputBase
           onKeyUp={(event) => {
             if (event.key === "Enter") {
-              const value = search.trim();
               onSearch(search);
-              setSearch(value);
             }
           }}
           onChange={(event) => {
@@ -200,9 +208,9 @@ const FiltersSidebar = ({
 
 export function App(): JSX.Element {
   const [queryParams, setQueryParams] = useQueryParams((params) => ({
-    page: Number(params["page"]) || 0,
-    rowsPerPage: Number(params["rowsPerPage"]) || 25,
-    search: String(params["search"] ?? "").trim() || undefined,
+    page: pageValueSchema.parse(params["page"]),
+    rowsPerPage: rowsPerPageValueSchema.parse(params["rowsPerPage"]),
+    search: searchValueSchema.parse(params["search"]),
   }));
 
   const fetchBoardgamesParams: Boardgames["querystring"] = {
@@ -312,6 +320,7 @@ export function App(): JSX.Element {
       <Box sx={{ ml: { md: `${SIDEBAR_WITH}px` } }}>
         <Box sx={{ marginX: "auto", maxWidth: 800 }}>
           <ListToolbar
+            key={queryParams.search}
             initialSearchValue={queryParams.search}
             onSearch={(searchValue) => {
               setQueryParams({
