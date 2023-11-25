@@ -54,6 +54,10 @@ const pluginCb: FastifyPluginAsync = async (fastify) => {
     await fastify.close();
     process.exitCode = 1;
   });
+
+  fastify.setNotFoundHandler(async (request, reply) => {
+    await reply.errors.notFound("Route not found");
+  });
 };
 
 export const errorsPlugin = fp(pluginCb);
