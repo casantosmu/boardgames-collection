@@ -27,7 +27,7 @@ import {
   FilterList as FilterListIcon,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
-import { Boardgames } from "dtos/v1";
+import { Boardgames as BoardgamesDto } from "dtos/v1";
 import { z } from "zod";
 import { useQueryParams } from "./queryParams";
 import { getImageSrc, useFetchBoardgames } from "./api";
@@ -412,7 +412,7 @@ const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
   );
 };
 
-export function App(): JSX.Element {
+export const Boardgames = (): JSX.Element => {
   const [queryParams, setQueryParams] = useQueryParams((params) => ({
     page: filtersSchemas.page.parse(params["page"]),
     rowsPerPage: filtersSchemas.rowsPerPage.parse(params["rowsPerPage"]),
@@ -423,7 +423,7 @@ export function App(): JSX.Element {
     maxBestPlayers: filtersSchemas.players.parse(params["maxBestPlayers"]),
   }));
 
-  const fetchBoardgamesParams: Boardgames["querystring"] = {
+  const fetchBoardgamesParams: BoardgamesDto["querystring"] = {
     page: queryParams.page,
     rowsPerPage: queryParams.rowsPerPage,
   };
@@ -550,4 +550,4 @@ export function App(): JSX.Element {
       />
     </>
   );
-}
+};

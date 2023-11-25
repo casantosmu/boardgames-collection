@@ -1,6 +1,6 @@
 import { Kysely, sql } from "kysely";
 
-export async function up(db: Kysely<any>): Promise<void> {
+export const up = async (db: Kysely<any>): Promise<void> => {
   await db.schema
     .createTable("boardgames")
     .addColumn("boardgame_id", "integer", (col) =>
@@ -137,9 +137,9 @@ export async function up(db: Kysely<any>): Promise<void> {
     )
     .addPrimaryKeyConstraint("boardgames_types_pkey", ["type", "boardgame_id"])
     .execute();
-}
+};
 
-export async function down(db: Kysely<any>): Promise<void> {
+export const down = async (db: Kysely<any>): Promise<void> => {
   await db.schema.dropTable("boardgames").execute();
   await db.schema.dropTable("alternate_names").execute();
   await db.schema.dropTable("best_players").execute();
@@ -149,4 +149,4 @@ export async function down(db: Kysely<any>): Promise<void> {
   await db.schema.dropTable("boardgames_categories").execute();
   await db.schema.dropTable("boardgames_mechanisms").execute();
   await db.schema.dropTable("boardgames_types").execute();
-}
+};
