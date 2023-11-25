@@ -8,8 +8,5 @@
         "@typescript-eslint/require-await": "off"
       }
     }
-  ],
-  "rules": {
-    "no-console": "error"
-  }
+  ]
 }
