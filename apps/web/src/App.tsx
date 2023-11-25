@@ -27,8 +27,19 @@ import {
   Mail as MailIcon,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
+import { Boardgames } from "dtos/v1";
+import { z } from "zod";
 import { useQueryParams } from "./queryParams";
 import { getImageSrc, useFetchBoardgames } from "./api";
+
+const rowsPerPageValueSchema = z.coerce
+  .number()
+  .int()
+  .positive()
+  .max(100)
+  .catch(25);
+const pageValueSchema = z.coerce.number().int().nonnegative().catch(0);
+const searchValueSchema = z.string().trim().optional().catch(undefined);
 
 const SearchIconWrapper = styled("div")(() => ({
   height: "100%",
@@ -53,7 +64,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 }));
 
 interface ListToolbarProps {
-  initialSearchValue: string;
+  initialSearchValue: string | undefined;
   onSearch: (searchValue: string) => void;
   onClickFiltersIcon: () => void;
 }
@@ -63,7 +74,7 @@ const ListToolbar = ({
   onSearch,
   onClickFiltersIcon,
 }: ListToolbarProps): JSX.Element => {
-  const [search, setSearch] = useState(initialSearchValue);
+  const [search, setSearch] = useState(initialSearchValue ?? "");
 
   return (
     <Toolbar>
@@ -154,7 +165,6 @@ const FiltersSidebar = ({
 
   return (
     <Box
-      component="nav"
       sx={{
         width: { md: SIDEBAR_WITH },
       }}
@@ -198,16 +208,20 @@ const FiltersSidebar = ({
 
 export function App(): JSX.Element {
   const [queryParams, setQueryParams] = useQueryParams((params) => ({
-    page: Number(params["page"]) || 0,
-    rowsPerPage: Number(params["rowsPerPage"]) || 25,
-    search: String(params["search"] || ""),
+    page: pageValueSchema.parse(params["page"]),
+    rowsPerPage: rowsPerPageValueSchema.parse(params["rowsPerPage"]),
+    search: searchValueSchema.parse(params["search"]),
   }));
 
-  const { loading, error, data } = useFetchBoardgames({
+  const fetchBoardgamesParams: Boardgames["querystring"] = {
     page: queryParams.page,
     rowsPerPage: queryParams.rowsPerPage,
-    search: queryParams.search,
-  });
+  };
+  if (queryParams.search !== undefined) {
+    fetchBoardgamesParams.search = queryParams.search;
+  }
+
+  const { loading, error, data } = useFetchBoardgames(fetchBoardgamesParams);
 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -306,6 +320,7 @@ export function App(): JSX.Element {
       <Box sx={{ ml: { md: `${SIDEBAR_WITH}px` } }}>
         <Box sx={{ marginX: "auto", maxWidth: 800 }}>
           <ListToolbar
+            key={queryParams.search}
             initialSearchValue={queryParams.search}
             onSearch={(searchValue) => {
               setQueryParams({

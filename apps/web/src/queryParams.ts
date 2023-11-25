@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export const useQueryParams = <
-  T extends Record<string, string | number | boolean>,
+  T extends Record<string, string | number | boolean | undefined>,
 >(
   transform: (params: Record<string, unknown>) => T,
 ): [T, (params: Partial<T>) => void] => {
@@ -18,8 +18,12 @@ export const useQueryParams = <
 
   const setQueryParams = (params: Partial<T>): void => {
     const urlSearchParams = new URLSearchParams(location.search);
-    for (const [key, value] of Object.entries(params)) {
-      urlSearchParams.set(key, String(value));
+    for (const [key, value] of Object.entries(transform(params))) {
+      if (value === undefined) {
+        urlSearchParams.delete(key);
+      } else {
+        urlSearchParams.set(key, String(value));
+      }
     }
     navigate(`?${urlSearchParams.toString()}`);
   };
