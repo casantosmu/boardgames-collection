@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type FormEvent, useState } from "react";
 import {
   Alert,
   AlertTitle,
@@ -14,17 +14,17 @@ import {
   Divider,
   ListItem,
   ListItemButton,
-  ListItemIcon,
   ListItemText,
   List,
   Drawer,
   ListItemAvatar,
+  Stack,
+  TextField,
+  Button,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   FilterList as FilterListIcon,
-  Inbox as InboxIcon,
-  Mail as MailIcon,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { Boardgames } from "dtos/v1";
@@ -32,14 +32,12 @@ import { z } from "zod";
 import { useQueryParams } from "./queryParams";
 import { getImageSrc, useFetchBoardgames } from "./api";
 
-const rowsPerPageValueSchema = z.coerce
-  .number()
-  .int()
-  .positive()
-  .max(100)
-  .catch(25);
-const pageValueSchema = z.coerce.number().int().nonnegative().catch(0);
-const searchValueSchema = z.string().trim().optional().catch(undefined);
+const filtersSchemas = {
+  rowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
+  page: z.coerce.number().int().nonnegative().catch(0),
+  search: z.string().trim().optional().catch(undefined),
+  players: z.coerce.number().int().positive().optional().catch(undefined),
+};
 
 const SearchIconWrapper = styled("div")(() => ({
   height: "100%",
@@ -65,7 +63,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 interface ListToolbarProps {
   initialSearchValue: string | undefined;
-  onSearch: (searchValue: string) => void;
+  onSearch: (searchValue: string | undefined) => void;
   onClickFiltersIcon: () => void;
 }
 
@@ -93,7 +91,9 @@ const ListToolbar = ({
         <StyledInputBase
           onKeyUp={(event) => {
             if (event.key === "Enter") {
-              onSearch(search);
+              const value = filtersSchemas.search.parse(search);
+              onSearch(value);
+              setSearch(value ?? "");
             }
           }}
           onChange={(event) => {
@@ -122,45 +122,147 @@ const ListToolbar = ({
 
 const SIDEBAR_WITH = 240;
 
+interface FiltersSidebar {
+  minBestPlayers: number | undefined;
+  maxBestPlayers: number | undefined;
+  minPlayers: number | undefined;
+  maxPlayers: number | undefined;
+}
+
 interface FiltersSidebarProps {
   open: boolean;
   onClose: () => void;
+  initialValues: FiltersSidebar;
+  onFilter: (values: FiltersSidebar) => void;
 }
 
 const FiltersSidebar = ({
   open,
   onClose,
+  initialValues,
+  onFilter,
 }: FiltersSidebarProps): JSX.Element => {
+  const [filters, setFilters] = useState({
+    minPlayers: initialValues.minPlayers?.toString() ?? "",
+    maxPlayers: initialValues.maxPlayers?.toString() ?? "",
+    minBestPlayers: initialValues.minBestPlayers?.toString() ?? "",
+    maxBestPlayers: initialValues.maxBestPlayers?.toString() ?? "",
+  });
+
+  const handleOnSubmit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    const minPlayers = filtersSchemas.players.parse(filters.minPlayers);
+    const maxPlayers = filtersSchemas.players.parse(filters.maxPlayers);
+    const minBestPlayers = filtersSchemas.players.parse(filters.minBestPlayers);
+    const maxBestPlayers = filtersSchemas.players.parse(filters.maxBestPlayers);
+    onFilter({
+      minPlayers,
+      maxPlayers,
+      minBestPlayers,
+      maxBestPlayers,
+    });
+    setFilters({
+      minPlayers: minPlayers?.toString() ?? "",
+      maxPlayers: maxPlayers?.toString() ?? "",
+      minBestPlayers: minBestPlayers?.toString() ?? "",
+      maxBestPlayers: maxBestPlayers?.toString() ?? "",
+    });
+    onClose();
+  };
+
   const body = (
-    <div>
+    <>
       <Toolbar />
       <Divider />
-      <List>
-        {["Inbox", "Starred", "Send email", "Drafts"].map((text, index) => (
-          <ListItem key={text} disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-              </ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-      <Divider />
-      <List>
-        {["All mail", "Trash", "Spam"].map((text, index) => (
-          <ListItem key={text} disablePadding>
-            <ListItemButton>
-              <ListItemIcon>
-                {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
-              </ListItemIcon>
-              <ListItemText primary={text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
-    </div>
+      <Box
+        component="form"
+        noValidate
+        autoComplete="off"
+        onSubmit={(event) => {
+          handleOnSubmit(event);
+        }}
+        sx={{ paddingTop: 2, paddingX: 1 }}
+      >
+        <Typography variant="subtitle2" gutterBottom>
+          Players
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <TextField
+            id="min-players"
+            label="Min"
+            variant="outlined"
+            size="small"
+            onChange={(event) => {
+              setFilters({
+                ...filters,
+                minPlayers: event.target.value,
+              });
+            }}
+            value={filters.minPlayers}
+            inputProps={{ "aria-label": "Min players" }}
+          />
+          <TextField
+            id="max-players"
+            label="Max"
+            variant="outlined"
+            size="small"
+            onChange={(event) => {
+              setFilters({
+                ...filters,
+                maxPlayers: event.target.value,
+              });
+            }}
+            value={filters.maxPlayers}
+            inputProps={{ "aria-label": "Max players" }}
+          />
+          <Button type="submit">Go</Button>
+        </Stack>
+      </Box>
+      <Box
+        component="form"
+        noValidate
+        autoComplete="off"
+        onSubmit={(event) => {
+          handleOnSubmit(event);
+        }}
+        sx={{ paddingTop: 2, paddingX: 1 }}
+      >
+        <Typography variant="subtitle2" gutterBottom>
+          Best players
+        </Typography>
+        <Stack direction="row" spacing={1}>
+          <TextField
+            id="min-best-players"
+            label="Min"
+            variant="outlined"
+            size="small"
+            onChange={(event) => {
+              setFilters({
+                ...filters,
+                minBestPlayers: event.target.value,
+              });
+            }}
+            value={filters.minBestPlayers}
+            inputProps={{ "aria-label": "Min best players" }}
+          />
+          <TextField
+            id="max-best-players"
+            label="Max"
+            variant="outlined"
+            size="small"
+            onChange={(event) => {
+              setFilters({
+                ...filters,
+                maxBestPlayers: event.target.value,
+              });
+            }}
+            value={filters.maxBestPlayers}
+            inputProps={{ "aria-label": "Max best players" }}
+          />
+          <Button type="submit">Go</Button>
+        </Stack>
+      </Box>
+    </>
   );
 
   return (
@@ -206,11 +308,119 @@ const FiltersSidebar = ({
   );
 };
 
+interface PlayersRange {
+  min: number;
+  max: number | null;
+}
+
+const buildPlayersRangeString = (
+  { min, max }: PlayersRange,
+  separator: string,
+): string => {
+  if (min === max) {
+    return `${min}`;
+  }
+  if (max === null) {
+    return `${min}+`;
+  }
+  const range = [];
+  for (let i = min; i <= max; i++) {
+    range.push(i);
+  }
+  return range.join(separator);
+};
+
+interface BoardgamesListItem {
+  id: number;
+  name: string;
+  images: {
+    "96x96": string;
+  };
+  yearPublished: number;
+  shortDescription: string | null;
+  rate: number;
+  complexity: number;
+  duration: {
+    min: number;
+    max: number;
+  };
+  minAge: number;
+  players: PlayersRange;
+  bestPlayers: PlayersRange[];
+}
+
+interface BoardgamesListProps {
+  boardgames: BoardgamesListItem[];
+}
+
+const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
+  return (
+    <List aria-labelledby="listTitle">
+      {boardgames.map((boardgame) => (
+        <ListItem key={boardgame.id}>
+          <ListItemButton component={Link} to={`/boardgames/${boardgame.id}`}>
+            <ListItemAvatar sx={{ width: 80 }}>
+              <img
+                height={64}
+                width={64}
+                alt={boardgame.name}
+                src={getImageSrc(boardgame.images["96x96"])}
+              />
+            </ListItemAvatar>
+            <ListItemText
+              primary={
+                <>
+                  {boardgame.name}{" "}
+                  <Box
+                    sx={{
+                      color: "text.secondary",
+                      display: "inline",
+                    }}
+                  >
+                    ({boardgame.yearPublished})
+                  </Box>
+                </>
+              }
+              secondary={
+                <>
+                  {boardgame.shortDescription}
+                  <Box sx={{ paddingTop: 1 }}>
+                    Rating: {boardgame.rate.toFixed(2)}
+                  </Box>
+                  <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
+                  <Box>
+                    Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
+                    Min
+                  </Box>
+                  <Box>Age: {boardgame.minAge}+</Box>
+                  <Box>
+                    Players: {buildPlayersRangeString(boardgame.players, ", ")}
+                  </Box>
+                  <Box>
+                    Best players:{" "}
+                    {boardgame.bestPlayers
+                      .map((minMax) => buildPlayersRangeString(minMax, ", "))
+                      .join(", ")}
+                  </Box>
+                </>
+              }
+            />
+          </ListItemButton>
+        </ListItem>
+      ))}
+    </List>
+  );
+};
+
 export function App(): JSX.Element {
   const [queryParams, setQueryParams] = useQueryParams((params) => ({
-    page: pageValueSchema.parse(params["page"]),
-    rowsPerPage: rowsPerPageValueSchema.parse(params["rowsPerPage"]),
-    search: searchValueSchema.parse(params["search"]),
+    page: filtersSchemas.page.parse(params["page"]),
+    rowsPerPage: filtersSchemas.rowsPerPage.parse(params["rowsPerPage"]),
+    search: filtersSchemas.search.parse(params["search"]),
+    minPlayers: filtersSchemas.players.parse(params["minPlayers"]),
+    maxPlayers: filtersSchemas.players.parse(params["maxPlayers"]),
+    minBestPlayers: filtersSchemas.players.parse(params["minBestPlayers"]),
+    maxBestPlayers: filtersSchemas.players.parse(params["maxBestPlayers"]),
   }));
 
   const fetchBoardgamesParams: Boardgames["querystring"] = {
@@ -219,6 +429,18 @@ export function App(): JSX.Element {
   };
   if (queryParams.search !== undefined) {
     fetchBoardgamesParams.search = queryParams.search;
+  }
+  if (queryParams.minPlayers !== undefined) {
+    fetchBoardgamesParams.minPlayers = queryParams.minPlayers;
+  }
+  if (queryParams.maxPlayers !== undefined) {
+    fetchBoardgamesParams.maxPlayers = queryParams.maxPlayers;
+  }
+  if (queryParams.minBestPlayers !== undefined) {
+    fetchBoardgamesParams.minBestPlayers = queryParams.minBestPlayers;
+  }
+  if (queryParams.maxBestPlayers !== undefined) {
+    fetchBoardgamesParams.maxBestPlayers = queryParams.maxBestPlayers;
   }
 
   const { loading, error, data } = useFetchBoardgames(fetchBoardgamesParams);
@@ -258,41 +480,7 @@ export function App(): JSX.Element {
   } else {
     body = (
       <>
-        <List aria-labelledby="listTitle">
-          {data.data.map((boardgame) => (
-            <ListItem key={boardgame.id}>
-              <ListItemButton
-                component={Link}
-                to={`/boardgames/${boardgame.id}`}
-              >
-                <ListItemAvatar sx={{ width: 80 }}>
-                  <img
-                    height={64}
-                    width={64}
-                    alt={boardgame.name}
-                    src={getImageSrc(boardgame.images["96x96"])}
-                  />
-                </ListItemAvatar>
-                <ListItemText
-                  primary={
-                    <>
-                      {boardgame.name}{" "}
-                      <Box
-                        sx={{
-                          color: "text.secondary",
-                          display: "inline",
-                        }}
-                      >
-                        ({boardgame.yearPublished})
-                      </Box>
-                    </>
-                  }
-                  secondary={boardgame.shortDescription}
-                />
-              </ListItemButton>
-            </ListItem>
-          ))}
-        </List>
+        <BoardgamesList boardgames={data.data} />
         <TablePagination
           component="div"
           rowsPerPageOptions={[10, 25, 50]}
@@ -320,7 +508,6 @@ export function App(): JSX.Element {
       <Box sx={{ ml: { md: `${SIDEBAR_WITH}px` } }}>
         <Box sx={{ marginX: "auto", maxWidth: 800 }}>
           <ListToolbar
-            key={queryParams.search}
             initialSearchValue={queryParams.search}
             onSearch={(searchValue) => {
               setQueryParams({
@@ -339,6 +526,26 @@ export function App(): JSX.Element {
         open={filtersOpen}
         onClose={() => {
           handleToggleFilters();
+        }}
+        initialValues={{
+          minPlayers: queryParams.minPlayers,
+          maxPlayers: queryParams.maxPlayers,
+          minBestPlayers: queryParams.minBestPlayers,
+          maxBestPlayers: queryParams.maxBestPlayers,
+        }}
+        onFilter={({
+          maxPlayers,
+          minPlayers,
+          minBestPlayers,
+          maxBestPlayers,
+        }) => {
+          setQueryParams({
+            page: 0,
+            maxPlayers,
+            minPlayers,
+            minBestPlayers,
+            maxBestPlayers,
+          });
         }}
       />
     </>

@@ -1,4 +1,5 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
+import { jsonArrayFrom } from "db-main-kysely";
 import { boardgames } from "dtos/v1";
 
 export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
@@ -17,27 +18,77 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     async (request) => {
       return fastify.kysely.transaction().execute(async (trx) => {
         let query = trx
-          .selectFrom("boardgames")
-          .select([
-            "boardgameId",
-            "rate",
-            "boardgameName",
-            "yearPublished",
-            "description",
-            "shortDescription",
-            "complexity",
-            "minAge",
-            "minPlayers",
-            "maxPlayers",
-            "minDuration",
-            "maxDuration",
+          .selectFrom("boardgames as b")
+          .select((eb) => [
+            "b.boardgameId as id",
+            "b.rate",
+            "b.boardgameName as name",
+            "b.yearPublished",
+            "b.description",
+            "b.shortDescription",
+            "b.complexity",
+            "b.minAge",
+            "b.minPlayers",
+            "b.maxPlayers",
+            "b.minDuration",
+            "b.maxDuration",
+            jsonArrayFrom(
+              eb
+                .selectFrom("bestPlayers as bp")
+                .select(["bp.minPlayers as min", "bp.maxPlayers as max"])
+                .whereRef("bp.boardgameId", "=", "b.boardgameId")
+                .orderBy("b.minPlayers"),
+            ).as("bestPlayers"),
           ]);
 
-        if (request.query.search) {
+        if (request.query.search !== undefined) {
           query = query.where(
-            "boardgameName",
+            "b.boardgameName",
             "ilike",
             `%${request.query.search}%`,
+          );
+        }
+
+        if (
+          request.query.minPlayers !== undefined ||
+          request.query.maxPlayers !== undefined
+        ) {
+          query = query.where((eb) => {
+            const ands = [];
+            if (request.query.minPlayers !== undefined) {
+              ands.push(eb("b.minPlayers", "<=", request.query.minPlayers));
+            }
+            if (request.query.maxPlayers !== undefined) {
+              ands.push(eb("b.maxPlayers", ">=", request.query.maxPlayers));
+            }
+            return eb.and(ands);
+          });
+        }
+
+        if (
+          request.query.minBestPlayers !== undefined ||
+          request.query.maxBestPlayers !== undefined
+        ) {
+          query = query.where(({ exists, selectFrom }) =>
+            exists(
+              selectFrom("bestPlayers as bp")
+                .selectAll()
+                .whereRef("bp.boardgameId", "=", "b.boardgameId")
+                .where((eb) => {
+                  const ands = [];
+                  if (request.query.minBestPlayers !== undefined) {
+                    ands.push(
+                      eb("bp.minPlayers", "<=", request.query.minBestPlayers),
+                    );
+                  }
+                  if (request.query.maxBestPlayers !== undefined) {
+                    ands.push(
+                      eb("bp.maxPlayers", ">=", request.query.maxBestPlayers),
+                    );
+                  }
+                  return eb.and(ands);
+                }),
+            ),
           );
         }
 
@@ -58,9 +109,9 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
           },
           data: data.map(
             ({
-              boardgameId,
+              id,
               rate,
-              boardgameName,
+              name,
               yearPublished,
               description,
               shortDescription,
@@ -70,14 +121,15 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               maxPlayers,
               minDuration,
               maxDuration,
+              bestPlayers,
             }) => ({
-              id: boardgameId,
+              id,
               rate,
-              name: boardgameName,
+              name,
               yearPublished,
               images: {
-                original: `/static/images/boardgame-${boardgameId}-original.webp`,
-                "96x96": `/static/images/boardgame-${boardgameId}-96x96.webp`,
+                original: `/static/images/boardgame-${id}-original.webp`,
+                "96x96": `/static/images/boardgame-${id}-96x96.webp`,
               },
               description,
               shortDescription,
@@ -91,6 +143,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
                 min: minDuration,
                 max: maxDuration,
               },
+              bestPlayers,
             }),
           ),
         };
