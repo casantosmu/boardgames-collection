@@ -2,7 +2,7 @@ import React from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { CssBaseline } from "@mui/material";
-import { App } from "./App.tsx";
+import { Boardgames } from "./Boardgames.tsx";
 
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
@@ -12,7 +12,7 @@ import "@fontsource/roboto/700.css";
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <App />,
+    element: <Boardgames />,
   },
 ]);
 
