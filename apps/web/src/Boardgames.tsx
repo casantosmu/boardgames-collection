@@ -293,6 +293,7 @@ const FiltersSidebar = ({
       </Drawer>
       <Drawer
         variant="permanent"
+        open
         sx={{
           display: { xs: "none", md: "block" },
           "& .MuiDrawer-paper": {
@@ -300,7 +301,6 @@ const FiltersSidebar = ({
             width: SIDEBAR_WITH,
           },
         }}
-        open
       >
         {body}
       </Drawer>
