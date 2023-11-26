@@ -6,6 +6,13 @@ import { openapiPlugin } from "./plugins/openapi.js";
 import { boardgamesRoutes } from "./routes/boardgames.js";
 import { pingRoutes } from "./routes/ping.js";
 
+if (!process.env["PG_URL"]) {
+  throw new Error(
+    "The 'PG_URL' environment variable is required but not provided.",
+  );
+}
+
+const POSTGRES_CONNECTION_URL = process.env["PG_URL"];
 const GRATEFUL_SHUTDOWN_TIMEOUT = 10000;
 
 export const buildApp = async (): Promise<FastifyInstance> => {
@@ -49,7 +56,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   await app.register(fastifyCors);
   await app.register(errorsPlugin);
   await app.register(kyselyPlugin, {
-    connectionString: process.env["PG_URL"],
+    url: POSTGRES_CONNECTION_URL,
   });
   await app.register(openapiPlugin);
   await app.register(boardgamesRoutes, { prefix: "/v1" });
