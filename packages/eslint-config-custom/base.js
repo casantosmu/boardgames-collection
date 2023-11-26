@@ -32,5 +32,6 @@ module.exports = {
       { allowExpressions: true },
     ],
     "prefer-template": "error",
+    "no-console": "error",
   },
 };

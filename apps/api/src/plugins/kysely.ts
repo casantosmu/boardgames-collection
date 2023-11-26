@@ -1,11 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
-import {
-  createKyselyInstance,
-  sql,
-  type KyselyInstance,
-  type PoolConfig,
-} from "db-main-kysely";
+import { createKyselyInstance, sql, type KyselyInstance } from "db-main-kysely";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -13,25 +8,29 @@ declare module "fastify" {
   }
 }
 
-const pluginCb: FastifyPluginAsync<PoolConfig> = async (fastify, options) => {
-  const kysely = createKyselyInstance(options, {
-    logger: fastify.log.debug,
-  });
-
-  fastify.decorate("kysely", kysely);
-
-  fastify.addHook("onClose", async () => {
-    await kysely.destroy();
-    fastify.log.info("Postgres shut down");
+const pluginCb: FastifyPluginAsync<{ url: string }> = async (
+  fastify,
+  options,
+) => {
+  const kysely = createKyselyInstance(options.url, {
+    logger(data) {
+      fastify.log.debug(data);
+    },
   });
 
   try {
     fastify.log.info("Starting PostgreSQL");
-    await sql`SELECT 1+1`.execute(fastify.kysely);
+    await sql`SELECT 1+1`.execute(kysely);
     fastify.log.info("Postgres is ready");
   } catch (error) {
     throw new Error("Postgres connection error", { cause: error });
   }
+
+  fastify.decorate("kysely", kysely);
+  fastify.addHook("onClose", async () => {
+    await kysely.destroy();
+    fastify.log.info("Postgres shut down");
+  });
 };
 
 export const kyselyPlugin = fp(pluginCb);

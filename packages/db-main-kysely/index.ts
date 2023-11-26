@@ -10,28 +10,31 @@ import pg from "pg";
 import type { DB } from "./generated/db.js";
 
 export { sql } from "kysely";
-export type { PoolConfig } from "pg";
 export { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
 
 interface Options {
-  logger: (metadata: unknown) => void;
+  logger: (data: unknown) => void;
 }
 
 export type KyselyInstance = Kysely<DB>;
 
 export const createKyselyInstance = (
-  poolConfig: pg.PoolConfig,
+  connectionString: string,
   options: Options,
 ): KyselyInstance =>
   new Kysely<DB>({
     dialect: new PostgresDialect({
-      pool: new pg.Pool(poolConfig),
+      pool: new pg.Pool({
+        connectionString,
+      }),
     }),
     plugins: [new CamelCasePlugin()],
-    log: options.logger,
+    log(event) {
+      if (event.level === "query") {
+        options.logger({
+          sql: event.query.sql,
+          parameters: event.query.parameters,
+        });
+      }
+    },
   });
-
-export const arrayFromColumn = <T, A>(
-  query: SelectQueryBuilder<DB & A, keyof A, { col: T }>,
-): RawBuilder<T[]> =>
-  sql`(SELECT coalesce(array_agg(col), '{}') FROM (${query}) as subquery)`;

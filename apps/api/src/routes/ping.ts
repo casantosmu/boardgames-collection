@@ -16,9 +16,9 @@ export const pingRoutes: FastifyPluginAsync = async (fastify) => {
         },
       },
     },
-    async (request, response) => {
+    async (request, reply) => {
       await sql`SELECT 1+1`.execute(fastify.kysely);
-      return response.code(204).send();
+      return reply.code(204).send();
     },
   );
 };

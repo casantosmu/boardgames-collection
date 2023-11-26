@@ -9,7 +9,5 @@
       }
     }
   ],
-  "rules": {
-    "no-console": "error"
-  }
+  "ignorePatterns": ["/vitest.config.ts"]
 }
