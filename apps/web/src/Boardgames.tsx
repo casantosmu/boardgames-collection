@@ -1,4 +1,4 @@
-import { type FormEvent, useState } from "react";
+import { FormEvent, useState } from "react";
 import {
   Alert,
   AlertTitle,
@@ -21,6 +21,7 @@ import {
   Stack,
   TextField,
   Button,
+  Autocomplete,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -30,14 +31,21 @@ import { Link } from "react-router-dom";
 import { Boardgames as BoardgamesDto } from "dtos/v1";
 import { z } from "zod";
 import { useQueryParams } from "./queryParams";
-import { getImageSrc, useFetchBoardgames } from "./api";
+import {
+  getImageSrc,
+  useFetchBoardgames,
+  useFetchClassifications,
+} from "./api";
 
 const filtersSchemas = {
   rowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
   page: z.coerce.number().int().nonnegative().catch(0),
   search: z.string().trim().optional().catch(undefined),
   players: z.coerce.number().int().positive().optional().catch(undefined),
+  classification: z.array(z.string().trim()).optional().catch(undefined),
 };
+
+type Classification = "types" | "categories" | "mechanisms";
 
 const SearchIconWrapper = styled("div")(() => ({
   height: "100%",
@@ -61,9 +69,11 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
+const BOARDGAMES_LIST_TITLE_ID = "listTitle";
+
 interface ListToolbarProps {
   initialSearchValue: string | undefined;
-  onSearch: (searchValue: string | undefined) => void;
+  onSearch: (value: string | undefined) => void;
   onClickFiltersIcon: () => void;
 }
 
@@ -78,7 +88,7 @@ const ListToolbar = ({
     <Toolbar>
       <Typography
         variant="h6"
-        id="listTitle"
+        id={BOARDGAMES_LIST_TITLE_ID}
         component="div"
         sx={{ display: { xs: "none", md: "block" }, paddingRight: 4 }}
       >
@@ -120,55 +130,65 @@ const ListToolbar = ({
   );
 };
 
-const SIDEBAR_WITH = 240;
-
-interface FiltersSidebar {
+interface FiltersPlayers {
   minBestPlayers: number | undefined;
   maxBestPlayers: number | undefined;
   minPlayers: number | undefined;
   maxPlayers: number | undefined;
 }
 
+interface FiltersClassifications {
+  types: string[] | undefined;
+  categories: string[] | undefined;
+  mechanisms: string[] | undefined;
+}
+
 interface FiltersSidebarProps {
-  onClose: () => void;
-  initialValues: FiltersSidebar;
-  onFilter: (values: FiltersSidebar) => void;
   // Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.
   kind: string;
+  onClose?: () => void;
+  initialPlayers: FiltersPlayers;
+  onFilterPlayers: (value: FiltersPlayers) => void;
+  classificationsValues: FiltersClassifications;
+  classificationsOptions: FiltersClassifications;
+  onFilterClassification: (kind: Classification, value: string[]) => void;
 }
 
 const FiltersSidebarForm = ({
-  onClose,
-  initialValues,
   kind,
-  onFilter,
+  onClose,
+  initialPlayers,
+  onFilterPlayers,
+  classificationsValues,
+  classificationsOptions,
+  onFilterClassification,
 }: FiltersSidebarProps): JSX.Element => {
-  const [filters, setFilters] = useState({
-    minPlayers: initialValues.minPlayers?.toString() ?? "",
-    maxPlayers: initialValues.maxPlayers?.toString() ?? "",
-    minBestPlayers: initialValues.minBestPlayers?.toString() ?? "",
-    maxBestPlayers: initialValues.maxBestPlayers?.toString() ?? "",
+  const [players, setPlayers] = useState({
+    minPlayers: initialPlayers.minPlayers?.toString() ?? "",
+    maxPlayers: initialPlayers.maxPlayers?.toString() ?? "",
+    minBestPlayers: initialPlayers.minBestPlayers?.toString() ?? "",
+    maxBestPlayers: initialPlayers.maxBestPlayers?.toString() ?? "",
   });
 
-  const handleOnSubmit = (event: FormEvent<HTMLFormElement>): void => {
+  const onSubmitPlayers = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    const minPlayers = filtersSchemas.players.parse(filters.minPlayers);
-    const maxPlayers = filtersSchemas.players.parse(filters.maxPlayers);
-    const minBestPlayers = filtersSchemas.players.parse(filters.minBestPlayers);
-    const maxBestPlayers = filtersSchemas.players.parse(filters.maxBestPlayers);
-    onFilter({
+    const minPlayers = filtersSchemas.players.parse(players.minPlayers);
+    const maxPlayers = filtersSchemas.players.parse(players.maxPlayers);
+    const minBestPlayers = filtersSchemas.players.parse(players.minBestPlayers);
+    const maxBestPlayers = filtersSchemas.players.parse(players.maxBestPlayers);
+    onFilterPlayers({
       minPlayers,
       maxPlayers,
       minBestPlayers,
       maxBestPlayers,
     });
-    setFilters({
+    setPlayers({
       minPlayers: minPlayers?.toString() ?? "",
       maxPlayers: maxPlayers?.toString() ?? "",
       minBestPlayers: minBestPlayers?.toString() ?? "",
       maxBestPlayers: maxBestPlayers?.toString() ?? "",
     });
-    onClose();
+    onClose?.();
   };
 
   return (
@@ -180,7 +200,7 @@ const FiltersSidebarForm = ({
         noValidate
         autoComplete="off"
         onSubmit={(event) => {
-          handleOnSubmit(event);
+          onSubmitPlayers(event);
         }}
         sx={{ paddingTop: 2, paddingX: 1 }}
       >
@@ -194,12 +214,12 @@ const FiltersSidebarForm = ({
             variant="outlined"
             size="small"
             onChange={(event) => {
-              setFilters({
-                ...filters,
+              setPlayers({
+                ...players,
                 minPlayers: event.target.value,
               });
             }}
-            value={filters.minPlayers}
+            value={players.minPlayers}
             inputProps={{ "aria-label": "Min players" }}
           />
           <TextField
@@ -208,12 +228,12 @@ const FiltersSidebarForm = ({
             variant="outlined"
             size="small"
             onChange={(event) => {
-              setFilters({
-                ...filters,
+              setPlayers({
+                ...players,
                 maxPlayers: event.target.value,
               });
             }}
-            value={filters.maxPlayers}
+            value={players.maxPlayers}
             inputProps={{ "aria-label": "Max players" }}
           />
           <Button type="submit">Go</Button>
@@ -224,7 +244,7 @@ const FiltersSidebarForm = ({
         noValidate
         autoComplete="off"
         onSubmit={(event) => {
-          handleOnSubmit(event);
+          onSubmitPlayers(event);
         }}
         sx={{ paddingTop: 2, paddingX: 1 }}
       >
@@ -238,12 +258,12 @@ const FiltersSidebarForm = ({
             variant="outlined"
             size="small"
             onChange={(event) => {
-              setFilters({
-                ...filters,
+              setPlayers({
+                ...players,
                 minBestPlayers: event.target.value,
               });
             }}
-            value={filters.minBestPlayers}
+            value={players.minBestPlayers}
             inputProps={{ "aria-label": "Min best players" }}
           />
           <TextField
@@ -252,16 +272,62 @@ const FiltersSidebarForm = ({
             variant="outlined"
             size="small"
             onChange={(event) => {
-              setFilters({
-                ...filters,
+              setPlayers({
+                ...players,
                 maxBestPlayers: event.target.value,
               });
             }}
-            value={filters.maxBestPlayers}
+            value={players.maxBestPlayers}
             inputProps={{ "aria-label": "Max best players" }}
           />
           <Button type="submit">Go</Button>
         </Stack>
+      </Box>
+      <Box sx={{ paddingTop: 2, paddingX: 1 }}>
+        <Typography variant="subtitle2" gutterBottom>
+          Classifications
+        </Typography>
+        <Autocomplete
+          multiple
+          id={`${kind}-types`}
+          value={classificationsValues.types ?? []}
+          options={classificationsOptions.types ?? []}
+          renderInput={(params) => (
+            // @ts-expect-error MUI error
+            <TextField {...params} variant="standard" label="Types" />
+          )}
+          onChange={(event, value) => {
+            onFilterClassification("types", value);
+          }}
+        />
+        <Autocomplete
+          sx={{ paddingTop: 2 }}
+          multiple
+          id={`${kind}-categories`}
+          value={classificationsValues.categories ?? []}
+          options={classificationsOptions.categories ?? []}
+          renderInput={(params) => (
+            // @ts-expect-error MUI error
+            <TextField {...params} variant="standard" label="Categories" />
+          )}
+          onChange={(event, value) => {
+            onFilterClassification("categories", value);
+          }}
+        />
+        <Autocomplete
+          sx={{ paddingTop: 2 }}
+          multiple
+          id={`${kind}-mechanisms`}
+          value={classificationsValues.mechanisms ?? []}
+          options={classificationsOptions.mechanisms ?? []}
+          renderInput={(params) => (
+            // @ts-expect-error MUI error
+            <TextField {...params} variant="standard" label="Mechanisms" />
+          )}
+          onChange={(event, value) => {
+            onFilterClassification("mechanisms", value);
+          }}
+        />
       </Box>
     </>
   );
@@ -314,7 +380,7 @@ interface BoardgamesListProps {
 
 const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
   return (
-    <List aria-labelledby="listTitle">
+    <List aria-labelledby={BOARDGAMES_LIST_TITLE_ID}>
       {boardgames.map((boardgame) => (
         <ListItem key={boardgame.id}>
           <ListItemButton component={Link} to={`/boardgames/${boardgame.id}`}>
@@ -373,6 +439,8 @@ const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
   );
 };
 
+const SIDEBAR_WITH = 300;
+
 export const Boardgames = (): JSX.Element => {
   const [queryParams, setQueryParams] = useQueryParams((params) => ({
     page: filtersSchemas.page.parse(params["page"]),
@@ -382,6 +450,9 @@ export const Boardgames = (): JSX.Element => {
     maxPlayers: filtersSchemas.players.parse(params["maxPlayers"]),
     minBestPlayers: filtersSchemas.players.parse(params["minBestPlayers"]),
     maxBestPlayers: filtersSchemas.players.parse(params["maxBestPlayers"]),
+    types: filtersSchemas.classification.parse(params["types"]),
+    categories: filtersSchemas.classification.parse(params["categories"]),
+    mechanisms: filtersSchemas.classification.parse(params["mechanisms"]),
   }));
 
   const fetchBoardgamesParams: BoardgamesDto["querystring"] = {
@@ -403,8 +474,18 @@ export const Boardgames = (): JSX.Element => {
   if (queryParams.maxBestPlayers !== undefined) {
     fetchBoardgamesParams.maxBestPlayers = queryParams.maxBestPlayers;
   }
+  if (queryParams.types !== undefined) {
+    fetchBoardgamesParams.types = queryParams.types;
+  }
+  if (queryParams.categories !== undefined) {
+    fetchBoardgamesParams.categories = queryParams.categories;
+  }
+  if (queryParams.mechanisms !== undefined) {
+    fetchBoardgamesParams.mechanisms = queryParams.mechanisms;
+  }
 
-  const { loading, error, data } = useFetchBoardgames(fetchBoardgamesParams);
+  const fetchBoardgames = useFetchBoardgames(fetchBoardgamesParams);
+  const fetchClassification = useFetchClassifications();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -412,12 +493,19 @@ export const Boardgames = (): JSX.Element => {
     setFiltersOpen(!filtersOpen);
   };
 
-  const handleOnFilter = ({
+  const handleOnSearch = (value: string | undefined): void => {
+    setQueryParams({
+      search: value,
+      page: 0,
+    });
+  };
+
+  const handleOnFilterPlayers = ({
     minPlayers,
     maxPlayers,
     minBestPlayers,
     maxBestPlayers,
-  }: FiltersSidebar): void => {
+  }: FiltersPlayers): void => {
     setQueryParams({
       page: 0,
       minPlayers,
@@ -427,15 +515,17 @@ export const Boardgames = (): JSX.Element => {
     });
   };
 
-  const filtersInitialValues = {
-    minPlayers: queryParams.minPlayers,
-    maxPlayers: queryParams.maxPlayers,
-    minBestPlayers: queryParams.minBestPlayers,
-    maxBestPlayers: queryParams.maxBestPlayers,
+  const handleOnFilterClassification = (
+    kind: Classification,
+    value: string[],
+  ): void => {
+    setQueryParams({
+      [kind]: value,
+    });
   };
 
   let body;
-  if (error) {
+  if (fetchBoardgames.error) {
     body = (
       <Box
         sx={{
@@ -449,7 +539,7 @@ export const Boardgames = (): JSX.Element => {
         </Alert>
       </Box>
     );
-  } else if (loading) {
+  } else if (fetchBoardgames.loading) {
     body = (
       <Box
         sx={{
@@ -463,11 +553,11 @@ export const Boardgames = (): JSX.Element => {
   } else {
     body = (
       <>
-        <BoardgamesList boardgames={data.data} />
+        <BoardgamesList boardgames={fetchBoardgames.data.data} />
         <TablePagination
           component="div"
           rowsPerPageOptions={[10, 25, 50]}
-          count={data.metadata.count}
+          count={fetchBoardgames.data.metadata.count}
           rowsPerPage={queryParams.rowsPerPage}
           page={queryParams.page}
           onPageChange={(_, newPage) => {
@@ -486,17 +576,76 @@ export const Boardgames = (): JSX.Element => {
     );
   }
 
+  let sidebarBodyStatus;
+  let sidebarBodyDesktop;
+  let sidebarBodyMobile;
+  if (fetchClassification.error) {
+    sidebarBodyStatus = (
+      <Box
+        sx={{
+          paddingY: 5,
+          paddingX: 2,
+        }}
+      >
+        <Alert severity="error">
+          <AlertTitle>Error</AlertTitle>
+          Something unexpected occurred.
+        </Alert>
+      </Box>
+    );
+  } else if (fetchClassification.loading) {
+    sidebarBodyStatus = (
+      <Box
+        sx={{
+          paddingY: 5,
+          paddingX: 2,
+        }}
+      >
+        <LinearProgress />
+      </Box>
+    );
+  } else {
+    sidebarBodyMobile = (
+      <FiltersSidebarForm
+        kind="mobile"
+        onClose={() => {
+          handleToggleFilters();
+        }}
+        initialPlayers={queryParams}
+        onFilterPlayers={(value) => {
+          handleOnFilterPlayers(value);
+        }}
+        classificationsValues={queryParams}
+        classificationsOptions={fetchClassification.data.data}
+        onFilterClassification={(kind, value) => {
+          handleOnFilterClassification(kind, value);
+        }}
+      />
+    );
+    sidebarBodyDesktop = (
+      <FiltersSidebarForm
+        kind="desktop"
+        initialPlayers={queryParams}
+        onFilterPlayers={(value) => {
+          handleOnFilterPlayers(value);
+        }}
+        classificationsValues={queryParams}
+        classificationsOptions={fetchClassification.data.data}
+        onFilterClassification={(kind, value) => {
+          handleOnFilterClassification(kind, value);
+        }}
+      />
+    );
+  }
+
   return (
     <>
       <Box sx={{ ml: { md: `${SIDEBAR_WITH}px` } }}>
         <Box sx={{ marginX: "auto", maxWidth: 800 }}>
           <ListToolbar
             initialSearchValue={queryParams.search}
-            onSearch={(searchValue) => {
-              setQueryParams({
-                search: searchValue,
-                page: 0,
-              });
+            onSearch={(value) => {
+              handleOnSearch(value);
             }}
             onClickFiltersIcon={() => {
               handleToggleFilters();
@@ -506,6 +655,7 @@ export const Boardgames = (): JSX.Element => {
         </Box>
       </Box>
       <Box sx={{ width: { md: SIDEBAR_WITH } }}>
+        {/* Mobile sidebar filters */}
         <Drawer
           variant="temporary"
           open={filtersOpen}
@@ -523,17 +673,9 @@ export const Boardgames = (): JSX.Element => {
             },
           }}
         >
-          <FiltersSidebarForm
-            kind="mobile"
-            onClose={() => {
-              handleToggleFilters();
-            }}
-            initialValues={filtersInitialValues}
-            onFilter={(values) => {
-              handleOnFilter(values);
-            }}
-          />
+          {sidebarBodyMobile ?? sidebarBodyStatus}
         </Drawer>
+        {/* Desktop sidebar filters */}
         <Drawer
           variant="permanent"
           open
@@ -545,16 +687,7 @@ export const Boardgames = (): JSX.Element => {
             },
           }}
         >
-          <FiltersSidebarForm
-            kind="desktop"
-            onClose={() => {
-              handleToggleFilters();
-            }}
-            initialValues={filtersInitialValues}
-            onFilter={(values) => {
-              handleOnFilter(values);
-            }}
-          />
+          {sidebarBodyDesktop ?? sidebarBodyStatus}
         </Drawer>
       </Box>
     </>

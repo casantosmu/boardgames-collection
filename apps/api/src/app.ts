@@ -4,6 +4,7 @@ import { errorsPlugin } from "./plugins/errors.js";
 import { kyselyPlugin } from "./plugins/kysely.js";
 import { openapiPlugin } from "./plugins/openapi.js";
 import { boardgamesRoutes } from "./routes/boardgames.js";
+import { classificationsRoutes } from "./routes/classifications.js";
 import { pingRoutes } from "./routes/ping.js";
 
 if (!process.env["PG_URL"]) {
@@ -60,6 +61,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   });
   await app.register(openapiPlugin);
   await app.register(boardgamesRoutes, { prefix: "/v1" });
+  await app.register(classificationsRoutes, { prefix: "/v1" });
   await app.register(pingRoutes, { prefix: "/v1" });
 
   return app;
