@@ -130,16 +130,17 @@ interface FiltersSidebar {
 }
 
 interface FiltersSidebarProps {
-  open: boolean;
   onClose: () => void;
   initialValues: FiltersSidebar;
   onFilter: (values: FiltersSidebar) => void;
+  // Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.
+  kind: string;
 }
 
-const FiltersSidebar = ({
-  open,
+const FiltersSidebarForm = ({
   onClose,
   initialValues,
+  kind,
   onFilter,
 }: FiltersSidebarProps): JSX.Element => {
   const [filters, setFilters] = useState({
@@ -170,7 +171,7 @@ const FiltersSidebar = ({
     onClose();
   };
 
-  const body = (
+  return (
     <>
       <Toolbar />
       <Divider />
@@ -188,7 +189,7 @@ const FiltersSidebar = ({
         </Typography>
         <Stack direction="row" spacing={1}>
           <TextField
-            id="min-players"
+            id={`${kind}-min-players`}
             label="Min"
             variant="outlined"
             size="small"
@@ -202,7 +203,7 @@ const FiltersSidebar = ({
             inputProps={{ "aria-label": "Min players" }}
           />
           <TextField
-            id="max-players"
+            id={`${kind}-max-players`}
             label="Max"
             variant="outlined"
             size="small"
@@ -232,7 +233,7 @@ const FiltersSidebar = ({
         </Typography>
         <Stack direction="row" spacing={1}>
           <TextField
-            id="min-best-players"
+            id={`${kind}-min-best-players`}
             label="Min"
             variant="outlined"
             size="small"
@@ -246,7 +247,7 @@ const FiltersSidebar = ({
             inputProps={{ "aria-label": "Min best players" }}
           />
           <TextField
-            id="max-best-players"
+            id={`${kind}-max-best-players`}
             label="Max"
             variant="outlined"
             size="small"
@@ -263,48 +264,6 @@ const FiltersSidebar = ({
         </Stack>
       </Box>
     </>
-  );
-
-  return (
-    <Box
-      sx={{
-        width: { md: SIDEBAR_WITH },
-      }}
-      aria-label="Filters"
-    >
-      <Drawer
-        variant="temporary"
-        open={open}
-        onClose={() => {
-          onClose();
-        }}
-        ModalProps={{
-          keepMounted: true,
-        }}
-        sx={{
-          display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": {
-            boxSizing: "border-box",
-            width: SIDEBAR_WITH,
-          },
-        }}
-      >
-        {body}
-      </Drawer>
-      <Drawer
-        variant="permanent"
-        open
-        sx={{
-          display: { xs: "none", md: "block" },
-          "& .MuiDrawer-paper": {
-            boxSizing: "border-box",
-            width: SIDEBAR_WITH,
-          },
-        }}
-      >
-        {body}
-      </Drawer>
-    </Box>
   );
 };
 
@@ -381,6 +340,7 @@ const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
                   </Box>
                 </>
               }
+              primaryTypographyProps={{ component: "div" }}
               secondary={
                 <>
                   {boardgame.shortDescription}
@@ -404,6 +364,7 @@ const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
                   </Box>
                 </>
               }
+              secondaryTypographyProps={{ component: "div" }}
             />
           </ListItemButton>
         </ListItem>
@@ -449,6 +410,28 @@ export const Boardgames = (): JSX.Element => {
 
   const handleToggleFilters = (): void => {
     setFiltersOpen(!filtersOpen);
+  };
+
+  const handleOnFilter = ({
+    minPlayers,
+    maxPlayers,
+    minBestPlayers,
+    maxBestPlayers,
+  }: FiltersSidebar): void => {
+    setQueryParams({
+      page: 0,
+      minPlayers,
+      maxPlayers,
+      minBestPlayers,
+      maxBestPlayers,
+    });
+  };
+
+  const filtersInitialValues = {
+    minPlayers: queryParams.minPlayers,
+    maxPlayers: queryParams.maxPlayers,
+    minBestPlayers: queryParams.minBestPlayers,
+    maxBestPlayers: queryParams.maxBestPlayers,
   };
 
   let body;
@@ -522,32 +505,58 @@ export const Boardgames = (): JSX.Element => {
           {body}
         </Box>
       </Box>
-      <FiltersSidebar
-        open={filtersOpen}
-        onClose={() => {
-          handleToggleFilters();
-        }}
-        initialValues={{
-          minPlayers: queryParams.minPlayers,
-          maxPlayers: queryParams.maxPlayers,
-          minBestPlayers: queryParams.minBestPlayers,
-          maxBestPlayers: queryParams.maxBestPlayers,
-        }}
-        onFilter={({
-          maxPlayers,
-          minPlayers,
-          minBestPlayers,
-          maxBestPlayers,
-        }) => {
-          setQueryParams({
-            page: 0,
-            maxPlayers,
-            minPlayers,
-            minBestPlayers,
-            maxBestPlayers,
-          });
-        }}
-      />
+      <Box sx={{ width: { md: SIDEBAR_WITH } }}>
+        <Drawer
+          variant="temporary"
+          open={filtersOpen}
+          onClose={() => {
+            handleToggleFilters();
+          }}
+          ModalProps={{
+            keepMounted: true,
+          }}
+          sx={{
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: SIDEBAR_WITH,
+            },
+          }}
+        >
+          <FiltersSidebarForm
+            kind="mobile"
+            onClose={() => {
+              handleToggleFilters();
+            }}
+            initialValues={filtersInitialValues}
+            onFilter={(values) => {
+              handleOnFilter(values);
+            }}
+          />
+        </Drawer>
+        <Drawer
+          variant="permanent"
+          open
+          sx={{
+            display: { xs: "none", md: "block" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: SIDEBAR_WITH,
+            },
+          }}
+        >
+          <FiltersSidebarForm
+            kind="desktop"
+            onClose={() => {
+              handleToggleFilters();
+            }}
+            initialValues={filtersInitialValues}
+            onFilter={(values) => {
+              handleOnFilter(values);
+            }}
+          />
+        </Drawer>
+      </Box>
     </>
   );
 };
