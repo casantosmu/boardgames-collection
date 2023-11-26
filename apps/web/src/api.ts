@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Boardgames } from "dtos/v1";
+import { Boardgames, Classifications } from "dtos/v1";
 import { API_BASE_URL, IMAGES_BASE_URL } from "./config";
 
 export const getImageSrc = (url: string): string =>
@@ -29,7 +29,10 @@ type UseFetchResult<T> =
     };
 
 interface UseFetchOptions {
-  params?: Record<string, string | number | boolean>;
+  params?: Record<
+    string,
+    string | number | boolean | (string | number | boolean)[]
+  >;
 }
 
 const useFetch = <T>(
@@ -42,7 +45,13 @@ const useFetch = <T>(
   const urlBuilder = new URL(url, API_BASE_URL);
   if (options?.params) {
     for (const [key, value] of Object.entries(options.params)) {
-      urlBuilder.searchParams.append(key, value.toString());
+      if (Array.isArray(value)) {
+        for (const item of value) {
+          urlBuilder.searchParams.append(key, item.toString());
+        }
+      } else {
+        urlBuilder.searchParams.append(key, value.toString());
+      }
     }
   }
   const urlResult = urlBuilder.toString();
@@ -101,4 +110,10 @@ export const useFetchBoardgames = (
   return useFetch("/v1/boardgames", {
     params,
   });
+};
+
+export const useFetchClassifications = (): UseFetchResult<
+  Classifications["response"]["200"]
+> => {
+  return useFetch("/v1/classifications");
 };

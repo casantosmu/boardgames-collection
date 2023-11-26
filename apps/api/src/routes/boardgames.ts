@@ -92,6 +92,54 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
           );
         }
 
+        if (request.query.types !== undefined) {
+          const types = request.query.types;
+          query = query.where(({ exists, selectFrom, and }) =>
+            and(
+              types.map((type) =>
+                exists(
+                  selectFrom("boardgamesTypes as bt")
+                    .selectAll()
+                    .whereRef("bt.boardgameId", "=", "b.boardgameId")
+                    .where("bt.type", "=", type),
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (request.query.categories !== undefined) {
+          const categories = request.query.categories;
+          query = query.where(({ exists, selectFrom, and }) =>
+            and(
+              categories.map((category) =>
+                exists(
+                  selectFrom("boardgamesCategories as bc")
+                    .selectAll()
+                    .whereRef("bc.boardgameId", "=", "b.boardgameId")
+                    .where("bc.category", "=", category),
+                ),
+              ),
+            ),
+          );
+        }
+
+        if (request.query.mechanisms !== undefined) {
+          const mechanisms = request.query.mechanisms;
+          query = query.where(({ exists, selectFrom, and }) =>
+            and(
+              mechanisms.map((mechanism) =>
+                exists(
+                  selectFrom("boardgamesMechanisms as bm")
+                    .selectAll()
+                    .whereRef("bm.boardgameId", "=", "b.boardgameId")
+                    .where("bm.mechanism", "=", mechanism),
+                ),
+              ),
+            ),
+          );
+        }
+
         const [data, metadata] = await Promise.all([
           query
             .limit(request.query.rowsPerPage)

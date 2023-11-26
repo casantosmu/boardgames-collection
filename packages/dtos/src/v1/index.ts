@@ -9,6 +9,9 @@ export const boardgames = {
     maxPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
     minBestPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
     maxBestPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
+    types: Type.Optional(Type.Array(Type.String())),
+    categories: Type.Optional(Type.Array(Type.String())),
+    mechanisms: Type.Optional(Type.Array(Type.String())),
   }),
   response: {
     200: Type.Object(
@@ -58,5 +61,28 @@ export type Boardgames = {
   querystring: Static<typeof boardgames.querystring>;
   response: {
     200: Static<(typeof boardgames.response)["200"]>;
+  };
+};
+
+export const classifications = {
+  response: {
+    200: Type.Object(
+      {
+        data: Type.Object({
+          types: Type.Array(Type.String()),
+          categories: Type.Array(Type.String()),
+          mechanisms: Type.Array(Type.String()),
+        }),
+      },
+      {
+        description: "Success",
+      },
+    ),
+  },
+};
+
+export type Classifications = {
+  response: {
+    200: Static<(typeof classifications.response)["200"]>;
   };
 };

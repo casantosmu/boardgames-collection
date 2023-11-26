@@ -1,29 +1,50 @@
-import { useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+const urlSearchParamsToObject = (
+  urlSearchParams: URLSearchParams,
+): Record<string, string | string[]> => {
+  const object: Record<string, string | string[]> = {};
+  for (const key of urlSearchParams.keys()) {
+    if (key.endsWith("[]")) {
+      object[key.slice(0, -2)] = urlSearchParams.getAll(key);
+    } else {
+      const value = urlSearchParams.get(key);
+      if (value !== null) {
+        object[key] = value;
+      }
+    }
+  }
+  return object;
+};
+
 export const useQueryParams = <
-  T extends Record<string, string | number | boolean | undefined>,
+  T extends Record<
+    string,
+    string | number | boolean | (string | number | boolean)[] | undefined
+  >,
 >(
   transform: (params: Record<string, unknown>) => T,
 ): [T, (params: Partial<T>) => void] => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const rawQueryParams = useMemo(
-    () => Object.fromEntries(new URLSearchParams(location.search)),
-    [location.search],
+  const queryParams = transform(
+    urlSearchParamsToObject(new URLSearchParams(location.search)),
   );
-
-  const queryParams = transform(rawQueryParams);
 
   const setQueryParams = (params: Partial<T>): void => {
     const urlSearchParams = new URLSearchParams(location.search);
     const queryParams = transform(
-      Object.assign(Object.fromEntries(urlSearchParams), params),
+      Object.assign(urlSearchParamsToObject(urlSearchParams), params),
     );
     for (const [key, value] of Object.entries(queryParams)) {
       if (value === undefined) {
         urlSearchParams.delete(key);
+      } else if (Array.isArray(value)) {
+        urlSearchParams.delete(`${key}[]`);
+        for (const item of value) {
+          urlSearchParams.append(`${key}[]`, item.toString());
+        }
       } else {
         urlSearchParams.set(key, value.toString());
       }
