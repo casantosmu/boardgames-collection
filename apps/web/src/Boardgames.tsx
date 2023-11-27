@@ -28,7 +28,6 @@ import {
   FilterList as FilterListIcon,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
-import { Boardgames as BoardgamesDto } from "dtos/v1";
 import { z } from "zod";
 import { useQueryParams } from "./queryParams";
 import {
@@ -36,6 +35,7 @@ import {
   useFetchBoardgames,
   useFetchClassifications,
 } from "./api";
+import { removeUndefinedValuesFromObject } from "./utils";
 
 const filtersSchemas = {
   rowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
@@ -441,50 +441,38 @@ const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
 
 const SIDEBAR_WITH = 300;
 
+interface QueryParams {
+  page: number;
+  rowsPerPage: number;
+  search: string | undefined;
+  minPlayers: number | undefined;
+  maxPlayers: number | undefined;
+  minBestPlayers: number | undefined;
+  maxBestPlayers: number | undefined;
+  types: string[] | undefined;
+  categories: string[] | undefined;
+  mechanisms: string[] | undefined;
+}
+
+const parseQueryParams = (params: Record<string, unknown>): QueryParams => ({
+  page: filtersSchemas.page.parse(params["page"]),
+  rowsPerPage: filtersSchemas.rowsPerPage.parse(params["rowsPerPage"]),
+  search: filtersSchemas.search.parse(params["search"]),
+  minPlayers: filtersSchemas.players.parse(params["minPlayers"]),
+  maxPlayers: filtersSchemas.players.parse(params["maxPlayers"]),
+  minBestPlayers: filtersSchemas.players.parse(params["minBestPlayers"]),
+  maxBestPlayers: filtersSchemas.players.parse(params["maxBestPlayers"]),
+  types: filtersSchemas.classification.parse(params["types"]),
+  categories: filtersSchemas.classification.parse(params["categories"]),
+  mechanisms: filtersSchemas.classification.parse(params["mechanisms"]),
+});
+
 export const Boardgames = (): JSX.Element => {
-  const [queryParams, setQueryParams] = useQueryParams((params) => ({
-    page: filtersSchemas.page.parse(params["page"]),
-    rowsPerPage: filtersSchemas.rowsPerPage.parse(params["rowsPerPage"]),
-    search: filtersSchemas.search.parse(params["search"]),
-    minPlayers: filtersSchemas.players.parse(params["minPlayers"]),
-    maxPlayers: filtersSchemas.players.parse(params["maxPlayers"]),
-    minBestPlayers: filtersSchemas.players.parse(params["minBestPlayers"]),
-    maxBestPlayers: filtersSchemas.players.parse(params["maxBestPlayers"]),
-    types: filtersSchemas.classification.parse(params["types"]),
-    categories: filtersSchemas.classification.parse(params["categories"]),
-    mechanisms: filtersSchemas.classification.parse(params["mechanisms"]),
-  }));
+  const [queryParams, setQueryParams] = useQueryParams(parseQueryParams);
 
-  const fetchBoardgamesParams: BoardgamesDto["querystring"] = {
-    page: queryParams.page,
-    rowsPerPage: queryParams.rowsPerPage,
-  };
-  if (queryParams.search !== undefined) {
-    fetchBoardgamesParams.search = queryParams.search;
-  }
-  if (queryParams.minPlayers !== undefined) {
-    fetchBoardgamesParams.minPlayers = queryParams.minPlayers;
-  }
-  if (queryParams.maxPlayers !== undefined) {
-    fetchBoardgamesParams.maxPlayers = queryParams.maxPlayers;
-  }
-  if (queryParams.minBestPlayers !== undefined) {
-    fetchBoardgamesParams.minBestPlayers = queryParams.minBestPlayers;
-  }
-  if (queryParams.maxBestPlayers !== undefined) {
-    fetchBoardgamesParams.maxBestPlayers = queryParams.maxBestPlayers;
-  }
-  if (queryParams.types !== undefined) {
-    fetchBoardgamesParams.types = queryParams.types;
-  }
-  if (queryParams.categories !== undefined) {
-    fetchBoardgamesParams.categories = queryParams.categories;
-  }
-  if (queryParams.mechanisms !== undefined) {
-    fetchBoardgamesParams.mechanisms = queryParams.mechanisms;
-  }
-
+  const fetchBoardgamesParams = removeUndefinedValuesFromObject(queryParams);
   const fetchBoardgames = useFetchBoardgames(fetchBoardgamesParams);
+
   const fetchClassification = useFetchClassifications();
 
   const [filtersOpen, setFiltersOpen] = useState(false);

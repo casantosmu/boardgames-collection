@@ -18,10 +18,14 @@ const urlSearchParamsToObject = (
 };
 
 export const useQueryParams = <
-  T extends Record<
-    string,
-    string | number | boolean | (string | number | boolean)[] | undefined
-  >,
+  T extends {
+    [P in keyof T]:
+      | string
+      | number
+      | boolean
+      | (string | number | boolean)[]
+      | undefined;
+  },
 >(
   transform: (params: Record<string, unknown>) => T,
 ): [T, (params: Partial<T>) => void] => {
@@ -43,10 +47,10 @@ export const useQueryParams = <
       } else if (Array.isArray(value)) {
         urlSearchParams.delete(`${key}[]`);
         for (const item of value) {
-          urlSearchParams.append(`${key}[]`, item.toString());
+          urlSearchParams.append(`${key}[]`, String(item));
         }
       } else {
-        urlSearchParams.set(key, value.toString());
+        urlSearchParams.set(key, String(value));
       }
     }
     navigate(`?${urlSearchParams.toString()}`);
