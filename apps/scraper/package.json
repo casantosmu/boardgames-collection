@@ -11,7 +11,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "mongodb": "^6.2.0",
+    "mongodb": "^6.3.0",
     "playwright": "^1.40.0",
     "zod": "^3.22.4"
   },
