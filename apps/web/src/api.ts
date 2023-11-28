@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
-import { Boardgames, Classifications } from "dtos/v1";
-import { API_BASE_URL, IMAGES_BASE_URL } from "./config";
+import { GetBoardgames, GetClassifications } from "dtos/v1";
 
-export const getImageSrc = (url: string): string =>
-  new URL(url, IMAGES_BASE_URL).toString();
+export const getImageSrc = (path: string): string => path;
 
 class ApiError extends Error {
   constructor(readonly statusCode: number) {
@@ -35,14 +33,19 @@ interface UseFetchOptions {
   >;
 }
 
+const getApiUrl = (origin: string, path: string): string =>
+  `${origin.endsWith("/") ? origin.slice(0, -1) : origin}/api/${
+    path.startsWith("/") ? path.slice(1) : path
+  }`;
+
 const useFetch = <T>(
-  url: string,
+  path: string,
   options?: UseFetchOptions,
 ): UseFetchResult<T> => {
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
-  const urlBuilder = new URL(url, API_BASE_URL);
+  const urlBuilder = new URL(getApiUrl(location.origin, path));
   if (options?.params) {
     for (const [key, value] of Object.entries(options.params)) {
       if (Array.isArray(value)) {
@@ -54,12 +57,12 @@ const useFetch = <T>(
       }
     }
   }
-  const urlResult = urlBuilder.toString();
+  const url = urlBuilder.toString();
 
   useEffect(() => {
     let ignore = false;
     setData(null);
-    fetch(urlResult)
+    fetch(url)
       .then((response) => {
         if (!response.ok) {
           throw new ApiError(response.status);
@@ -79,7 +82,7 @@ const useFetch = <T>(
     return () => {
       ignore = true;
     };
-  }, [urlResult]);
+  }, [url]);
 
   if (error) {
     return {
@@ -105,15 +108,15 @@ const useFetch = <T>(
 };
 
 export const useFetchBoardgames = (
-  params: Boardgames["querystring"],
-): UseFetchResult<Boardgames["response"]["200"]> => {
+  params: GetBoardgames["querystring"],
+): UseFetchResult<GetBoardgames["response"]["200"]> => {
   return useFetch("/v1/boardgames", {
     params,
   });
 };
 
 export const useFetchClassifications = (): UseFetchResult<
-  Classifications["response"]["200"]
+  GetClassifications["response"]["200"]
 > => {
   return useFetch("/v1/classifications");
 };

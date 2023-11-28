@@ -32,7 +32,7 @@ log "Installing project dependencies..."
 pnpm install
 
 log "Starting Docker services..."
-docker compose -f docker/dev/docker-compose.yaml up -d postgres nginx
+docker compose -f docker/dev/docker-compose.yaml up -d postgres nginx redis
 
 copy_env_file apps/web
 copy_env_file packages/db-main-kysely

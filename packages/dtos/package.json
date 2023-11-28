@@ -16,10 +16,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@sinclair/typebox": "^0.31.23"
+    "@sinclair/typebox": "^0.31.28"
   },
   "devDependencies": {
-    "@types/node": "^18.18.7",
+    "@types/node": "^20.10.0",
     "tsconfig": "workspace:^",
     "typescript": "^5.3.2"
   }
