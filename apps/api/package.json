@@ -15,11 +15,11 @@
   },
   "dependencies": {
     "@fastify/cookie": "^9.2.0",
-    "@fastify/session": "^10.6.0",
+    "@fastify/session": "^10.6.1",
     "@fastify/swagger": "^8.12.0",
     "@fastify/swagger-ui": "^1.10.1",
     "@fastify/type-provider-typebox": "^3.5.0",
-    "@sinclair/typebox": "^0.31.23",
+    "@sinclair/typebox": "^0.31.28",
     "connect-redis": "^7.1.0",
     "db-main-kysely": "workspace:^",
     "dtos": "workspace:^",
@@ -28,12 +28,12 @@
     "ioredis": "^5.3.2"
   },
   "devDependencies": {
-    "@types/node": "^18.18.7",
+    "@types/node": "^20.10.0",
     "dotenv": "^16.3.1",
     "eslint-config-custom": "workspace:^",
     "pino-pretty": "^10.2.3",
     "tsconfig": "workspace:^",
-    "tsx": "^3.14.0",
+    "tsx": "^4.6.0",
     "typescript": "^5.3.2",
     "vitest": "^0.34.6"
   }
