@@ -29,7 +29,7 @@ import {
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { z } from "zod";
-import { useQueryParams } from "./queryParams";
+import { useQueryParams } from "./query-params";
 import {
   getImageSrc,
   useFetchBoardgames,

@@ -1,11 +1,15 @@
 import { fastify, type FastifyInstance } from "fastify";
-import { fastifyCors } from "@fastify/cors";
+import { fastifySwagger } from "@fastify/swagger";
+import { fastifySwaggerUi } from "@fastify/swagger-ui";
+import { openApiInfo } from "dtos/v1";
 import { errorsPlugin } from "./plugins/errors.js";
 import { kyselyPlugin } from "./plugins/kysely.js";
-import { openapiPlugin } from "./plugins/openapi.js";
+import { gracefulShutdownPlugin } from "./plugins/graceful-shutdown.js";
 import { boardgamesRoutes } from "./routes/boardgames.js";
 import { classificationsRoutes } from "./routes/classifications.js";
 import { pingRoutes } from "./routes/ping.js";
+import { authenticationRoutes } from "./routes/authentication.js";
+import { sessionPlugin } from "./plugins/session.js";
 
 if (!process.env["PG_URL"]) {
   throw new Error(
@@ -13,56 +17,52 @@ if (!process.env["PG_URL"]) {
   );
 }
 
-const POSTGRES_CONNECTION_URL = process.env["PG_URL"];
-const GRATEFUL_SHUTDOWN_TIMEOUT = 10000;
+if (!process.env["SESSION_SECRET"]) {
+  throw new Error(
+    "The 'SESSION_SECRET' environment variable is required but not provided.",
+  );
+}
+
+const IS_PRODUCTION = process.env["NODE_ENV"] === "production";
+const PG_URL = process.env["PG_URL"];
+const SESSION_SECRET = process.env["SESSION_SECRET"];
+const LOG_LEVEL = process.env["LOG_LEVEL"] ?? "info";
 
 export const buildApp = async (): Promise<FastifyInstance> => {
   const app = fastify({
     logger: {
-      level: process.env["LOG_LEVEL"] ?? "info",
+      level: LOG_LEVEL,
     },
   });
 
-  for (const event of ["SIGTERM", "SIGINT"]) {
-    process.once(event, () => {
-      app.log.info(`Received ${event} signal`);
-      const timeout = setTimeout(() => {
-        app.log.error(
-          `Grateful shutdown ${event} timed out. Exiting abruptly..`,
-        );
-        process.exit(1);
-      }, GRATEFUL_SHUTDOWN_TIMEOUT);
-      app.close(() => {
-        clearTimeout(timeout);
-      });
-    });
-  }
-
-  for (const event of ["uncaughtException", "unhandledRejection"]) {
-    process.once(event, (error) => {
-      app.log.error(error, `Received ${event} error`);
-      const timeout = setTimeout(() => {
-        app.log.error(
-          `Grateful shutdown ${event} timed out. Exiting abruptly..`,
-        );
-        process.exit(1);
-      }, GRATEFUL_SHUTDOWN_TIMEOUT);
-      app.close(() => {
-        clearTimeout(timeout);
-        process.exitCode = 1;
-      });
-    });
-  }
-
-  await app.register(fastifyCors);
+  // Plugins
+  await app.register(gracefulShutdownPlugin);
   await app.register(errorsPlugin);
   await app.register(kyselyPlugin, {
-    url: POSTGRES_CONNECTION_URL,
+    url: PG_URL,
   });
-  await app.register(openapiPlugin);
-  await app.register(boardgamesRoutes, { prefix: "/v1" });
-  await app.register(classificationsRoutes, { prefix: "/v1" });
-  await app.register(pingRoutes, { prefix: "/v1" });
+  await app.register(sessionPlugin, {
+    secret: SESSION_SECRET,
+    secure: IS_PRODUCTION,
+  });
+  await app.register(fastifySwagger, {
+    openapi: openApiInfo,
+  });
+  await app.register(fastifySwaggerUi);
+
+  // Routes
+  await app.register(boardgamesRoutes, {
+    prefix: "/v1",
+  });
+  await app.register(classificationsRoutes, {
+    prefix: "/v1",
+  });
+  await app.register(authenticationRoutes, {
+    prefix: "/v1",
+  });
+  await app.register(pingRoutes, {
+    prefix: "/v1",
+  });
 
   return app;
 };

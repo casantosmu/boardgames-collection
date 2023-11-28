@@ -19,7 +19,7 @@ const pluginCb: FastifyPluginAsync<{ url: string }> = async (
   });
 
   try {
-    fastify.log.info("Starting PostgreSQL");
+    fastify.log.info("Starting PostgreSQL connection...");
     await sql`SELECT 1+1`.execute(kysely);
     fastify.log.info("Postgres is ready");
   } catch (error) {

@@ -1,24 +1,10 @@
 import type { FastifyPluginAsync } from "fastify";
 import { sql } from "db-main-kysely";
+import { ping } from "dtos/v1";
 
 export const pingRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.post(
-    "/ping",
-    {
-      schema: {
-        description: "Ping the server to check its availability",
-        tags: ["ping"],
-        response: {
-          204: {
-            type: "null",
-            description: "Success",
-          },
-        },
-      },
-    },
-    async (request, reply) => {
-      await sql`SELECT 1+1`.execute(fastify.kysely);
-      return reply.code(204).send();
-    },
-  );
+  fastify.post("/ping", { schema: ping }, async (request, reply) => {
+    await sql`SELECT 1+1`.execute(fastify.kysely);
+    return reply.code(204).send();
+  });
 };

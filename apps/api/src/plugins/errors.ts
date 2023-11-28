@@ -23,6 +23,10 @@ class ReplyErrors {
     return this.reply.send(new ApiError(message ?? "Bad Request", 400));
   }
 
+  unauthorized(message?: string): FastifyReply {
+    return this.reply.send(new ApiError(message ?? "Unauthorized", 401));
+  }
+
   notFound(message?: string): FastifyReply {
     return this.reply.send(new ApiError(message ?? "Not Found", 404));
   }

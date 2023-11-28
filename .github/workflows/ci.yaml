@@ -61,9 +61,10 @@ jobs:
         run: |
           echo "PG_URL=postgresql://postgres:postgres@localhost:5432/postgres" >> apps/api/.env
           echo "LOG_LEVEL=silent" >> apps/api/.env
+          echo "SESSION_SECRET=\"yA78h/a_<3{0ECv|(xS#Z~Tv1O;?&u7P\"" >> apps/api/.env
 
       - name: Start Postgres
-        run: docker compose -f docker/dev/docker-compose.yaml up -d postgres
+        run: docker compose -f docker/dev/docker-compose.yaml up -d postgres redis
 
       - name: Install Dependencies
         run: pnpm install

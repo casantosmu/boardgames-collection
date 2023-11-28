@@ -1,6 +1,64 @@
 import { Type, type Static } from "@sinclair/typebox";
 
-export const boardgames = {
+export const openApiInfo = {
+  info: {
+    title: "Boardgames collection",
+    version: "0.1.0",
+  },
+  components: {
+    securitySchemes: {
+      cookieAuth: {
+        type: "apiKey",
+        in: "cookie",
+        name: "sessionId",
+      },
+    },
+  },
+} as const;
+
+export const login = {
+  description: "Logs in and returns the authentication cookie.",
+  tags: ["authentication"],
+  body: Type.Object({
+    email: Type.String({
+      format: "email",
+    }),
+    password: Type.String(),
+  }),
+  response: {
+    "200": {
+      type: "null",
+      description: "Success",
+      headers: {
+        "Set-Cookie": {
+          schema: {
+            type: "string",
+            example: "sessionId=abc123; Path=/; HttpOnly;",
+          },
+        },
+      },
+    },
+  },
+} as const;
+
+export type login = {
+  body: Static<typeof login.body>;
+};
+
+export const logout = {
+  description: "Logs out and clears the authentication cookie.",
+  tags: ["authentication"],
+  response: {
+    "200": {
+      type: "null",
+      description: "Success",
+    },
+  },
+} as const;
+
+export const getBoardgames = {
+  description: "Get a list of boardgames in the collection",
+  tags: ["boardgames"],
   querystring: Type.Object({
     rowsPerPage: Type.Integer({ minimum: 1, maximum: 100, default: 25 }),
     page: Type.Integer({ minimum: 0, default: 0 }),
@@ -55,16 +113,18 @@ export const boardgames = {
       },
     ),
   },
-};
+} as const;
 
-export type Boardgames = {
-  querystring: Static<typeof boardgames.querystring>;
+export type GetBoardgames = {
+  querystring: Static<typeof getBoardgames.querystring>;
   response: {
-    200: Static<(typeof boardgames.response)["200"]>;
+    200: Static<(typeof getBoardgames.response)["200"]>;
   };
 };
 
-export const classifications = {
+export const getClassifications = {
+  description: "Get a list of boardgames types, categories and mechanisms",
+  tags: ["classifications"],
   response: {
     200: Type.Object(
       {
@@ -79,10 +139,21 @@ export const classifications = {
       },
     ),
   },
-};
+} as const;
 
-export type Classifications = {
+export type GetClassifications = {
   response: {
-    200: Static<(typeof classifications.response)["200"]>;
+    200: Static<(typeof getClassifications.response)["200"]>;
   };
 };
+
+export const ping = {
+  description: "Ping the server to check its availability",
+  tags: ["ping"],
+  response: {
+    204: {
+      type: "null",
+      description: "Success",
+    },
+  },
+} as const;
