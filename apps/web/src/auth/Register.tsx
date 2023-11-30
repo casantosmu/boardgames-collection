@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -9,23 +10,64 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
-import { Register as RegisterDto } from "dtos/v1";
-import { z } from "zod";
-import { regexp } from "common";
-import { ApiError, getApiUrl } from "../api";
+import { errorCodes } from "common";
+import { register } from "../api";
 import { useAuth } from "./auth-context";
-
-const formSchema = {
-  email: z.string().regex(regexp.email.pattern),
-  password: z.string().regex(regexp.password.pattern),
-};
 
 export const Register = (): JSX.Element => {
   const navigate = useNavigate();
   const auth = useAuth();
 
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [email, setEmail] = useState({
+    value: "",
+    error: false,
+  });
+  const [password, setPassword] = useState({
+    value: "",
+    error: false,
+  });
   const [error, setError] = useState<string | null>();
+
+  const handleRegister = async (): Promise<void> => {
+    const result = await register({
+      email: email.value,
+      password: password.value,
+    });
+
+    if (!result.success) {
+      switch (result.error.code) {
+        case errorCodes.invalidEmail: {
+          setEmail({
+            value: email.value,
+            error: true,
+          });
+          setError(null);
+          return;
+        }
+        case errorCodes.invalidPassword: {
+          setPassword({
+            value: password.value,
+            error: true,
+          });
+          setError(null);
+          return;
+        }
+        case errorCodes.emailExists: {
+          setError("Email already exists");
+          return;
+        }
+        default:
+          setError("Internal server error");
+          return;
+      }
+    }
+
+    auth.dispatch({
+      type: "LOGIN",
+      payload: result.data,
+    });
+    navigate("/");
+  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -47,51 +89,7 @@ export const Register = (): JSX.Element => {
           component="form"
           onSubmit={(event) => {
             event.preventDefault();
-
-            const emailValidation = formSchema.email.safeParse(form.email);
-            const passwordValidation = formSchema.password.safeParse(
-              form.password,
-            );
-            if (!emailValidation.success && !passwordValidation.success) {
-              setError("Invalid email and invalid password");
-              return;
-            }
-            if (!emailValidation.success) {
-              setError("Invalid email");
-              return;
-            }
-            if (!passwordValidation.success) {
-              setError("Invalid password");
-              return;
-            }
-
-            fetch(getApiUrl(location.origin, "/v1/auth/register"), {
-              method: "POST",
-              body: JSON.stringify(form),
-              headers: {
-                "Content-Type": "application/json",
-              },
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  throw new ApiError(response.status);
-                }
-                return response.json();
-              })
-              .then((data: RegisterDto["response"]["200"]) => {
-                auth.dispatch({
-                  type: "LOGIN",
-                  payload: data,
-                });
-                navigate("/");
-              })
-              .catch((error) => {
-                if (error instanceof ApiError && error.statusCode === 401) {
-                  setError("Invalid username or password");
-                } else {
-                  setError("Internal server error");
-                }
-              });
+            void handleRegister();
           }}
           noValidate
           sx={{ mt: 1 }}
@@ -104,11 +102,15 @@ export const Register = (): JSX.Element => {
             label="Email Address"
             name="email"
             autoComplete="email"
-            value={form.email}
+            error={email.error}
+            value={email.value}
+            helperText={
+              email.error ? "Please enter a valid email address." : undefined
+            }
             onChange={(event) => {
-              setForm({
-                ...form,
-                email: event.target.value,
+              setEmail({
+                value: event.target.value,
+                error: false,
               });
             }}
           />
@@ -121,11 +123,17 @@ export const Register = (): JSX.Element => {
             type="password"
             id="password"
             autoComplete="current-password"
-            value={form.password}
+            error={password.error}
+            value={password.value}
+            helperText={
+              password.error
+                ? "Password must contain one digit from 1 to 9, one lowercase letter, one uppercase letter, one special character, no space, and it must be 8-16 characters long."
+                : undefined
+            }
             onChange={(event) => {
-              setForm({
-                ...form,
-                password: event.target.value,
+              setPassword({
+                value: event.target.value,
+                error: false,
               });
             }}
           />
@@ -137,8 +145,12 @@ export const Register = (): JSX.Element => {
           >
             Register
           </Button>
+          {error && (
+            <Alert variant="outlined" severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
         </Box>
-        {error}
       </Box>
     </Container>
   );

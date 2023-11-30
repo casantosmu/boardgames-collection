@@ -1,5 +1,6 @@
 import { useState } from "react";
 import {
+  Alert,
   Avatar,
   Box,
   Button,
@@ -10,16 +11,9 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate, Link as LinkRouter } from "react-router-dom";
-import { Login as LoginDto } from "dtos/v1";
-import { z } from "zod";
-import { regexp } from "common";
-import { ApiError, getApiUrl } from "../api";
+import { errorCodes } from "common";
+import { login } from "../api";
 import { useAuth } from "./auth-context";
-
-const formSchema = {
-  email: z.string().regex(regexp.email.pattern),
-  password: z.string().regex(regexp.password.pattern),
-};
 
 export const Login = (): JSX.Element => {
   const navigate = useNavigate();
@@ -27,6 +21,28 @@ export const Login = (): JSX.Element => {
 
   const [form, setForm] = useState({ email: "", password: "" });
   const [error, setError] = useState<string | null>();
+
+  const handleLogin = async (): Promise<void> => {
+    const result = await login(form);
+
+    if (!result.success) {
+      switch (result.error.code) {
+        case errorCodes.unauthorized: {
+          setError("Invalid email or password");
+          return;
+        }
+        default:
+          setError("Internal server error");
+          return;
+      }
+    }
+
+    auth.dispatch({
+      type: "LOGIN",
+      payload: result.data,
+    });
+    navigate("/");
+  };
 
   return (
     <Container component="main" maxWidth="xs">
@@ -48,51 +64,7 @@ export const Login = (): JSX.Element => {
           component="form"
           onSubmit={(event) => {
             event.preventDefault();
-
-            const emailValidation = formSchema.email.safeParse(form.email);
-            const passwordValidation = formSchema.password.safeParse(
-              form.password,
-            );
-            if (!emailValidation.success && !passwordValidation.success) {
-              setError("Invalid email and invalid password");
-              return;
-            }
-            if (!emailValidation.success) {
-              setError("Invalid email");
-              return;
-            }
-            if (!passwordValidation.success) {
-              setError("Invalid password");
-              return;
-            }
-
-            fetch(getApiUrl(location.origin, "/v1/auth/login"), {
-              method: "POST",
-              body: JSON.stringify(form),
-              headers: {
-                "Content-Type": "application/json",
-              },
-            })
-              .then((response) => {
-                if (!response.ok) {
-                  throw new ApiError(response.status);
-                }
-                return response.json();
-              })
-              .then((data: LoginDto["response"]["200"]) => {
-                auth.dispatch({
-                  type: "LOGIN",
-                  payload: data,
-                });
-                navigate("/");
-              })
-              .catch((error) => {
-                if (error instanceof ApiError && error.statusCode === 401) {
-                  setError("Invalid username or password");
-                } else {
-                  setError("Internal server error");
-                }
-              });
+            void handleLogin();
           }}
           noValidate
           sx={{ mt: 1 }}
@@ -138,11 +110,15 @@ export const Login = (): JSX.Element => {
           >
             Sign In
           </Button>
+          {error && (
+            <Alert variant="outlined" severity="error" sx={{ mb: 2 }}>
+              {error}
+            </Alert>
+          )}
           <Link component={LinkRouter} to="/register" variant="body2">
             {"Don't have an account? Sign Up"}
           </Link>
         </Box>
-        {error}
       </Box>
     </Container>
   );

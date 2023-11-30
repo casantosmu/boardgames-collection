@@ -1,6 +1,6 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { jsonArrayFrom } from "db-main-kysely";
-import { getBoardgames } from "dtos/v1";
+import { getBoardgames } from "common/dtos/v1";
 
 export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.get("/boardgames", { schema: getBoardgames }, async (request) => {

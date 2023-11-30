@@ -56,9 +56,6 @@ importers:
       db-main-kysely:
         specifier: workspace:^
         version: link:../../packages/db-main-kysely
-      dtos:
-        specifier: workspace:^
-        version: link:../../packages/dtos
       fastify:
         specifier: ^4.24.3
         version: 4.24.3
@@ -173,9 +170,6 @@ importers:
       dotenv:
         specifier: ^16.3.1
         version: 16.3.1
-      dtos:
-        specifier: workspace:^
-        version: link:../../packages/dtos
       eslint-config-custom:
         specifier: workspace:^
         version: link:../../packages/eslint-config-custom
@@ -190,6 +184,10 @@ importers:
         version: 5.0.2(@types/node@20.10.0)
 
   packages/common:
+    dependencies:
+      '@sinclair/typebox':
+        specifier: ^0.31.28
+        version: 0.31.28
     devDependencies:
       tsconfig:
         specifier: workspace:^
@@ -225,22 +223,6 @@ importers:
       tsx:
         specifier: ^4.6.0
         version: 4.6.0
-      typescript:
-        specifier: ^5.3.2
-        version: 5.3.2
-
-  packages/dtos:
-    dependencies:
-      '@sinclair/typebox':
-        specifier: ^0.31.28
-        version: 0.31.28
-    devDependencies:
-      '@types/node':
-        specifier: ^20.10.0
-        version: 20.10.0
-      tsconfig:
-        specifier: workspace:^
-        version: link:../tsconfig
       typescript:
         specifier: ^5.3.2
         version: 5.3.2

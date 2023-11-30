@@ -1,47 +1,56 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
-import { login, logout } from "dtos/v1";
+import { login, logout, register } from "common/dtos/v1";
 import { compare as bcryptCompare, hash as bcryptHash } from "bcrypt";
-import { regexp, type UserData } from "common";
+import { errorCodes, regexp, type UserData } from "common";
 
 const SALT_ROUNDS = 10;
 
 export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
-  fastify.post("/auth/register", { schema: login }, async (request, reply) => {
-    const { email, password } = request.body;
+  fastify.post(
+    "/auth/register",
+    { schema: register },
+    async (request, reply) => {
+      const { email, password } = request.body;
 
-    if (!regexp.email.pattern.test(email)) {
-      return reply.errors.badRequest(
-        `Invalid email: ${regexp.email.description}`,
-      );
-    }
-    if (!regexp.password.pattern.test(password)) {
-      return reply.errors.badRequest(
-        `Invalid password: ${regexp.password.description}`,
-      );
-    }
+      if (!regexp.email.pattern.test(email)) {
+        return reply.errors.badRequest({
+          message: `Invalid email: ${regexp.email.description}`,
+          code: errorCodes.invalidEmail,
+        });
+      }
+      if (!regexp.password.pattern.test(password)) {
+        return reply.errors.badRequest({
+          message: `Invalid password: ${regexp.password.description}`,
+          code: errorCodes.invalidPassword,
+        });
+      }
 
-    const emailExists = await fastify.kysely
-      .selectFrom("users")
-      .where("email", "=", email)
-      .executeTakeFirst();
+      const emailExists = await fastify.kysely
+        .selectFrom("users")
+        .where("email", "=", email)
+        .executeTakeFirst();
 
-    if (emailExists) {
-      return reply.errors.badRequest("Invalid email");
-    }
+      if (emailExists) {
+        return reply.errors.conflict({
+          message: "Email already exists",
+          code: errorCodes.emailExists,
+        });
+      }
 
-    const hashPassword = await bcryptHash(password, SALT_ROUNDS);
+      const hashPassword = await bcryptHash(password, SALT_ROUNDS);
 
-    const user: UserData = await fastify.kysely
-      .insertInto("users")
-      .values({
-        email,
-        password: hashPassword,
-      })
-      .returning(["users.userId as id", "users.email"])
-      .executeTakeFirstOrThrow();
+      const user: UserData = await fastify.kysely
+        .insertInto("users")
+        .values({
+          email,
+          password: hashPassword,
+        })
+        .returning(["users.userId as id", "users.email"])
+        .executeTakeFirstOrThrow();
 
-    return user;
-  });
+      return user;
+    },
+  );
 
   fastify.post("/auth/login", { schema: login }, async (request, reply) => {
     const { email, password } = request.body;
@@ -53,13 +62,17 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       .executeTakeFirst();
 
     if (!user) {
-      return reply.errors.unauthorized("Invalid user or email");
+      return reply.errors.unauthorized({
+        message: "Invalid email or password",
+      });
     }
 
     const isValidPassword = await bcryptCompare(password, user.password);
 
     if (!isValidPassword) {
-      return reply.errors.unauthorized("Invalid user or email");
+      return reply.errors.unauthorized({
+        message: "Invalid email or password",
+      });
     }
 
     const userData: UserData = {

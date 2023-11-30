@@ -1,7 +1,7 @@
 import { fastify, type FastifyInstance } from "fastify";
 import { fastifySwagger } from "@fastify/swagger";
 import { fastifySwaggerUi } from "@fastify/swagger-ui";
-import { openApiInfo } from "dtos/v1";
+import { openApiInfo } from "common/dtos/v1";
 import { errorsPlugin } from "./plugins/errors.js";
 import { kyselyPlugin } from "./plugins/kysely.js";
 import { gracefulShutdownPlugin } from "./plugins/graceful-shutdown.js";

@@ -1,13 +1,35 @@
 import { useEffect, useState } from "react";
-import { GetBoardgames, GetClassifications } from "dtos/v1";
+import {
+  GetBoardgames,
+  GetClassifications,
+  ApiError,
+  Login,
+  Register,
+} from "common/dtos/v1";
 
 export const getImageSrc = (path: string): string => path;
 
-export class ApiError extends Error {
-  constructor(readonly statusCode: number) {
-    super();
-  }
+interface Ok<T> {
+  success: true;
+  data: T;
 }
+
+interface Err {
+  success: false;
+  error: ApiError;
+}
+
+type Result<T> = Ok<T> | Err;
+
+const ok = <T>(data: T): Ok<T> => ({
+  success: true,
+  data,
+});
+
+const err = (error: ApiError): Err => ({
+  success: false,
+  error,
+});
 
 type UseFetchResult<T> =
   | {
@@ -33,10 +55,12 @@ interface UseFetchOptions {
   >;
 }
 
-export const getApiUrl = (origin: string, path: string): string =>
-  `${origin.endsWith("/") ? origin.slice(0, -1) : origin}/api/${
+const getApiUrl = (path: string): string => {
+  const origin = location.origin;
+  return `${origin.endsWith("/") ? origin.slice(0, -1) : origin}/api/${
     path.startsWith("/") ? path.slice(1) : path
   }`;
+};
 
 const useFetch = <T>(
   path: string,
@@ -45,7 +69,7 @@ const useFetch = <T>(
   const [data, setData] = useState<T | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
 
-  const urlBuilder = new URL(getApiUrl(location.origin, path));
+  const urlBuilder = new URL(getApiUrl(path));
   if (options?.params) {
     for (const [key, value] of Object.entries(options.params)) {
       if (Array.isArray(value)) {
@@ -61,24 +85,22 @@ const useFetch = <T>(
 
   useEffect(() => {
     let ignore = false;
-    setData(null);
-    fetch(url)
-      .then((response) => {
-        if (!response.ok) {
-          throw new ApiError(response.status);
-        }
-        return response.json();
-      })
-      .then((data: T) => {
-        if (!ignore) {
-          setData(data);
-        }
-      })
-      .catch((error) => {
-        if (!ignore) {
-          setError(error instanceof ApiError ? error : new ApiError(500));
-        }
-      });
+
+    const doFetch = async (): Promise<void> => {
+      setData(null);
+
+      const response = await fetch(url);
+      const data: unknown = await response.json();
+
+      if (!response.ok && !ignore) {
+        setError(data as ApiError);
+      } else if (!ignore) {
+        setData(data as T);
+      }
+    };
+
+    void doFetch();
+
     return () => {
       ignore = true;
     };
@@ -119,4 +141,45 @@ export const useFetchClassifications = (): UseFetchResult<
   GetClassifications["response"]["200"]
 > => {
   return useFetch("/v1/classifications");
+};
+
+export const register = async (
+  body: Register["body"],
+): Promise<Result<Register["response"]["200"]>> => {
+  const response = await fetch(getApiUrl("/v1/auth/register"), {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const data: unknown = await response.json();
+  if (!response.ok) {
+    return err(data as ApiError);
+  }
+  return ok(data as Register["response"]["200"]);
+};
+
+export const login = async (
+  body: Login["body"],
+): Promise<Result<Login["response"]["200"]>> => {
+  const response = await fetch(getApiUrl("/v1/auth/login"), {
+    method: "POST",
+    body: JSON.stringify(body),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  const data: unknown = await response.json();
+  if (!response.ok) {
+    return err(data as ApiError);
+  }
+  return ok(data as Login["response"]["200"]);
+};
+
+export const logout = async (): Promise<void> => {
+  const response = await fetch(getApiUrl("/v1/auth/logout"));
+  if (!response.ok) {
+    throw new Error(response.statusText);
+  }
 };

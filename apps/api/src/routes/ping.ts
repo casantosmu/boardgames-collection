@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { sql } from "db-main-kysely";
-import { ping } from "dtos/v1";
+import { ping } from "common/dtos/v1";
 
 export const pingRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post("/ping", { schema: ping }, async (request, reply) => {
