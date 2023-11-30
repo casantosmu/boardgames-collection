@@ -36,8 +36,8 @@ class ReplyErrors {
   }
 
   notFound({
-    code = "Not Found",
-    message = errorCodes.notFound,
+    code = errorCodes.notFound,
+    message = "Not Found",
   }): FastifyReply {
     return this.reply.send(new ApiError(message, 404, code));
   }

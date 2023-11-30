@@ -131,21 +131,21 @@ const useFetch = <T>(
 
 export const useFetchBoardgames = (
   params: GetBoardgames["querystring"],
-): UseFetchResult<GetBoardgames["response"]["200"]> => {
+): UseFetchResult<GetBoardgames["response"][200]> => {
   return useFetch("/v1/boardgames", {
     params,
   });
 };
 
 export const useFetchClassifications = (): UseFetchResult<
-  GetClassifications["response"]["200"]
+  GetClassifications["response"][200]
 > => {
   return useFetch("/v1/classifications");
 };
 
 export const register = async (
   body: Register["body"],
-): Promise<Result<Register["response"]["200"]>> => {
+): Promise<Result<Register["response"][200]>> => {
   const response = await fetch(getApiUrl("/v1/auth/register"), {
     method: "POST",
     body: JSON.stringify(body),
@@ -157,12 +157,12 @@ export const register = async (
   if (!response.ok) {
     return err(data as ApiError);
   }
-  return ok(data as Register["response"]["200"]);
+  return ok(data as Register["response"][200]);
 };
 
 export const login = async (
   body: Login["body"],
-): Promise<Result<Login["response"]["200"]>> => {
+): Promise<Result<Login["response"][200]>> => {
   const response = await fetch(getApiUrl("/v1/auth/login"), {
     method: "POST",
     body: JSON.stringify(body),
@@ -174,7 +174,7 @@ export const login = async (
   if (!response.ok) {
     return err(data as ApiError);
   }
-  return ok(data as Login["response"]["200"]);
+  return ok(data as Login["response"][200]);
 };
 
 export const logout = async (): Promise<void> => {
