@@ -1,5 +1,5 @@
-import { UserData } from "common";
 import {
+  Dispatch,
   PropsWithChildren,
   createContext,
   useContext,
@@ -7,7 +7,12 @@ import {
   useReducer,
 } from "react";
 
-type State = UserData | null;
+interface User {
+  id: number;
+  email: string;
+}
+
+type State = User | null;
 
 type Action =
   | {
@@ -18,7 +23,7 @@ type Action =
       type: "LOGOUT";
     };
 
-const reducer = (state: State, action: Action): State => {
+const authReducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "LOGIN": {
       return action.payload;
@@ -31,32 +36,34 @@ const reducer = (state: State, action: Action): State => {
 
 interface Context {
   state: State;
-  dispatch: React.Dispatch<Action>;
+  dispatch: Dispatch<Action>;
 }
 
-const Context = createContext<Context | null>(null);
+const AuthContext = createContext<Context | null>(null);
 
 const createInitialState = (): State => {
   const value = localStorage.getItem("user");
   if (typeof value === "string") {
-    return JSON.parse(value) as UserData;
+    return JSON.parse(value) as User;
   }
   return null;
 };
 
 export const AuthProvider = ({ children }: PropsWithChildren): JSX.Element => {
-  const [state, dispatch] = useReducer(reducer, null, createInitialState);
+  const [state, dispatch] = useReducer(authReducer, null, createInitialState);
   useEffect(() => {
     localStorage.setItem("user", JSON.stringify(state));
   }, [state]);
   return (
-    <Context.Provider value={{ state, dispatch }}>{children}</Context.Provider>
+    <AuthContext.Provider value={{ state, dispatch }}>
+      {children}
+    </AuthContext.Provider>
   );
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): Context => {
-  const context = useContext(Context);
+  const context = useContext(AuthContext);
   if (context === null) {
     throw new Error("useAuth must be used within a AuthProvider");
   }

@@ -1,7 +1,7 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { login, logout, register } from "common/dtos/v1";
 import { compare as bcryptCompare, hash as bcryptHash } from "bcrypt";
-import { errorCodes, regexp, type UserData } from "common";
+import { errorCodes, regexp } from "common";
 
 const SALT_ROUNDS = 10;
 
@@ -39,7 +39,7 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
 
       const hashPassword = await bcryptHash(password, SALT_ROUNDS);
 
-      const user: UserData = await fastify.kysely
+      return fastify.kysely
         .insertInto("users")
         .values({
           email,
@@ -47,8 +47,6 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         })
         .returning(["users.userId as id", "users.email"])
         .executeTakeFirstOrThrow();
-
-      return user;
     },
   );
 
@@ -75,12 +73,13 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       });
     }
 
-    const userData: UserData = {
+    const userData = {
       id: user.id,
       email: user.email,
     };
 
     request.session.user = userData;
+
     return userData;
   });
 
