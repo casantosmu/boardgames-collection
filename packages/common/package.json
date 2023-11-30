@@ -3,13 +3,24 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./dtos/v1": {
+      "types": "./dist/dtos/v1/index.d.ts",
+      "import": "./dist/dtos/v1/index.js"
+    }
+  },
   "scripts": {
     "clear": "rm -fr dist",
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@sinclair/typebox": "^0.31.28"
   },
   "devDependencies": {
     "tsconfig": "workspace:^",

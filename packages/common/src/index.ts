@@ -12,6 +12,19 @@ export const regexp = {
   },
 };
 
+export const errorCodes = {
+  badRequest: "BAD_REQUEST",
+  unauthorized: "UNAUTHORIZED",
+  notFound: "NOT_FOUND",
+  conflict: "CONFLICT",
+  internalServerError: "INTERNAL_SERVER_ERROR",
+  validation: "VALIDATION",
+  invalidEmail: "INVALID_EMAIL",
+  invalidPassword: "INVALID_PASSWORD",
+  emailExists: "EMAIL_EXITS",
+  routeNotFound: "ROUTE_NOT_FOUND",
+};
+
 export interface UserData {
   id: number;
   email: string;

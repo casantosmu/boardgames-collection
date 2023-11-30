@@ -24,7 +24,6 @@
     "common": "workspace:^",
     "connect-redis": "^7.1.0",
     "db-main-kysely": "workspace:^",
-    "dtos": "workspace:^",
     "fastify": "^4.24.3",
     "fastify-plugin": "^4.5.1",
     "ioredis": "^5.3.2"

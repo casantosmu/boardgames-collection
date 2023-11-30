@@ -4,7 +4,7 @@ import { Redis } from "ioredis";
 import RedisStore from "connect-redis";
 import { fastifyCookie } from "@fastify/cookie";
 import { fastifySession } from "@fastify/session";
-import { openApiInfo } from "dtos/v1";
+import { openApiInfo } from "common/dtos/v1";
 
 declare module "fastify" {
   interface Session {

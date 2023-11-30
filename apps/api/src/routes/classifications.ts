@@ -1,5 +1,5 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
-import { getClassifications } from "dtos/v1";
+import { getClassifications } from "common/dtos/v1";
 
 export const classificationsRoutes: FastifyPluginAsyncTypebox = async (
   fastify,

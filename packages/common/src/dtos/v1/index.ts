@@ -16,6 +16,46 @@ export const openApiInfo = {
   },
 } as const;
 
+const errors = {
+  400: Type.Object(
+    {
+      message: Type.String(),
+      code: Type.String(),
+    },
+    { description: "Bad Request" },
+  ),
+  401: Type.Object(
+    {
+      message: Type.String(),
+      code: Type.String(),
+    },
+    { description: "Unauthorized" },
+  ),
+  404: Type.Object(
+    {
+      message: Type.String(),
+      code: Type.String(),
+    },
+    { description: "Not Found" },
+  ),
+  409: Type.Object(
+    {
+      message: Type.String(),
+      code: Type.String(),
+    },
+    { description: "Conflict" },
+  ),
+  500: Type.Object(
+    {
+      message: Type.String(),
+      code: Type.String(),
+    },
+    { description: "Internal Server Error" },
+  ),
+};
+
+export type ApiError = Static<(typeof errors)[keyof typeof errors]>;
+
 export const register = {
   description: "Registers a new user and returns authentication information.",
   tags: ["auth"],
@@ -24,7 +64,7 @@ export const register = {
     password: Type.String(),
   }),
   response: {
-    "200": Type.Object(
+    200: Type.Object(
       {
         id: Type.Integer(),
         email: Type.String(),
@@ -41,13 +81,16 @@ export const register = {
         },
       },
     ),
+    400: errors[400],
+    409: errors[409],
+    500: errors[500],
   },
 } as const;
 
 export type Register = {
   body: Static<typeof register.body>;
   response: {
-    200: Static<(typeof register.response)["200"]>;
+    200: Static<(typeof register.response)[200]>;
   };
 };
 
@@ -59,7 +102,7 @@ export const login = {
     password: Type.String(),
   }),
   response: {
-    "200": Type.Object(
+    200: Type.Object(
       {
         id: Type.Integer(),
         email: Type.String(),
@@ -76,13 +119,15 @@ export const login = {
         },
       },
     ),
+    401: errors[401],
+    500: errors[500],
   },
 } as const;
 
 export type Login = {
   body: Static<typeof login.body>;
   response: {
-    200: Static<(typeof login.response)["200"]>;
+    200: Static<(typeof login.response)[200]>;
   };
 };
 
@@ -90,10 +135,11 @@ export const logout = {
   description: "Logs out and clears the authentication cookie.",
   tags: ["auth"],
   response: {
-    "200": {
+    200: {
       type: "null",
       description: "Success",
     },
+    500: errors[500],
   },
 } as const;
 
@@ -149,17 +195,16 @@ export const getBoardgames = {
           }),
         ),
       },
-      {
-        description: "Success",
-      },
+      { description: "Success" },
     ),
+    500: errors[500],
   },
 } as const;
 
 export type GetBoardgames = {
   querystring: Static<typeof getBoardgames.querystring>;
   response: {
-    200: Static<(typeof getBoardgames.response)["200"]>;
+    200: Static<(typeof getBoardgames.response)[200]>;
   };
 };
 
@@ -175,16 +220,15 @@ export const getClassifications = {
           mechanisms: Type.Array(Type.String()),
         }),
       },
-      {
-        description: "Success",
-      },
+      { description: "Success" },
     ),
+    500: errors[500],
   },
 } as const;
 
 export type GetClassifications = {
   response: {
-    200: Static<(typeof getClassifications.response)["200"]>;
+    200: Static<(typeof getClassifications.response)[200]>;
   };
 };
 
@@ -196,5 +240,6 @@ export const ping = {
       type: "null",
       description: "Success",
     },
+    500: errors[500],
   },
 } as const;

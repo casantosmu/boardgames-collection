@@ -23,7 +23,6 @@ import {
   alpha,
   AppBar,
   Container,
-  Snackbar,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -33,9 +32,8 @@ import { Link } from "react-router-dom";
 import { z } from "zod";
 import { useQueryParams } from "./query-params";
 import {
-  ApiError,
-  getApiUrl,
   getImageSrc,
+  logout,
   useFetchBoardgames,
   useFetchClassifications,
 } from "./api";
@@ -107,32 +105,16 @@ const ListToolbar = ({
 }: ListToolbarProps): JSX.Element => {
   const auth = useAuth();
   const [search, setSearch] = useState(initialSearchValue ?? "");
-  const [error, setError] = useState<string | null>(null);
 
-  const handleOnCloseError = (): void => {
-    setError(null);
+  const handleLogout = async (): Promise<void> => {
+    await logout();
+    auth.dispatch({
+      type: "LOGOUT",
+    });
   };
 
   return (
     <>
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
-        onClose={() => {
-          handleOnCloseError();
-        }}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
-          onClose={() => {
-            handleOnCloseError();
-          }}
-          severity="error"
-          sx={{ width: "100%" }}
-        >
-          {error}
-        </Alert>
-      </Snackbar>
       <AppBar
         position="absolute"
         sx={{
@@ -190,18 +172,7 @@ const ListToolbar = ({
             <Button
               color="inherit"
               onClick={() => {
-                fetch(getApiUrl(location.origin, "/v1/auth/logout"))
-                  .then((response) => {
-                    if (!response.ok) {
-                      throw new ApiError(response.status);
-                    }
-                    auth.dispatch({
-                      type: "LOGOUT",
-                    });
-                  })
-                  .catch(() => {
-                    setError("Logout error. Something went wrong");
-                  });
+                void handleLogout();
               }}
             >
               Logout
