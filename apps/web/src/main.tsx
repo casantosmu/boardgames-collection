@@ -9,12 +9,12 @@ import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { Boardgames } from "./Boardgames.tsx";
 import { Login } from "./auth/Login.tsx";
 import { AuthProvider } from "./auth/auth-context.tsx";
+import { Register } from "./auth/Register.tsx";
 
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
 import "@fontsource/roboto/500.css";
 import "@fontsource/roboto/700.css";
-import { Register } from "./auth/Register.tsx";
 
 const defaultTheme = createTheme();
 

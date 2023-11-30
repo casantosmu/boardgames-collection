@@ -40,9 +40,8 @@ const createInitialState = (): State => {
   const value = localStorage.getItem("user");
   if (typeof value === "string") {
     return JSON.parse(value) as UserData;
-  } else {
-    return null;
   }
+  return null;
 };
 
 export const AuthProvider = ({ children }: PropsWithChildren): JSX.Element => {

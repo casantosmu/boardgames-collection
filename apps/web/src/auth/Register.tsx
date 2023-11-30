@@ -10,8 +10,15 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
 import { Register as RegisterDto } from "dtos/v1";
+import { z } from "zod";
+import { regexp } from "common";
 import { ApiError, getApiUrl } from "../api";
 import { useAuth } from "./auth-context";
+
+const formSchema = {
+  email: z.string().regex(regexp.email.pattern),
+  password: z.string().regex(regexp.password.pattern),
+};
 
 export const Register = (): JSX.Element => {
   const navigate = useNavigate();
@@ -40,6 +47,24 @@ export const Register = (): JSX.Element => {
           component="form"
           onSubmit={(event) => {
             event.preventDefault();
+
+            const emailValidation = formSchema.email.safeParse(form.email);
+            const passwordValidation = formSchema.password.safeParse(
+              form.password,
+            );
+            if (!emailValidation.success && !passwordValidation.success) {
+              setError("Invalid email and invalid password");
+              return;
+            }
+            if (!emailValidation.success) {
+              setError("Invalid email");
+              return;
+            }
+            if (!passwordValidation.success) {
+              setError("Invalid password");
+              return;
+            }
+
             fetch(getApiUrl(location.origin, "/v1/auth/register"), {
               method: "POST",
               body: JSON.stringify(form),
