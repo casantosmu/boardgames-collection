@@ -24,8 +24,3 @@ export const errorCodes = {
   emailExists: "EMAIL_EXITS",
   routeNotFound: "ROUTE_NOT_FOUND",
 };
-
-export interface UserData {
-  id: number;
-  email: string;
-}
