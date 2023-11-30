@@ -58,6 +58,12 @@ export interface Types {
   type: string;
 }
 
+export interface Users {
+  email: string;
+  password: string;
+  userId: Generated<number>;
+}
+
 export interface DB {
   alternateNames: AlternateNames;
   bestPlayers: BestPlayers;
@@ -68,4 +74,5 @@ export interface DB {
   categories: Categories;
   mechanisms: Mechanisms;
   types: Types;
+  users: Users;
 }

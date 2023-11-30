@@ -11,6 +11,7 @@ const setTimeOut = (event: string): NodeJS.Timeout => {
     process.exit(1);
   }, 10000);
 };
+
 const pluginCb: FastifyPluginAsync = async (fastify) => {
   for (const event of SIGNAL_EVENTS) {
     process.once(event, () => {
