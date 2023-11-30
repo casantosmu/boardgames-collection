@@ -4,6 +4,19 @@ import { getBoardgames } from "dtos/v1";
 
 export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.get("/boardgames", { schema: getBoardgames }, async (request) => {
+    const {
+      page,
+      rowsPerPage,
+      search,
+      minPlayers,
+      maxPlayers,
+      minBestPlayers,
+      maxBestPlayers,
+      types,
+      categories,
+      mechanisms,
+    } = request.query;
+
     return fastify.kysely.transaction().execute(async (trx) => {
       let query = trx
         .selectFrom("boardgames as b")
@@ -29,34 +42,24 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
           ).as("bestPlayers"),
         ]);
 
-      if (request.query.search !== undefined) {
-        query = query.where(
-          "b.boardgameName",
-          "ilike",
-          `%${request.query.search}%`,
-        );
+      if (search !== undefined) {
+        query = query.where("b.boardgameName", "ilike", `%${search}%`);
       }
 
-      if (
-        request.query.minPlayers !== undefined ||
-        request.query.maxPlayers !== undefined
-      ) {
+      if (minPlayers !== undefined || maxPlayers !== undefined) {
         query = query.where((eb) => {
           const ands = [];
-          if (request.query.minPlayers !== undefined) {
-            ands.push(eb("b.minPlayers", "<=", request.query.minPlayers));
+          if (minPlayers !== undefined) {
+            ands.push(eb("b.minPlayers", "<=", minPlayers));
           }
-          if (request.query.maxPlayers !== undefined) {
-            ands.push(eb("b.maxPlayers", ">=", request.query.maxPlayers));
+          if (maxPlayers !== undefined) {
+            ands.push(eb("b.maxPlayers", ">=", maxPlayers));
           }
           return eb.and(ands);
         });
       }
 
-      if (
-        request.query.minBestPlayers !== undefined ||
-        request.query.maxBestPlayers !== undefined
-      ) {
+      if (minBestPlayers !== undefined || maxBestPlayers !== undefined) {
         query = query.where(({ exists, selectFrom }) =>
           exists(
             selectFrom("bestPlayers as bp")
@@ -64,15 +67,11 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               .whereRef("bp.boardgameId", "=", "b.boardgameId")
               .where((eb) => {
                 const ands = [];
-                if (request.query.minBestPlayers !== undefined) {
-                  ands.push(
-                    eb("bp.minPlayers", "<=", request.query.minBestPlayers),
-                  );
+                if (minBestPlayers !== undefined) {
+                  ands.push(eb("bp.minPlayers", "<=", minBestPlayers));
                 }
-                if (request.query.maxBestPlayers !== undefined) {
-                  ands.push(
-                    eb("bp.maxPlayers", ">=", request.query.maxBestPlayers),
-                  );
+                if (maxBestPlayers !== undefined) {
+                  ands.push(eb("bp.maxPlayers", ">=", maxBestPlayers));
                 }
                 return eb.and(ands);
               }),
@@ -80,8 +79,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         );
       }
 
-      if (request.query.types !== undefined) {
-        const types = request.query.types;
+      if (types !== undefined) {
         query = query.where(({ exists, selectFrom, and }) =>
           and(
             types.map((type) =>
@@ -96,8 +94,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         );
       }
 
-      if (request.query.categories !== undefined) {
-        const categories = request.query.categories;
+      if (categories !== undefined) {
         query = query.where(({ exists, selectFrom, and }) =>
           and(
             categories.map((category) =>
@@ -112,8 +109,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         );
       }
 
-      if (request.query.mechanisms !== undefined) {
-        const mechanisms = request.query.mechanisms;
+      if (mechanisms !== undefined) {
         query = query.where(({ exists, selectFrom, and }) =>
           and(
             mechanisms.map((mechanism) =>
@@ -130,8 +126,8 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
 
       const [data, metadata] = await Promise.all([
         query
-          .limit(request.query.rowsPerPage)
-          .offset(request.query.page * request.query.rowsPerPage)
+          .limit(rowsPerPage)
+          .offset(page * rowsPerPage)
           .execute(),
         query
           .clearSelect()

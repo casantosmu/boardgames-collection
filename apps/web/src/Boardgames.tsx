@@ -9,11 +9,9 @@ import {
   InputBase,
   Toolbar,
   Typography,
-  Tooltip,
   IconButton,
   Divider,
   ListItem,
-  ListItemButton,
   ListItemText,
   List,
   Drawer,
@@ -22,6 +20,10 @@ import {
   TextField,
   Button,
   Autocomplete,
+  alpha,
+  AppBar,
+  Container,
+  Snackbar,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -31,11 +33,14 @@ import { Link } from "react-router-dom";
 import { z } from "zod";
 import { useQueryParams } from "./query-params";
 import {
+  ApiError,
+  getApiUrl,
   getImageSrc,
   useFetchBoardgames,
   useFetchClassifications,
 } from "./api";
 import { removeUndefinedValuesFromObject } from "./utils";
+import { useAuth } from "./auth/auth-context";
 
 const filtersSchemas = {
   rowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
@@ -47,7 +52,24 @@ const filtersSchemas = {
 
 type Classification = "types" | "categories" | "mechanisms";
 
-const SearchIconWrapper = styled("div")(() => ({
+const Search = styled("div")(({ theme }) => ({
+  position: "relative",
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: alpha(theme.palette.common.white, 0.15),
+  "&:hover": {
+    backgroundColor: alpha(theme.palette.common.white, 0.25),
+  },
+  marginRight: theme.spacing(2),
+  marginLeft: 0,
+  width: "100%",
+  [theme.breakpoints.up("sm")]: {
+    marginLeft: theme.spacing(3),
+    width: "auto",
+  },
+}));
+
+const SearchIconWrapper = styled("div")(({ theme }) => ({
+  padding: theme.spacing(0, 2),
   height: "100%",
   position: "absolute",
   pointerEvents: "none",
@@ -59,8 +81,9 @@ const SearchIconWrapper = styled("div")(() => ({
 const StyledInputBase = styled(InputBase)(({ theme }) => ({
   color: "inherit",
   "& .MuiInputBase-input": {
+    padding: theme.spacing(1, 1, 1, 0),
     // vertical padding + font size from searchIcon
-    paddingLeft: `calc(1em + ${theme.spacing(2)})`,
+    paddingLeft: `calc(1em + ${theme.spacing(4)})`,
     transition: theme.transitions.create("width"),
     width: "100%",
     [theme.breakpoints.up("md")]: {
@@ -69,7 +92,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
   },
 }));
 
-const BOARDGAMES_LIST_TITLE_ID = "listTitle";
+const SIDEBAR_WITH = 300;
 
 interface ListToolbarProps {
   initialSearchValue: string | undefined;
@@ -82,51 +105,111 @@ const ListToolbar = ({
   onSearch,
   onClickFiltersIcon,
 }: ListToolbarProps): JSX.Element => {
+  const auth = useAuth();
   const [search, setSearch] = useState(initialSearchValue ?? "");
+  const [error, setError] = useState<string | null>(null);
+
+  const handleOnCloseError = (): void => {
+    setError(null);
+  };
 
   return (
-    <Toolbar>
-      <Typography
-        variant="h6"
-        id={BOARDGAMES_LIST_TITLE_ID}
-        component="div"
-        sx={{ display: { xs: "none", md: "block" }, paddingRight: 4 }}
-      >
-        Boardgames
-      </Typography>
-      <Box sx={{ position: "relative" }}>
-        <SearchIconWrapper>
-          <SearchIcon />
-        </SearchIconWrapper>
-        <StyledInputBase
-          onKeyUp={(event) => {
-            if (event.key === "Enter") {
-              const value = filtersSchemas.search.parse(search);
-              onSearch(value);
-              setSearch(value ?? "");
-            }
-          }}
-          onChange={(event) => {
-            setSearch(event.target.value);
-          }}
-          placeholder="Search…"
-          value={search}
-          inputProps={{ "aria-label": "search" }}
-        />
-      </Box>
-      <Box sx={{ flexGrow: 1 }} />
-      <Tooltip
-        title="Filter list"
-        onClick={() => {
-          onClickFiltersIcon();
+    <>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => {
+          handleOnCloseError();
         }}
-        sx={{ display: { md: "none" } }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <IconButton aria-label="open filters">
-          <FilterListIcon />
-        </IconButton>
-      </Tooltip>
-    </Toolbar>
+        <Alert
+          onClose={() => {
+            handleOnCloseError();
+          }}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
+          {error}
+        </Alert>
+      </Snackbar>
+      <AppBar
+        position="absolute"
+        sx={{
+          marginLeft: { md: SIDEBAR_WITH },
+          width: { md: `calc(100% - ${SIDEBAR_WITH}px)` },
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            size="large"
+            edge="start"
+            color="inherit"
+            aria-label="open filters"
+            onClick={() => {
+              onClickFiltersIcon();
+            }}
+            sx={{ display: { md: "none" }, mr: 2 }}
+          >
+            <FilterListIcon />
+          </IconButton>
+          <Typography
+            variant="h6"
+            noWrap
+            component="div"
+            sx={{ display: { xs: "none", sm: "block" } }}
+          >
+            Boardgames
+          </Typography>
+          <Search>
+            <SearchIconWrapper>
+              <SearchIcon />
+            </SearchIconWrapper>
+            <StyledInputBase
+              onKeyUp={(event) => {
+                if (event.key === "Enter") {
+                  const value = filtersSchemas.search.parse(search);
+                  onSearch(value);
+                  setSearch(value ?? "");
+                }
+              }}
+              onChange={(event) => {
+                setSearch(event.target.value);
+              }}
+              placeholder="Search…"
+              value={search}
+              inputProps={{ "aria-label": "search" }}
+            />
+          </Search>
+          <Box sx={{ flexGrow: 1 }} />
+          {!auth.state ? (
+            <Button color="inherit" component={Link} to="/login">
+              Login
+            </Button>
+          ) : (
+            <Button
+              color="inherit"
+              onClick={() => {
+                fetch(getApiUrl(location.origin, "/v1/auth/logout"))
+                  .then((response) => {
+                    if (!response.ok) {
+                      throw new ApiError(response.status);
+                    }
+                    auth.dispatch({
+                      type: "LOGOUT",
+                    });
+                  })
+                  .catch(() => {
+                    setError("Logout error. Something went wrong");
+                  });
+              }}
+            >
+              Logout
+            </Button>
+          )}
+        </Toolbar>
+      </AppBar>
+    </>
   );
 };
 
@@ -170,7 +253,7 @@ const FiltersSidebarForm = ({
     maxBestPlayers: initialPlayers.maxBestPlayers?.toString() ?? "",
   });
 
-  const onSubmitPlayers = (event: FormEvent<HTMLFormElement>): void => {
+  const handleOnSubmitPlayers = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
     const minPlayers = filtersSchemas.players.parse(players.minPlayers);
     const maxPlayers = filtersSchemas.players.parse(players.maxPlayers);
@@ -200,7 +283,7 @@ const FiltersSidebarForm = ({
         noValidate
         autoComplete="off"
         onSubmit={(event) => {
-          onSubmitPlayers(event);
+          handleOnSubmitPlayers(event);
         }}
         sx={{ paddingTop: 2, paddingX: 1 }}
       >
@@ -244,7 +327,7 @@ const FiltersSidebarForm = ({
         noValidate
         autoComplete="off"
         onSubmit={(event) => {
-          onSubmitPlayers(event);
+          handleOnSubmitPlayers(event);
         }}
         sx={{ paddingTop: 2, paddingX: 1 }}
       >
@@ -380,66 +463,62 @@ interface BoardgamesListProps {
 
 const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
   return (
-    <List aria-labelledby={BOARDGAMES_LIST_TITLE_ID}>
+    <List aria-labelledby={"Boardgames"}>
       {boardgames.map((boardgame) => (
         <ListItem key={boardgame.id}>
-          <ListItemButton component={Link} to={`/boardgames/${boardgame.id}`}>
-            <ListItemAvatar sx={{ width: 80 }}>
-              <img
-                height={64}
-                width={64}
-                alt={boardgame.name}
-                src={getImageSrc(boardgame.images["96x96"])}
-              />
-            </ListItemAvatar>
-            <ListItemText
-              primary={
-                <>
-                  {boardgame.name}{" "}
-                  <Box
-                    sx={{
-                      color: "text.secondary",
-                      display: "inline",
-                    }}
-                  >
-                    ({boardgame.yearPublished})
-                  </Box>
-                </>
-              }
-              primaryTypographyProps={{ component: "div" }}
-              secondary={
-                <>
-                  {boardgame.shortDescription}
-                  <Box sx={{ paddingTop: 1 }}>
-                    Rating: {boardgame.rate.toFixed(2)}
-                  </Box>
-                  <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
-                  <Box>
-                    Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
-                    Min
-                  </Box>
-                  <Box>Age: {boardgame.minAge}+</Box>
-                  <Box>
-                    Players: {buildPlayersRangeString(boardgame.players, ", ")}
-                  </Box>
-                  <Box>
-                    Best players:{" "}
-                    {boardgame.bestPlayers
-                      .map((minMax) => buildPlayersRangeString(minMax, ", "))
-                      .join(", ")}
-                  </Box>
-                </>
-              }
-              secondaryTypographyProps={{ component: "div" }}
+          <ListItemAvatar sx={{ width: 80 }}>
+            <img
+              height={64}
+              width={64}
+              alt={boardgame.name}
+              src={getImageSrc(boardgame.images["96x96"])}
             />
-          </ListItemButton>
+          </ListItemAvatar>
+          <ListItemText
+            primary={
+              <>
+                {boardgame.name}{" "}
+                <Box
+                  sx={{
+                    color: "text.secondary",
+                    display: "inline",
+                  }}
+                >
+                  ({boardgame.yearPublished})
+                </Box>
+              </>
+            }
+            primaryTypographyProps={{ component: "div" }}
+            secondary={
+              <>
+                {boardgame.shortDescription}
+                <Box sx={{ paddingTop: 1 }}>
+                  Rating: {boardgame.rate.toFixed(2)}
+                </Box>
+                <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
+                <Box>
+                  Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
+                  Min
+                </Box>
+                <Box>Age: {boardgame.minAge}+</Box>
+                <Box>
+                  Players: {buildPlayersRangeString(boardgame.players, ", ")}
+                </Box>
+                <Box>
+                  Best players:{" "}
+                  {boardgame.bestPlayers
+                    .map((minMax) => buildPlayersRangeString(minMax, ", "))
+                    .join(", ")}
+                </Box>
+              </>
+            }
+            secondaryTypographyProps={{ component: "div" }}
+          />
         </ListItem>
       ))}
     </List>
   );
 };
-
-const SIDEBAR_WITH = 300;
 
 interface QueryParams {
   page: number;
@@ -479,13 +558,6 @@ export const Boardgames = (): JSX.Element => {
 
   const handleToggleFilters = (): void => {
     setFiltersOpen(!filtersOpen);
-  };
-
-  const handleOnSearch = (value: string | undefined): void => {
-    setQueryParams({
-      search: value,
-      page: 0,
-    });
   };
 
   const handleOnFilterPlayers = ({
@@ -627,57 +699,64 @@ export const Boardgames = (): JSX.Element => {
   }
 
   return (
-    <>
-      <Box sx={{ ml: { md: `${SIDEBAR_WITH}px` } }}>
-        <Box sx={{ marginX: "auto", maxWidth: 800 }}>
-          <ListToolbar
-            initialSearchValue={queryParams.search}
-            onSearch={(value) => {
-              handleOnSearch(value);
-            }}
-            onClickFiltersIcon={() => {
-              handleToggleFilters();
-            }}
-          />
+    <Box sx={{ display: "flex" }}>
+      <ListToolbar
+        initialSearchValue={queryParams.search}
+        onSearch={(value) => {
+          setQueryParams({
+            search: value,
+            page: 0,
+          });
+        }}
+        onClickFiltersIcon={() => {
+          handleToggleFilters();
+        }}
+      />
+      {/* Mobile sidebar filters */}
+      <Drawer
+        variant="temporary"
+        open={filtersOpen}
+        onClose={() => {
+          handleToggleFilters();
+        }}
+        ModalProps={{
+          keepMounted: true,
+        }}
+        sx={{
+          display: { xs: "block", md: "none" },
+          "& .MuiDrawer-paper": {
+            position: "relative",
+            boxSizing: "border-box",
+            width: SIDEBAR_WITH,
+          },
+        }}
+      >
+        {sidebarBodyMobile ?? sidebarBodyStatus}
+      </Drawer>
+      {/* Desktop sidebar filters */}
+      <Drawer
+        variant="permanent"
+        open
+        sx={{
+          display: { xs: "none", md: "block" },
+          "& .MuiDrawer-paper": {
+            position: "relative",
+            boxSizing: "border-box",
+            width: SIDEBAR_WITH,
+          },
+        }}
+      >
+        {sidebarBodyDesktop ?? sidebarBodyStatus}
+      </Drawer>
+      <Box
+        component="main"
+        sx={{ flexGrow: 1, height: "100vh", overflow: "auto" }}
+      >
+        <Toolbar />
+        <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           {body}
-        </Box>
+        </Container>
       </Box>
-      <Box sx={{ width: { md: SIDEBAR_WITH } }}>
-        {/* Mobile sidebar filters */}
-        <Drawer
-          variant="temporary"
-          open={filtersOpen}
-          onClose={() => {
-            handleToggleFilters();
-          }}
-          ModalProps={{
-            keepMounted: true,
-          }}
-          sx={{
-            display: { xs: "block", md: "none" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: SIDEBAR_WITH,
-            },
-          }}
-        >
-          {sidebarBodyMobile ?? sidebarBodyStatus}
-        </Drawer>
-        {/* Desktop sidebar filters */}
-        <Drawer
-          variant="permanent"
-          open
-          sx={{
-            display: { xs: "none", md: "block" },
-            "& .MuiDrawer-paper": {
-              boxSizing: "border-box",
-              width: SIDEBAR_WITH,
-            },
-          }}
-        >
-          {sidebarBodyDesktop ?? sidebarBodyStatus}
-        </Drawer>
-      </Box>
-    </>
+    </Box>
   );
 };

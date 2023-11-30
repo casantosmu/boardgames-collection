@@ -16,38 +16,79 @@ export const openApiInfo = {
   },
 } as const;
 
-export const login = {
-  description: "Logs in and returns the authentication cookie.",
-  tags: ["authentication"],
+export const register = {
+  description: "Registers a new user and returns authentication information.",
+  tags: ["auth"],
   body: Type.Object({
-    email: Type.String({
-      format: "email",
-    }),
+    email: Type.String(),
     password: Type.String(),
   }),
   response: {
-    "200": {
-      type: "null",
-      description: "Success",
-      headers: {
-        "Set-Cookie": {
-          schema: {
-            type: "string",
-            example: "sessionId=abc123; Path=/; HttpOnly;",
+    "200": Type.Object(
+      {
+        id: Type.Integer(),
+        email: Type.String(),
+      },
+      {
+        description: "Success",
+        headers: {
+          "Set-Cookie": {
+            schema: {
+              type: "string",
+              example: "sessionId=abc123; Path=/; HttpOnly;",
+            },
           },
         },
       },
-    },
+    ),
   },
 } as const;
 
-export type login = {
+export type Register = {
+  body: Static<typeof register.body>;
+  response: {
+    200: Static<(typeof register.response)["200"]>;
+  };
+};
+
+export const login = {
+  description: "Logs in and returns the authentication cookie.",
+  tags: ["auth"],
+  body: Type.Object({
+    email: Type.String(),
+    password: Type.String(),
+  }),
+  response: {
+    "200": Type.Object(
+      {
+        id: Type.Integer(),
+        email: Type.String(),
+      },
+      {
+        description: "Success",
+        headers: {
+          "Set-Cookie": {
+            schema: {
+              type: "string",
+              example: "sessionId=abc123; Path=/; HttpOnly;",
+            },
+          },
+        },
+      },
+    ),
+  },
+} as const;
+
+export type Login = {
   body: Static<typeof login.body>;
+  response: {
+    200: Static<(typeof login.response)["200"]>;
+  };
 };
 
 export const logout = {
   description: "Logs out and clears the authentication cookie.",
-  tags: ["authentication"],
+  tags: ["auth"],
   response: {
     "200": {
       type: "null",

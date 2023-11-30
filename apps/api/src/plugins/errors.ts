@@ -48,7 +48,7 @@ const pluginCb: FastifyPluginAsync = async (fastify) => {
       return reply.code(error.statusCode).send({ error: error.message });
     }
 
-    if (error.code === "FST_ERR_VALIDATION") {
+    if (error.validation) {
       request.log.warn(error);
       return reply.code(400).send({ error: error.message });
     }

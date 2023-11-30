@@ -8,14 +8,19 @@ import { openApiInfo } from "dtos/v1";
 
 declare module "fastify" {
   interface Session {
-    authenticated?: boolean;
+    user?: {
+      id: number;
+      email: string;
+    };
   }
 }
 
-const pluginCb: FastifyPluginAsync<{
+interface Options {
   secret: string;
   secure: boolean;
-}> = async (fastify, options) => {
+}
+
+const pluginCb: FastifyPluginAsync<Options> = async (fastify, options) => {
   const ioRedis = new Redis({
     enableAutoPipelining: true,
     lazyConnect: true,

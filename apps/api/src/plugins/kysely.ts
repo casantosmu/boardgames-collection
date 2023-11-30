@@ -8,10 +8,11 @@ declare module "fastify" {
   }
 }
 
-const pluginCb: FastifyPluginAsync<{ url: string }> = async (
-  fastify,
-  options,
-) => {
+interface Options {
+  url: string;
+}
+
+const pluginCb: FastifyPluginAsync<Options> = async (fastify, options) => {
   const kysely = createKyselyInstance(options.url, {
     logger(data) {
       fastify.log.debug(data);

@@ -3,7 +3,7 @@ import { GetBoardgames, GetClassifications } from "dtos/v1";
 
 export const getImageSrc = (path: string): string => path;
 
-class ApiError extends Error {
+export class ApiError extends Error {
   constructor(readonly statusCode: number) {
     super();
   }
@@ -33,7 +33,7 @@ interface UseFetchOptions {
   >;
 }
 
-const getApiUrl = (origin: string, path: string): string =>
+export const getApiUrl = (origin: string, path: string): string =>
   `${origin.endsWith("/") ? origin.slice(0, -1) : origin}/api/${
     path.startsWith("/") ? path.slice(1) : path
   }`;

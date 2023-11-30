@@ -8,7 +8,7 @@ import { gracefulShutdownPlugin } from "./plugins/graceful-shutdown.js";
 import { boardgamesRoutes } from "./routes/boardgames.js";
 import { classificationsRoutes } from "./routes/classifications.js";
 import { pingRoutes } from "./routes/ping.js";
-import { authenticationRoutes } from "./routes/authentication.js";
+import { authRoutes } from "./routes/auth.js";
 import { sessionPlugin } from "./plugins/session.js";
 
 if (!process.env["PG_URL"]) {
@@ -57,7 +57,7 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   await app.register(classificationsRoutes, {
     prefix: "/v1",
   });
-  await app.register(authenticationRoutes, {
+  await app.register(authRoutes, {
     prefix: "/v1",
   });
   await app.register(pingRoutes, {
