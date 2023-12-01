@@ -20,7 +20,10 @@ interface Options {
   secure: boolean;
 }
 
-const pluginCb: FastifyPluginAsync<Options> = async (fastify, options) => {
+const pluginCallback: FastifyPluginAsync<Options> = async (
+  fastify,
+  options,
+) => {
   const ioRedis = new Redis({
     enableAutoPipelining: true,
     lazyConnect: true,
@@ -50,4 +53,4 @@ const pluginCb: FastifyPluginAsync<Options> = async (fastify, options) => {
   });
 };
 
-export const sessionPlugin = fp(pluginCb);
+export const sessionPlugin = fp(pluginCallback);

@@ -20,3 +20,25 @@ export const removeUndefinedValuesFromObject = <
   }
   return result as UndefinedToOptional<T>;
 };
+
+interface Ok<T> {
+  success: true;
+  data: T;
+}
+
+interface Err<E> {
+  success: false;
+  error: E;
+}
+
+export type Result<T, E> = Ok<T> | Err<E>;
+
+export const ok = <const T>(data: T): Ok<T> => ({
+  success: true,
+  data,
+});
+
+export const err = <const E>(error: E): Err<E> => ({
+  success: false,
+  error,
+});

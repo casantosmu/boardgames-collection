@@ -1,7 +1,7 @@
-import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
-import { login, logout, register } from "common/dtos/v1";
 import { compare as bcryptCompare, hash as bcryptHash } from "bcrypt";
+import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { errorCodes, regexp } from "common";
+import { login, logout, register } from "common/dtos/v1";
 
 const SALT_ROUNDS = 10;
 

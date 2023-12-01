@@ -56,7 +56,7 @@ export class PlaywrightScraper implements Scraper {
       const elements = await this.page
         .locator(".collection_objectname a")
         .all();
-      if (!elements.length) {
+      if (elements.length === 0) {
         throw new Error("Anchor elements not found");
       }
       return await Promise.all(
@@ -69,10 +69,10 @@ export class PlaywrightScraper implements Scraper {
           return href;
         }),
       );
-    } catch (err) {
-      const error = new Error(`Error while scraping ${listLink}`);
-      error.cause = err;
-      throw error;
+    } catch (error) {
+      const customError = new Error(`Error while scraping ${listLink}`);
+      customError.cause = error;
+      throw customError;
     }
   }
 
@@ -87,10 +87,10 @@ export class PlaywrightScraper implements Scraper {
         throw new Error(`Invalid game data: ${validation.error.message}`);
       }
       return validation.data;
-    } catch (err) {
-      const error = new Error(`Error while scraping ${gameLink}`);
-      error.cause = err;
-      throw error;
+    } catch (error) {
+      const customError = new Error(`Error while scraping ${gameLink}`);
+      customError.cause = error;
+      throw customError;
     }
   }
 

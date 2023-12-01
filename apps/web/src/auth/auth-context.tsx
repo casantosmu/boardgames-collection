@@ -17,7 +17,7 @@ type State = User | null;
 type Action =
   | {
       type: "LOGIN";
-      payload: State;
+      payload: User;
     }
   | {
       type: "LOGOUT";

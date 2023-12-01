@@ -8,11 +8,12 @@ const setTimeOut = (event: string): NodeJS.Timeout => {
   return setTimeout(() => {
     // eslint-disable-next-line no-console
     console.error(`Grateful shutdown ${event} timed out. Exiting abruptly..`);
+    // eslint-disable-next-line unicorn/no-process-exit
     process.exit(1);
-  }, 10000);
+  }, 10 * 1000);
 };
 
-const pluginCb: FastifyPluginAsync = async (fastify) => {
+const pluginCallback: FastifyPluginAsync = async (fastify) => {
   for (const event of SIGNAL_EVENTS) {
     process.once(event, () => {
       fastify.log.info(`Received ${event} signal`);
@@ -35,4 +36,4 @@ const pluginCb: FastifyPluginAsync = async (fastify) => {
   }
 };
 
-export const gracefulShutdownPlugin = fp(pluginCb);
+export const gracefulShutdownPlugin = fp(pluginCallback);

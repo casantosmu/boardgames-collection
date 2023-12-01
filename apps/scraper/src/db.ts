@@ -112,14 +112,14 @@ export class MongoLinkRepository implements LinkRepository {
     updates: UpdateByIdOperation[],
   ): Promise<void> {
     const operations: AnyBulkWriteOperation<LinkDocument>[] = [];
-    inserts.forEach((document) => {
+    for (const document of inserts) {
       operations.push({
         insertOne: {
           document,
         },
       });
-    });
-    updates.forEach(({ id, document }) => {
+    }
+    for (const { id, document } of updates) {
       operations.push({
         updateOne: {
           filter: {
@@ -130,7 +130,7 @@ export class MongoLinkRepository implements LinkRepository {
           },
         },
       });
-    });
+    }
     await this.collection.bulkWrite(operations);
   }
 }

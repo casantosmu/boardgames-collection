@@ -12,7 +12,10 @@ interface Options {
   url: string;
 }
 
-const pluginCb: FastifyPluginAsync<Options> = async (fastify, options) => {
+const pluginCallback: FastifyPluginAsync<Options> = async (
+  fastify,
+  options,
+) => {
   const kysely = createKyselyInstance(options.url, {
     logger(data) {
       fastify.log.debug(data);
@@ -34,4 +37,4 @@ const pluginCb: FastifyPluginAsync<Options> = async (fastify, options) => {
   });
 };
 
-export const kyselyPlugin = fp(pluginCb);
+export const kyselyPlugin = fp(pluginCallback);

@@ -63,7 +63,6 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         query = query.where(({ exists, selectFrom }) =>
           exists(
             selectFrom("bestPlayers as bp")
-              .selectAll()
               .whereRef("bp.boardgameId", "=", "b.boardgameId")
               .where((eb) => {
                 const ands = [];
@@ -85,7 +84,6 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
             types.map((type) =>
               exists(
                 selectFrom("boardgamesTypes as bt")
-                  .selectAll()
                   .whereRef("bt.boardgameId", "=", "b.boardgameId")
                   .where("bt.type", "=", type),
               ),
@@ -100,7 +98,6 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
             categories.map((category) =>
               exists(
                 selectFrom("boardgamesCategories as bc")
-                  .selectAll()
                   .whereRef("bc.boardgameId", "=", "b.boardgameId")
                   .where("bc.category", "=", category),
               ),
@@ -115,7 +112,6 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
             mechanisms.map((mechanism) =>
               exists(
                 selectFrom("boardgamesMechanisms as bm")
-                  .selectAll()
                   .whereRef("bm.boardgameId", "=", "b.boardgameId")
                   .where("bm.mechanism", "=", mechanism),
               ),
