@@ -19,9 +19,9 @@ if (!env.success) {
     `Error loading environment variables:${env.error.errors
       .map(
         (validationError) =>
-          `\n- [${validationError.path.join()}] ${validationError.message}`,
+          `\n- [${validationError.path.join(",")}] ${validationError.message}`,
       )
-      .join()}`,
+      .join(",")}`,
   );
 }
 

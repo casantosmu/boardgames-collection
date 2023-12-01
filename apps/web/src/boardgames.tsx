@@ -23,6 +23,7 @@ import {
   alpha,
   AppBar,
   Container,
+  Snackbar,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -104,17 +105,39 @@ const ListToolbar = ({
   onClickFiltersIcon,
 }: ListToolbarProps): JSX.Element => {
   const auth = useAuth();
+
   const [search, setSearch] = useState(initialSearchValue ?? "");
+  const [error, setError] = useState(false);
 
   const handleLogout = async (): Promise<void> => {
-    await logout();
-    auth.dispatch({
-      type: "LOGOUT",
-    });
+    try {
+      await logout();
+      auth.dispatch({ type: "LOGOUT" });
+    } catch {
+      setError(true);
+    }
   };
 
   return (
     <>
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={() => {
+          setError(false);
+        }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => {
+            setError(false);
+          }}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
+          Something unexpected occurred.
+        </Alert>
+      </Snackbar>
       <AppBar
         position="absolute"
         sx={{
@@ -164,11 +187,7 @@ const ListToolbar = ({
             />
           </Search>
           <Box sx={{ flexGrow: 1 }} />
-          {!auth.state ? (
-            <Button color="inherit" component={Link} to="/login">
-              Login
-            </Button>
-          ) : (
+          {auth.state ? (
             <Button
               color="inherit"
               onClick={() => {
@@ -176,6 +195,10 @@ const ListToolbar = ({
               }}
             >
               Logout
+            </Button>
+          ) : (
+            <Button color="inherit" component={Link} to="/login">
+              Login
             </Button>
           )}
         </Toolbar>
@@ -185,10 +208,10 @@ const ListToolbar = ({
 };
 
 interface FiltersPlayers {
-  minBestPlayers: number | undefined;
-  maxBestPlayers: number | undefined;
   minPlayers: number | undefined;
   maxPlayers: number | undefined;
+  minBestPlayers: number | undefined;
+  maxBestPlayers: number | undefined;
 }
 
 interface FiltersClassifications {
@@ -403,8 +426,8 @@ const buildPlayersRangeString = (
     return `${min}+`;
   }
   const range = [];
-  for (let i = min; i <= max; i++) {
-    range.push(i);
+  for (let index = min; index <= max; index++) {
+    range.push(index);
   }
   return range.join(separator);
 };
@@ -598,7 +621,7 @@ export const Boardgames = (): JSX.Element => {
           }}
           onRowsPerPageChange={(event) => {
             setQueryParams({
-              rowsPerPage: parseInt(event.target.value, 10),
+              rowsPerPage: Number.parseInt(event.target.value, 10),
               page: 0,
             });
           }}

@@ -6,10 +6,10 @@ import {
   RouterProvider,
 } from "react-router-dom";
 import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
-import { Boardgames } from "./Boardgames.tsx";
-import { Login } from "./auth/Login.tsx";
+import { Boardgames } from "./boardgames.tsx";
+import { Login } from "./auth/login.tsx";
 import { AuthProvider } from "./auth/auth-context.tsx";
-import { Register } from "./auth/Register.tsx";
+import { Register } from "./auth/register.tsx";
 
 import "@fontsource/roboto/300.css";
 import "@fontsource/roboto/400.css";
@@ -37,7 +37,7 @@ const router = createBrowserRouter([
   },
 ]);
 
-const rootElement = document.getElementById("root");
+const rootElement = document.querySelector("#root");
 
 if (!rootElement) {
   throw new Error("Root element not found");

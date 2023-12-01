@@ -47,7 +47,7 @@ class ReplyErrors {
   }
 }
 
-const pluginCb: FastifyPluginAsync = async (fastify) => {
+const pluginCallback: FastifyPluginAsync = async (fastify) => {
   fastify.decorateRequest("errors", null);
   fastify.addHook("onRequest", async (request, reply) => {
     reply.errors = new ReplyErrors(reply);
@@ -91,4 +91,4 @@ const pluginCb: FastifyPluginAsync = async (fastify) => {
   });
 };
 
-export const errorsPlugin = fp(pluginCb);
+export const errorsPlugin = fp(pluginCallback);

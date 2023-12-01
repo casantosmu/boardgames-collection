@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
-import { errorCodes } from "common";
+import { errorCodes, regexp } from "common";
 import { register } from "../api";
 import { useAuth } from "./auth-context";
 
@@ -29,44 +29,49 @@ export const Register = (): JSX.Element => {
   const [error, setError] = useState<string | null>();
 
   const handleRegister = async (): Promise<void> => {
-    const result = await register({
-      email: email.value,
-      password: password.value,
-    });
+    try {
+      const result = await register({
+        email: email.value,
+        password: password.value,
+      });
 
-    if (!result.success) {
-      switch (result.error.code) {
-        case errorCodes.invalidEmail: {
-          setEmail({
-            value: email.value,
-            error: true,
-          });
-          setError(null);
-          return;
+      if (!result.success) {
+        switch (result.error.code) {
+          case errorCodes.invalidEmail: {
+            setEmail({
+              value: email.value,
+              error: true,
+            });
+            setError(null);
+            return;
+          }
+          case errorCodes.invalidPassword: {
+            setPassword({
+              value: password.value,
+              error: true,
+            });
+            setError(null);
+            return;
+          }
+          case errorCodes.emailExists: {
+            setError("Email already exists");
+            return;
+          }
+          default: {
+            setError("Something unexpected occurred.");
+            return;
+          }
         }
-        case errorCodes.invalidPassword: {
-          setPassword({
-            value: password.value,
-            error: true,
-          });
-          setError(null);
-          return;
-        }
-        case errorCodes.emailExists: {
-          setError("Email already exists");
-          return;
-        }
-        default:
-          setError("Internal server error");
-          return;
       }
-    }
 
-    auth.dispatch({
-      type: "LOGIN",
-      payload: result.data,
-    });
-    navigate("/");
+      auth.dispatch({
+        type: "LOGIN",
+        payload: result.data,
+      });
+      navigate("/");
+    } catch {
+      setError("Something unexpected occurred.");
+    }
   };
 
   return (
@@ -126,9 +131,7 @@ export const Register = (): JSX.Element => {
             error={password.error}
             value={password.value}
             helperText={
-              password.error
-                ? "Password must contain one digit from 1 to 9, one lowercase letter, one uppercase letter, one special character, no space, and it must be 8-16 characters long."
-                : undefined
+              password.error ? regexp.password.description : undefined
             }
             onChange={(event) => {
               setPassword({

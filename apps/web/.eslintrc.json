@@ -7,7 +7,10 @@
       {
         "ignore": [".svg"]
       }
-    ]
+    ],
+    // prefer-top-level-await falsely flagging zod .catch calls as promises
+    // https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2149
+    "unicorn/prefer-top-level-await": "off"
   },
   "ignorePatterns": ["/vite.config.ts"]
 }

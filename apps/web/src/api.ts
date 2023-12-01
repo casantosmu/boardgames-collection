@@ -6,30 +6,9 @@ import {
   Login,
   Register,
 } from "common/dtos/v1";
+import { Result, err, ok } from "./utils";
 
 export const getImageSrc = (path: string): string => path;
-
-interface Ok<T> {
-  success: true;
-  data: T;
-}
-
-interface Err {
-  success: false;
-  error: ApiError;
-}
-
-type Result<T> = Ok<T> | Err;
-
-const ok = <T>(data: T): Ok<T> => ({
-  success: true,
-  data,
-});
-
-const err = (error: ApiError): Err => ({
-  success: false,
-  error,
-});
 
 type UseFetchResult<T> =
   | {
@@ -145,7 +124,7 @@ export const useFetchClassifications = (): UseFetchResult<
 
 export const register = async (
   body: Register["body"],
-): Promise<Result<Register["response"][200]>> => {
+): Promise<Result<Register["response"][200], ApiError>> => {
   const response = await fetch(getApiUrl("/v1/auth/register"), {
     method: "POST",
     body: JSON.stringify(body),
@@ -162,7 +141,7 @@ export const register = async (
 
 export const login = async (
   body: Login["body"],
-): Promise<Result<Login["response"][200]>> => {
+): Promise<Result<Login["response"][200], ApiError>> => {
   const response = await fetch(getApiUrl("/v1/auth/login"), {
     method: "POST",
     body: JSON.stringify(body),

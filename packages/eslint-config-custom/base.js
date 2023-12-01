@@ -6,6 +6,7 @@ module.exports = {
     "plugin:@typescript-eslint/stylistic-type-checked",
     "plugin:import/recommended",
     "plugin:import/typescript",
+    "plugin:unicorn/recommended",
   ],
   plugins: ["@typescript-eslint"],
   parser: "@typescript-eslint/parser",
@@ -33,5 +34,20 @@ module.exports = {
     ],
     "prefer-template": "error",
     "no-console": "error",
+    "unicorn/prevent-abbreviations": [
+      "error",
+      {
+        replacements: {
+          db: false,
+          env: false,
+          params: false,
+          props: false,
+          src: false,
+          err: false,
+        },
+      },
+    ],
+    "unicorn/no-null": "off",
+    "unicorn/no-useless-undefined": "off",
   },
 };
