@@ -4,7 +4,6 @@ import { Redis } from "ioredis";
 import RedisStore from "connect-redis";
 import { fastifyCookie } from "@fastify/cookie";
 import { fastifySession } from "@fastify/session";
-import { openApiInfo } from "common/dtos/v1";
 
 declare module "fastify" {
   interface Session {
@@ -18,6 +17,7 @@ declare module "fastify" {
 interface Options {
   secret: string;
   secure: boolean;
+  cookieName: string;
 }
 
 const pluginCallback: FastifyPluginAsync<Options> = async (
@@ -45,7 +45,7 @@ const pluginCallback: FastifyPluginAsync<Options> = async (
   await fastify.register(fastifyCookie);
   await fastify.register(fastifySession, {
     secret: options.secret,
-    cookieName: openApiInfo.components.securitySchemes.cookieAuth.name,
+    cookieName: options.cookieName,
     cookie: { secure: options.secure },
     store: new RedisStore({
       client: ioRedis,
