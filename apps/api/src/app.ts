@@ -1,15 +1,15 @@
 import { fastify, type FastifyInstance } from "fastify";
 import { fastifySwagger } from "@fastify/swagger";
 import { fastifySwaggerUi } from "@fastify/swagger-ui";
-import { openApiInfo } from "common/dtos/v1";
+import { openapi } from "./openapi.js";
 import { errorsPlugin } from "./plugins/errors.js";
-import { kyselyPlugin } from "./plugins/kysely.js";
 import { gracefulShutdownPlugin } from "./plugins/graceful-shutdown.js";
+import { kyselyPlugin } from "./plugins/kysely.js";
+import { sessionPlugin } from "./plugins/session.js";
+import { authRoutes } from "./routes/auth.js";
 import { boardgamesRoutes } from "./routes/boardgames.js";
 import { classificationsRoutes } from "./routes/classifications.js";
 import { pingRoutes } from "./routes/ping.js";
-import { authRoutes } from "./routes/auth.js";
-import { sessionPlugin } from "./plugins/session.js";
 
 if (!process.env["PG_URL"]) {
   throw new Error(
@@ -44,9 +44,10 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   await app.register(sessionPlugin, {
     secret: SESSION_SECRET,
     secure: IS_PRODUCTION,
+    cookieName: openapi.components.securitySchemes.cookieAuth.name,
   });
   await app.register(fastifySwagger, {
-    openapi: openApiInfo,
+    openapi,
   });
   await app.register(fastifySwaggerUi);
 

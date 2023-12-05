@@ -88,6 +88,7 @@ export const Login = (): JSX.Element => {
                 ...form,
                 email: event.target.value,
               });
+              setError(null);
             }}
           />
           <TextField
@@ -105,6 +106,7 @@ export const Login = (): JSX.Element => {
                 ...form,
                 password: event.target.value,
               });
+              setError(null);
             }}
           />
           <Button

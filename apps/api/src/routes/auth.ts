@@ -1,14 +1,35 @@
 import { compare as bcryptCompare, hash as bcryptHash } from "bcrypt";
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { errorCodes, regexp } from "common";
-import { login, logout, register } from "common/dtos/v1";
+import { errors, login, register } from "common/dtos/v1";
 
 const SALT_ROUNDS = 10;
 
 export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.post(
     "/auth/register",
-    { schema: register },
+    {
+      schema: {
+        summary: "Registers a new user and returns authentication information",
+        tags: ["auth"],
+        body: register.body,
+        response: {
+          200: {
+            ...register.response[200],
+            description: "Success",
+            headers: {
+              "Set-Cookie": {
+                type: "string",
+                example: "sessionId=abc123; Path=/; HttpOnly;",
+              },
+            },
+          },
+          400: errors[400],
+          409: errors[409],
+          500: errors[500],
+        },
+      },
+    },
     async (request, reply) => {
       const { email, password } = request.body;
 
@@ -50,43 +71,83 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
     },
   );
 
-  fastify.post("/auth/login", { schema: login }, async (request, reply) => {
-    const { email, password } = request.body;
+  fastify.post(
+    "/auth/login",
+    {
+      schema: {
+        summary: "Logs in and returns the authentication cookie",
+        tags: ["auth"],
+        body: login.body,
+        response: {
+          200: {
+            ...login.response[200],
+            description: "Success",
+            headers: {
+              "Set-Cookie": {
+                type: "string",
+                example: "sessionId=abc123; Path=/; HttpOnly;",
+              },
+            },
+          },
+          401: errors[401],
+          500: errors[500],
+        },
+      },
+    },
+    async (request, reply) => {
+      const { email, password } = request.body;
 
-    const user = await fastify.kysely
-      .selectFrom("users as u")
-      .select(["u.userId as id", "u.email", "u.password"])
-      .where("u.email", "=", email)
-      .executeTakeFirst();
+      const user = await fastify.kysely
+        .selectFrom("users as u")
+        .select(["u.userId as id", "u.email", "u.password"])
+        .where("u.email", "=", email)
+        .executeTakeFirst();
 
-    if (!user) {
-      return reply.errors.unauthorized({
-        message: "Invalid email or password",
-      });
-    }
+      if (!user) {
+        return reply.errors.unauthorized({
+          message: "Invalid email or password",
+        });
+      }
 
-    const isValidPassword = await bcryptCompare(password, user.password);
+      const isValidPassword = await bcryptCompare(password, user.password);
 
-    if (!isValidPassword) {
-      return reply.errors.unauthorized({
-        message: "Invalid email or password",
-      });
-    }
+      if (!isValidPassword) {
+        return reply.errors.unauthorized({
+          message: "Invalid email or password",
+        });
+      }
 
-    const userData = {
-      id: user.id,
-      email: user.email,
-    };
+      const userData = {
+        id: user.id,
+        email: user.email,
+      };
 
-    request.session.user = userData;
+      request.session.user = userData;
 
-    return userData;
-  });
+      return userData;
+    },
+  );
 
-  fastify.get("/auth/logout", { schema: logout }, async (request, reply) => {
-    if (request.session.user) {
-      await request.session.destroy();
-    }
-    return reply.code(204).send();
-  });
+  fastify.get(
+    "/auth/logout",
+    {
+      schema: {
+        summary: "Logs out and clears the authentication cookie",
+        tags: ["auth"],
+        response: {
+          204: {
+            type: "null",
+            description: "Success",
+          },
+          500: errors[500],
+        },
+      },
+    },
+    async (request, reply) => {
+      if (request.session.user) {
+        await request.session.destroy();
+      }
+      return reply.code(204).send();
+    },
+  );
 };

@@ -117,6 +117,7 @@ export const Register = (): JSX.Element => {
                 value: event.target.value,
                 error: false,
               });
+              setError(null);
             }}
           />
           <TextField
@@ -138,6 +139,7 @@ export const Register = (): JSX.Element => {
                 value: event.target.value,
                 error: false,
               });
+              setError(null);
             }}
           />
           <Button
