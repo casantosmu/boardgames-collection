@@ -10,6 +10,13 @@ import { Result, err, ok } from "./utils";
 
 export const getImageSrc = (path: string): string => path;
 
+const getApiUrl = (path: string): string => {
+  const origin = location.origin;
+  return `${origin.endsWith("/") ? origin.slice(0, -1) : origin}/api/${
+    path.startsWith("/") ? path.slice(1) : path
+  }`;
+};
+
 type UseFetchResult<T> =
   | {
       loading: true;
@@ -33,13 +40,6 @@ interface UseFetchOptions {
     string | number | boolean | (string | number | boolean)[]
   >;
 }
-
-const getApiUrl = (path: string): string => {
-  const origin = location.origin;
-  return `${origin.endsWith("/") ? origin.slice(0, -1) : origin}/api/${
-    path.startsWith("/") ? path.slice(1) : path
-  }`;
-};
 
 const useFetch = <T>(
   path: string,
@@ -79,7 +79,6 @@ const useFetch = <T>(
     };
 
     void doFetch();
-
     return () => {
       ignore = true;
     };
@@ -122,9 +121,11 @@ export const useFetchClassifications = (): UseFetchResult<
   return useFetch("/v1/classifications");
 };
 
+type FetchResult<T> = Result<T, ApiError>;
+
 export const register = async (
   body: Register["body"],
-): Promise<Result<Register["response"][200], ApiError>> => {
+): Promise<FetchResult<Register["response"][200]>> => {
   const response = await fetch(getApiUrl("/v1/auth/register"), {
     method: "POST",
     body: JSON.stringify(body),
@@ -141,7 +142,7 @@ export const register = async (
 
 export const login = async (
   body: Login["body"],
-): Promise<Result<Login["response"][200], ApiError>> => {
+): Promise<FetchResult<Login["response"][200]>> => {
   const response = await fetch(getApiUrl("/v1/auth/login"), {
     method: "POST",
     body: JSON.stringify(body),

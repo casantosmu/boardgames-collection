@@ -97,11 +97,11 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         if (types !== undefined) {
           query = query.where(({ exists, selectFrom, and }) =>
             and(
-              types.map((type) =>
+              types.map((typeId) =>
                 exists(
                   selectFrom("boardgamesTypes as bt")
                     .whereRef("bt.boardgameId", "=", "b.boardgameId")
-                    .where("bt.type", "=", type),
+                    .where("bt.typeId", "=", typeId),
                 ),
               ),
             ),
@@ -111,11 +111,11 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         if (categories !== undefined) {
           query = query.where(({ exists, selectFrom, and }) =>
             and(
-              categories.map((category) =>
+              categories.map((categoryId) =>
                 exists(
                   selectFrom("boardgamesCategories as bc")
                     .whereRef("bc.boardgameId", "=", "b.boardgameId")
-                    .where("bc.category", "=", category),
+                    .where("bc.categoryId", "=", categoryId),
                 ),
               ),
             ),
@@ -125,11 +125,11 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         if (mechanisms !== undefined) {
           query = query.where(({ exists, selectFrom, and }) =>
             and(
-              mechanisms.map((mechanism) =>
+              mechanisms.map((mechanismId) =>
                 exists(
                   selectFrom("boardgamesMechanisms as bm")
                     .whereRef("bm.boardgameId", "=", "b.boardgameId")
-                    .where("bm.mechanism", "=", mechanism),
+                    .where("bm.mechanismId", "=", mechanismId),
                 ),
               ),
             ),

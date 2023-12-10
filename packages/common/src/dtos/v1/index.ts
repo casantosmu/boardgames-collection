@@ -89,9 +89,9 @@ export const getBoardgames = {
     maxPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
     minBestPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
     maxBestPlayers: Type.Optional(Type.Integer({ minimum: 1 })),
-    types: Type.Optional(Type.Array(Type.String())),
-    categories: Type.Optional(Type.Array(Type.String())),
-    mechanisms: Type.Optional(Type.Array(Type.String())),
+    types: Type.Optional(Type.Array(Type.Integer())),
+    categories: Type.Optional(Type.Array(Type.Integer())),
+    mechanisms: Type.Optional(Type.Array(Type.Integer())),
   }),
   response: {
     200: Type.Object({
@@ -143,9 +143,24 @@ export const getClassifications = {
   response: {
     200: Type.Object({
       data: Type.Object({
-        types: Type.Array(Type.String()),
-        categories: Type.Array(Type.String()),
-        mechanisms: Type.Array(Type.String()),
+        types: Type.Array(
+          Type.Object({
+            id: Type.Integer(),
+            name: Type.String(),
+          }),
+        ),
+        categories: Type.Array(
+          Type.Object({
+            id: Type.Integer(),
+            name: Type.String(),
+          }),
+        ),
+        mechanisms: Type.Array(
+          Type.Object({
+            id: Type.Integer(),
+            name: Type.String(),
+          }),
+        ),
       }),
     }),
   },
