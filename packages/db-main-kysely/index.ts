@@ -1,13 +1,6 @@
-import {
-  CamelCasePlugin,
-  Kysely,
-  PostgresDialect,
-  sql,
-  type RawBuilder,
-  type SelectQueryBuilder,
-} from "kysely";
+import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely";
 import pg from "pg";
-import type { DB } from "./generated/db.js";
+import type { DB } from "kysely-codegen";
 
 export { sql } from "kysely";
 export { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
