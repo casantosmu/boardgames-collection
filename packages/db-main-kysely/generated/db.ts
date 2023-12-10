@@ -6,6 +6,7 @@ export type Generated<T> = T extends ColumnType<infer S, infer I, infer U>
 
 export interface AlternateNames {
   alternateName: string;
+  alternateNameId: Generated<number>;
   boardgameId: number;
 }
 
@@ -33,29 +34,32 @@ export interface Boardgames {
 
 export interface BoardgamesCategories {
   boardgameId: number;
-  category: string;
+  categoryId: number;
 }
 
 export interface BoardgamesMechanisms {
   boardgameId: number;
-  mechanism: string;
+  mechanismId: number;
 }
 
 export interface BoardgamesTypes {
   boardgameId: number;
-  type: string;
+  typeId: number;
 }
 
 export interface Categories {
-  category: string;
+  categoryId: Generated<number>;
+  categoryName: string;
 }
 
 export interface Mechanisms {
-  mechanism: string;
+  mechanismId: Generated<number>;
+  mechanismName: string;
 }
 
 export interface Types {
-  type: string;
+  typeId: Generated<number>;
+  typeName: string;
 }
 
 export interface Users {

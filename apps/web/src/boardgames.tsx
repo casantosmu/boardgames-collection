@@ -40,16 +40,22 @@ import {
 } from "./api";
 import { removeUndefinedValuesFromObject } from "./utils";
 import { useAuth } from "./auth/auth-context";
+import type {
+  Type,
+  Category,
+  Mechanism,
+  Classification,
+  PlayersRange,
+  Boardgame,
+} from "./types";
 
 const filtersSchemas = {
   rowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
   page: z.coerce.number().int().nonnegative().catch(0),
   search: z.string().trim().optional().catch(undefined),
   players: z.coerce.number().int().positive().optional().catch(undefined),
-  classification: z.array(z.string().trim()).optional().catch(undefined),
+  classification: z.array(z.coerce.number().int()).optional().catch(undefined),
 };
-
-type Classification = "types" | "categories" | "mechanisms";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -109,6 +115,10 @@ const ListToolbar = ({
   const [search, setSearch] = useState(initialSearchValue ?? "");
   const [error, setError] = useState(false);
 
+  const handleCloseError = (): void => {
+    setError(false);
+  };
+
   const handleLogout = async (): Promise<void> => {
     try {
       await logout();
@@ -124,13 +134,13 @@ const ListToolbar = ({
         open={!!error}
         autoHideDuration={6000}
         onClose={() => {
-          setError(false);
+          handleCloseError();
         }}
         anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
         <Alert
           onClose={() => {
-            setError(false);
+            handleCloseError();
           }}
           severity="error"
           sx={{ width: "100%" }}
@@ -214,21 +224,27 @@ interface FiltersPlayers {
   maxBestPlayers: number | undefined;
 }
 
-interface FiltersClassifications {
-  types: string[] | undefined;
-  categories: string[] | undefined;
-  mechanisms: string[] | undefined;
+interface FiltersClassificationsValues {
+  types: number[] | undefined;
+  categories: number[] | undefined;
+  mechanisms: number[] | undefined;
+}
+
+interface FiltersClassificationsOptions {
+  types: Type[];
+  categories: Category[];
+  mechanisms: Mechanism[];
 }
 
 interface FiltersSidebarProps {
-  // Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.
+  /** Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.  */
   kind: string;
   onClose?: () => void;
   initialPlayers: FiltersPlayers;
   onFilterPlayers: (value: FiltersPlayers) => void;
-  classificationsValues: FiltersClassifications;
-  classificationsOptions: FiltersClassifications;
-  onFilterClassification: (kind: Classification, value: string[]) => void;
+  classificationsValues: FiltersClassificationsValues;
+  classificationsOptions: FiltersClassificationsOptions;
+  onFilterClassification: (kind: Classification, value: number[]) => void;
 }
 
 const FiltersSidebarForm = ({
@@ -246,6 +262,42 @@ const FiltersSidebarForm = ({
     minBestPlayers: initialPlayers.minBestPlayers?.toString() ?? "",
     maxBestPlayers: initialPlayers.maxBestPlayers?.toString() ?? "",
   });
+
+  const typesValues =
+    classificationsValues.types?.map((id) => {
+      const options = classificationsOptions.types;
+      const foundOption = options.find((option) => id === option.id);
+      if (!foundOption) {
+        throw new Error(
+          `No option found for type ${id}: ${JSON.stringify(options)}`,
+        );
+      }
+      return foundOption;
+    }) ?? [];
+
+  const categoriesValues =
+    classificationsValues.categories?.map((id) => {
+      const options = classificationsOptions.categories;
+      const foundOption = options.find((option) => id === option.id);
+      if (!foundOption) {
+        throw new Error(
+          `No option found for category ${id}: ${JSON.stringify(options)}`,
+        );
+      }
+      return foundOption;
+    }) ?? [];
+
+  const mechanismsValues =
+    classificationsValues.mechanisms?.map((id) => {
+      const options = classificationsOptions.mechanisms;
+      const foundOption = options.find((option) => id === option.id);
+      if (!foundOption) {
+        throw new Error(
+          `No option found for mechanism ${id}: ${JSON.stringify(options)}`,
+        );
+      }
+      return foundOption;
+    }) ?? [];
 
   const handleOnSubmitPlayers = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -367,53 +419,60 @@ const FiltersSidebarForm = ({
         <Autocomplete
           multiple
           id={`${kind}-types`}
-          value={classificationsValues.types ?? []}
-          options={classificationsOptions.types ?? []}
+          value={typesValues}
+          options={classificationsOptions.types}
+          getOptionLabel={(option) => option.name}
           renderInput={(params) => (
             // @ts-expect-error MUI error
             <TextField {...params} variant="standard" label="Types" />
           )}
           onChange={(event, value) => {
-            onFilterClassification("types", value);
+            onFilterClassification(
+              "types",
+              value.map((type) => type.id),
+            );
           }}
         />
         <Autocomplete
           sx={{ paddingTop: 2 }}
           multiple
           id={`${kind}-categories`}
-          value={classificationsValues.categories ?? []}
-          options={classificationsOptions.categories ?? []}
+          value={categoriesValues}
+          options={classificationsOptions.categories}
+          getOptionLabel={(option) => option.name}
           renderInput={(params) => (
             // @ts-expect-error MUI error
             <TextField {...params} variant="standard" label="Categories" />
           )}
           onChange={(event, value) => {
-            onFilterClassification("categories", value);
+            onFilterClassification(
+              "categories",
+              value.map((type) => type.id),
+            );
           }}
         />
         <Autocomplete
           sx={{ paddingTop: 2 }}
           multiple
           id={`${kind}-mechanisms`}
-          value={classificationsValues.mechanisms ?? []}
-          options={classificationsOptions.mechanisms ?? []}
+          value={mechanismsValues}
+          options={classificationsOptions.mechanisms}
+          getOptionLabel={(option) => option.name}
           renderInput={(params) => (
             // @ts-expect-error MUI error
             <TextField {...params} variant="standard" label="Mechanisms" />
           )}
           onChange={(event, value) => {
-            onFilterClassification("mechanisms", value);
+            onFilterClassification(
+              "mechanisms",
+              value.map((type) => type.id),
+            );
           }}
         />
       </Box>
     </>
   );
 };
-
-interface PlayersRange {
-  min: number;
-  max: number | null;
-}
 
 const buildPlayersRangeString = (
   { min, max }: PlayersRange,
@@ -432,27 +491,8 @@ const buildPlayersRangeString = (
   return range.join(separator);
 };
 
-interface BoardgamesListItem {
-  id: number;
-  name: string;
-  images: {
-    "96x96": string;
-  };
-  yearPublished: number;
-  shortDescription: string | null;
-  rate: number;
-  complexity: number;
-  duration: {
-    min: number;
-    max: number;
-  };
-  minAge: number;
-  players: PlayersRange;
-  bestPlayers: PlayersRange[];
-}
-
 interface BoardgamesListProps {
-  boardgames: BoardgamesListItem[];
+  boardgames: Boardgame[];
 }
 
 const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
@@ -522,9 +562,9 @@ interface QueryParams {
   maxPlayers: number | undefined;
   minBestPlayers: number | undefined;
   maxBestPlayers: number | undefined;
-  types: string[] | undefined;
-  categories: string[] | undefined;
-  mechanisms: string[] | undefined;
+  types: number[] | undefined;
+  categories: number[] | undefined;
+  mechanisms: number[] | undefined;
 }
 
 const parseQueryParams = (params: Record<string, unknown>): QueryParams => ({
@@ -571,7 +611,7 @@ export const Boardgames = (): JSX.Element => {
 
   const handleOnFilterClassification = (
     kind: Classification,
-    value: string[],
+    value: number[],
   ): void => {
     setQueryParams({
       [kind]: value,

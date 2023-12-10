@@ -42,14 +42,13 @@ export const up = async (db: Kysely<any>): Promise<void> => {
 
   await db.schema
     .createTable("alternate_names")
+    .addColumn("alternate_name_id", "integer", (col) =>
+      col.primaryKey().generatedByDefaultAsIdentity(),
+    )
     .addColumn("alternate_name", "text", (col) => col.notNull())
     .addColumn("boardgame_id", "integer", (col) =>
       col.notNull().references("boardgames.boardgame_id").onDelete("cascade"),
     )
-    .addPrimaryKeyConstraint("alternate_names_pkey", [
-      "alternate_name",
-      "boardgame_id",
-    ])
     .execute();
 
   await db.schema
@@ -74,68 +73,77 @@ export const up = async (db: Kysely<any>): Promise<void> => {
 
   await db.schema
     .createTable("categories")
-    .addColumn("category", "text", (col) => col.primaryKey().notNull())
+    .addColumn("category_id", "integer", (col) =>
+      col.primaryKey().generatedByDefaultAsIdentity(),
+    )
+    .addColumn("category_name", "text", (col) => col.notNull().unique())
     .execute();
 
   await db.schema
     .createTable("mechanisms")
-    .addColumn("mechanism", "text", (col) => col.primaryKey().notNull())
+    .addColumn("mechanism_id", "integer", (col) =>
+      col.primaryKey().generatedByDefaultAsIdentity(),
+    )
+    .addColumn("mechanism_name", "text", (col) => col.notNull().unique())
     .execute();
 
   await db.schema
     .createTable("types")
-    .addColumn("type", "text", (col) => col.primaryKey().notNull())
+    .addColumn("type_id", "integer", (col) =>
+      col.primaryKey().generatedByDefaultAsIdentity(),
+    )
+    .addColumn("type_name", "text", (col) => col.notNull().unique())
     .execute();
 
   await db.schema
     .createTable("boardgames_categories")
-    .addColumn("category", "text", (col) =>
-      col
-        .notNull()
-        .references("categories.category")
-        .onUpdate("cascade")
-        .onDelete("cascade"),
+    .addColumn("category_id", "integer", (col) =>
+      col.notNull().references("categories.category_id").onDelete("cascade"),
     )
     .addColumn("boardgame_id", "integer", (col) =>
       col.notNull().references("boardgames.boardgame_id").onDelete("cascade"),
     )
     .addPrimaryKeyConstraint("boardgames_categories_pkey", [
-      "category",
+      "category_id",
       "boardgame_id",
     ])
     .execute();
 
   await db.schema
     .createTable("boardgames_mechanisms")
-    .addColumn("mechanism", "text", (col) =>
-      col
-        .notNull()
-        .references("mechanisms.mechanism")
-        .onUpdate("cascade")
-        .onDelete("cascade"),
+    .addColumn("mechanism_id", "integer", (col) =>
+      col.notNull().references("mechanisms.mechanism_id").onDelete("cascade"),
     )
     .addColumn("boardgame_id", "integer", (col) =>
       col.notNull().references("boardgames.boardgame_id").onDelete("cascade"),
     )
     .addPrimaryKeyConstraint("boardgames_mechanisms_pkey", [
-      "mechanism",
+      "mechanism_id",
       "boardgame_id",
     ])
     .execute();
 
   await db.schema
     .createTable("boardgames_types")
-    .addColumn("type", "text", (col) =>
-      col
-        .notNull()
-        .references("types.type")
-        .onUpdate("cascade")
-        .onDelete("cascade"),
+    .addColumn("type_id", "integer", (col) =>
+      col.notNull().references("types.type_id").onDelete("cascade"),
     )
     .addColumn("boardgame_id", "integer", (col) =>
       col.notNull().references("boardgames.boardgame_id").onDelete("cascade"),
     )
-    .addPrimaryKeyConstraint("boardgames_types_pkey", ["type", "boardgame_id"])
+    .addPrimaryKeyConstraint("boardgames_types_pkey", [
+      "type_id",
+      "boardgame_id",
+    ])
+    .execute();
+
+  await db.schema
+    .createTable("users")
+    .addColumn("user_id", "integer", (col) =>
+      col.primaryKey().generatedByDefaultAsIdentity(),
+    )
+    .addColumn("email", "text", (col) => col.notNull().unique())
+    .addColumn("password", "text", (col) => col.notNull())
     .execute();
 };
 
@@ -149,4 +157,5 @@ export const down = async (db: Kysely<any>): Promise<void> => {
   await db.schema.dropTable("boardgames_categories").execute();
   await db.schema.dropTable("boardgames_mechanisms").execute();
   await db.schema.dropTable("boardgames_types").execute();
+  await db.schema.dropTable("users").execute();
 };

@@ -24,28 +24,22 @@ export const classificationsRoutes: FastifyPluginAsyncTypebox = async (
         const [types, categories, mechanisms] = await Promise.all([
           trx
             .selectFrom("types as t")
-            .select("t.type")
-            .orderBy("t.type")
+            .select(["t.typeId as id", "t.typeName as name"])
+            .orderBy("t.typeName")
             .execute(),
           trx
             .selectFrom("categories as c")
-            .select("c.category")
-            .orderBy("c.category")
+            .select(["c.categoryId as id", "c.categoryName as name"])
+            .orderBy("c.categoryName")
             .execute(),
           trx
             .selectFrom("mechanisms as m")
-            .select("m.mechanism")
-            .orderBy("m.mechanism")
+            .select(["m.mechanismId as id", "m.mechanismName as name"])
+            .orderBy("m.mechanismName")
             .execute(),
         ]);
 
-        return {
-          data: {
-            types: types.map((type) => type.type),
-            categories: categories.map((category) => category.category),
-            mechanisms: mechanisms.map((mechanism) => mechanism.mechanism),
-          },
-        };
+        return { data: { types, categories, mechanisms } };
       });
     },
   );

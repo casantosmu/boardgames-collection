@@ -60,8 +60,9 @@ try {
           .insertInto("alternateNames")
           .values(
             boardgame.alternateNames.map((alternateName) => ({
+              alternateNameId: alternateName.id,
+              alternateName: alternateName.name,
               boardgameId: boardgame.id,
-              alternateName,
             })),
           )
           .onConflict((oc) => oc.doNothing())
@@ -91,7 +92,8 @@ try {
           .insertInto("types")
           .values(
             boardgame.types.map((type) => ({
-              type,
+              typeId: type.id,
+              typeName: type.name,
             })),
           )
           .onConflict((oc) => oc.doNothing())
@@ -106,7 +108,7 @@ try {
           .values(
             boardgame.types.map((type) => ({
               boardgameId: boardgame.id,
-              type,
+              typeId: type.id,
             })),
           )
           .onConflict((oc) => oc.doNothing())
@@ -120,7 +122,8 @@ try {
           .insertInto("mechanisms")
           .values(
             boardgame.mechanisms.map((mechanism) => ({
-              mechanism,
+              mechanismId: mechanism.id,
+              mechanismName: mechanism.name,
             })),
           )
           .onConflict((oc) => oc.doNothing())
@@ -135,7 +138,7 @@ try {
           .values(
             boardgame.mechanisms.map((mechanism) => ({
               boardgameId: boardgame.id,
-              mechanism,
+              mechanismId: mechanism.id,
             })),
           )
           .onConflict((oc) => oc.doNothing())
@@ -149,7 +152,8 @@ try {
           .insertInto("categories")
           .values(
             boardgame.categories.map((category) => ({
-              category,
+              categoryId: category.id,
+              categoryName: category.name,
             })),
           )
           .onConflict((oc) => oc.doNothing())
@@ -164,7 +168,7 @@ try {
           .values(
             boardgame.categories.map((category) => ({
               boardgameId: boardgame.id,
-              category,
+              categoryId: category.id,
             })),
           )
           .onConflict((oc) => oc.doNothing())
