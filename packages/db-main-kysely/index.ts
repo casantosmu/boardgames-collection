@@ -12,8 +12,13 @@ import type { DB } from "./generated/db.js";
 export { sql } from "kysely";
 export { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
 
+interface LogData {
+  sql: string;
+  parameters: readonly unknown[];
+}
+
 interface Options {
-  logger: (data: unknown) => void;
+  logger: (data: LogData) => void;
 }
 
 export type KyselyInstance = Kysely<DB>;
