@@ -1,5 +1,8 @@
 #!/bin/bash
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
+
 log() {
   echo "[dev-setup] $1"
 }
@@ -22,6 +25,8 @@ copy_env_file() {
         log "Development environment file $ENV_FILE already exists."
     fi
 }
+
+cd "$PROJECT_DIR" || exit 1
 
 log "Verifying required tools..."
 check_command node
