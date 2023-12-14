@@ -48,7 +48,7 @@ pnpm migrate
 pnpm seed
 
 log "Building and running applications in development mode..."
+pnpm codegen
 pnpm build:packages
-pnpm dev
 
 log "Development environment is set up successfully."

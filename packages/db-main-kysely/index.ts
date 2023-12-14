@@ -1,13 +1,6 @@
-import {
-  CamelCasePlugin,
-  Kysely,
-  PostgresDialect,
-  sql,
-  type RawBuilder,
-  type SelectQueryBuilder,
-} from "kysely";
+import { CamelCasePlugin, Kysely, PostgresDialect } from "kysely";
 import pg from "pg";
-import type { DB } from "./generated/db.js";
+import type { DB } from "kysely-codegen";
 
 export { sql } from "kysely";
 export { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/postgres";
@@ -18,28 +11,33 @@ interface LogData {
 }
 
 interface Options {
-  logger: (data: LogData) => void;
+  logger?: (data: LogData) => void;
 }
 
 export type KyselyInstance = Kysely<DB>;
 
 export const createKyselyInstance = (
   connectionString: string,
-  options: Options,
-): KyselyInstance =>
-  new Kysely<DB>({
+  options?: Options,
+): KyselyInstance => {
+  const { logger } = options ?? {};
+
+  return new Kysely<DB>({
     dialect: new PostgresDialect({
       pool: new pg.Pool({
         connectionString,
       }),
     }),
     plugins: [new CamelCasePlugin()],
-    log(event) {
-      if (event.level === "query") {
-        options.logger({
-          sql: event.query.sql,
-          parameters: event.query.parameters,
-        });
-      }
-    },
+    ...(logger && {
+      log(event) {
+        if (event.level === "query") {
+          logger({
+            sql: event.query.sql,
+            parameters: event.query.parameters,
+          });
+        }
+      },
+    }),
   });
+};
