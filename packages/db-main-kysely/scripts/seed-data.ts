@@ -1,16 +1,15 @@
-import pg from "pg";
-import { Kysely, PostgresDialect, CamelCasePlugin } from "kysely";
-import type { DB } from "../generated/db.js";
+import { createKyselyInstance } from "../index";
 import boardgames from "../seeds/boardgames.json";
 
-const db = new Kysely<DB>({
-  dialect: new PostgresDialect({
-    pool: new pg.Pool({
-      connectionString: process.env["DATABASE_URL"],
-    }),
-  }),
-  plugins: [new CamelCasePlugin()],
-});
+const DATABASE_URL = process.env["DATABASE_URL"];
+
+if (!DATABASE_URL) {
+  throw new Error(
+    "The 'DATABASE_URL' environment variable is required but not provided.",
+  );
+}
+
+const db = createKyselyInstance(DATABASE_URL);
 
 try {
   await db.transaction().execute(async (trx) => {

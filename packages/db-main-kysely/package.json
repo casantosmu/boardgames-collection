@@ -8,7 +8,7 @@
   "scripts": {
     "migrate": "tsx -r dotenv/config scripts/migrator.ts",
     "seed": "tsx -r dotenv/config scripts/seed-data.ts",
-    "codegen": "kysely-codegen --camel-case --dialect postgres --out-file generated/db.ts",
+    "codegen": "kysely-codegen --camel-case --dialect postgres",
     "clear": "rm -fr dist node_modules",
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
