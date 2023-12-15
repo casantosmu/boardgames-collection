@@ -24,10 +24,13 @@ import {
   AppBar,
   Container,
   Snackbar,
+  MenuItem,
+  Menu,
 } from "@mui/material";
 import {
   Search as SearchIcon,
   FilterList as FilterListIcon,
+  AccountCircle,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { z } from "zod";
@@ -99,6 +102,12 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 const SIDEBAR_WITH = 300;
 
+interface AlterState {
+  severity: "success" | "error";
+  title: string;
+  message: string;
+}
+
 interface ListToolbarProps {
   initialSearchValue: string | undefined;
   onSearch: (value: string | undefined) => void;
@@ -112,42 +121,60 @@ const ListToolbar = ({
 }: ListToolbarProps): JSX.Element => {
   const auth = useAuth();
 
+  const [menuElement, setMenuElement] = useState<HTMLElement | null>(null);
   const [search, setSearch] = useState(initialSearchValue ?? "");
-  const [error, setError] = useState(false);
+  const [alert, setAlert] = useState<AlterState | null>(null);
 
-  const handleCloseError = (): void => {
-    setError(false);
+  const handleCloseAlert = (): void => {
+    setAlert(null);
+  };
+
+  const handleCloseMenu = (): void => {
+    setMenuElement(null);
   };
 
   const handleLogout = async (): Promise<void> => {
-    try {
-      await logout();
-      auth.dispatch({ type: "LOGOUT" });
-    } catch {
-      setError(true);
+    const result = await logout();
+    if (!result.success) {
+      setAlert({
+        severity: "error",
+        title: "Error",
+        message: "Something unexpected occurred.",
+      });
+      return;
     }
+    auth.dispatch({ type: "LOGOUT" });
+    handleCloseMenu();
+    setAlert({
+      severity: "success",
+      title: "Logged out",
+      message: "You are now logged out of your account.",
+    });
   };
 
   return (
     <>
-      <Snackbar
-        open={!!error}
-        autoHideDuration={6000}
-        onClose={() => {
-          handleCloseError();
-        }}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-      >
-        <Alert
+      {alert && (
+        <Snackbar
+          open={!!alert}
+          autoHideDuration={6000}
           onClose={() => {
-            handleCloseError();
+            handleCloseAlert();
           }}
-          severity="error"
-          sx={{ width: "100%" }}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          Something unexpected occurred.
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={() => {
+              handleCloseAlert();
+            }}
+            severity={alert.severity}
+            sx={{ width: "100%" }}
+          >
+            <AlertTitle>{alert.title}</AlertTitle>
+            {alert.message}
+          </Alert>
+        </Snackbar>
+      )}
       <AppBar
         position="absolute"
         sx={{
@@ -171,8 +198,13 @@ const ListToolbar = ({
           <Typography
             variant="h6"
             noWrap
-            component="div"
-            sx={{ display: { xs: "none", sm: "block" } }}
+            component={Link}
+            to="/"
+            sx={{
+              display: { xs: "none", sm: "block" },
+              textDecoration: "none",
+              color: "inherit",
+            }}
           >
             Boardgames
           </Typography>
@@ -197,19 +229,50 @@ const ListToolbar = ({
             />
           </Search>
           <Box sx={{ flexGrow: 1 }} />
-          {auth.state ? (
-            <Button
-              color="inherit"
-              onClick={() => {
-                void handleLogout();
-              }}
-            >
-              Logout
-            </Button>
-          ) : (
+          {auth.state?.id === undefined ? (
             <Button color="inherit" component={Link} to="/login">
               Login
             </Button>
+          ) : (
+            <div>
+              <IconButton
+                size="large"
+                aria-label="user menu"
+                aria-controls="menu-appbar"
+                aria-haspopup="true"
+                onClick={(event) => {
+                  setMenuElement(event.currentTarget);
+                }}
+                color="inherit"
+              >
+                <AccountCircle />
+              </IconButton>
+              <Menu
+                id="menu-appbar"
+                anchorEl={menuElement}
+                anchorOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+                keepMounted
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+                open={Boolean(menuElement)}
+                onClose={() => {
+                  handleCloseMenu();
+                }}
+              >
+                <MenuItem
+                  onClick={() => {
+                    void handleLogout();
+                  }}
+                >
+                  Logout
+                </MenuItem>
+              </Menu>
+            </div>
           )}
         </Toolbar>
       </AppBar>

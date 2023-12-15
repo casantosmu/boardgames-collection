@@ -8,6 +8,11 @@ import {
 } from "common/dtos/v1";
 import { Result, err, ok } from "./utils";
 
+const INTERNAL_APP_FETCH_ERROR = {
+  code: "INTERNAL_APP_FETCH_ERROR",
+  message: "Something unexpected occurred ",
+} as const;
+
 export const getImageSrc = (path: string): string => path;
 
 const getApiUrl = (path: string): string => {
@@ -92,7 +97,7 @@ const useFetch = <T>(
     };
   }
 
-  if (!data) {
+  if (data === null) {
     return {
       loading: true,
       error: null,
@@ -126,40 +131,54 @@ type FetchResult<T> = Result<T, ApiError>;
 export const register = async (
   body: Register["body"],
 ): Promise<FetchResult<Register["response"][200]>> => {
-  const response = await fetch(getApiUrl("/v1/auth/register"), {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  const data: unknown = await response.json();
-  if (!response.ok) {
-    return err(data as ApiError);
+  try {
+    const response = await fetch(getApiUrl("/v1/auth/register"), {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data: unknown = await response.json();
+    if (!response.ok) {
+      return err(data as ApiError);
+    }
+    return ok(data as Register["response"][200]);
+  } catch {
+    return err(INTERNAL_APP_FETCH_ERROR);
   }
-  return ok(data as Register["response"][200]);
 };
 
 export const login = async (
   body: Login["body"],
 ): Promise<FetchResult<Login["response"][200]>> => {
-  const response = await fetch(getApiUrl("/v1/auth/login"), {
-    method: "POST",
-    body: JSON.stringify(body),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  const data: unknown = await response.json();
-  if (!response.ok) {
-    return err(data as ApiError);
+  try {
+    const response = await fetch(getApiUrl("/v1/auth/login"), {
+      method: "POST",
+      body: JSON.stringify(body),
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+    const data: unknown = await response.json();
+    if (!response.ok) {
+      return err(data as ApiError);
+    }
+    return ok(data as Login["response"][200]);
+  } catch {
+    return err(INTERNAL_APP_FETCH_ERROR);
   }
-  return ok(data as Login["response"][200]);
 };
 
-export const logout = async (): Promise<void> => {
-  const response = await fetch(getApiUrl("/v1/auth/logout"));
-  if (!response.ok) {
-    throw new Error(response.statusText);
+export const logout = async (): Promise<FetchResult<undefined>> => {
+  try {
+    const response = await fetch(getApiUrl("/v1/auth/logout"));
+    if (!response.ok) {
+      const data = (await response.json()) as ApiError;
+      return err(data);
+    }
+    return ok(undefined);
+  } catch {
+    return err(INTERNAL_APP_FETCH_ERROR);
   }
 };
