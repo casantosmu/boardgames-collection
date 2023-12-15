@@ -134,22 +134,22 @@ const ListToolbar = ({
   };
 
   const handleLogout = async (): Promise<void> => {
-    try {
-      await logout();
-      auth.dispatch({ type: "LOGOUT" });
-      handleCloseMenu();
-      setAlert({
-        severity: "success",
-        title: "Logged out",
-        message: "You are now logged out of your account.",
-      });
-    } catch {
+    const result = await logout();
+    if (!result.success) {
       setAlert({
         severity: "error",
         title: "Error",
         message: "Something unexpected occurred.",
       });
+      return;
     }
+    auth.dispatch({ type: "LOGOUT" });
+    handleCloseMenu();
+    setAlert({
+      severity: "success",
+      title: "Logged out",
+      message: "You are now logged out of your account.",
+    });
   };
 
   return (

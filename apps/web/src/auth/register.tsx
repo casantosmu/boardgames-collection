@@ -29,49 +29,45 @@ export const Register = (): JSX.Element => {
   const [error, setError] = useState<string | null>();
 
   const handleRegister = async (): Promise<void> => {
-    try {
-      const result = await register({
-        email: email.value,
-        password: password.value,
-      });
+    const result = await register({
+      email: email.value,
+      password: password.value,
+    });
 
-      if (!result.success) {
-        switch (result.error.code) {
-          case errorCodes.invalidEmail: {
-            setEmail({
-              value: email.value,
-              error: true,
-            });
-            setError(null);
-            return;
-          }
-          case errorCodes.invalidPassword: {
-            setPassword({
-              value: password.value,
-              error: true,
-            });
-            setError(null);
-            return;
-          }
-          case errorCodes.emailExists: {
-            setError("Email already exists");
-            return;
-          }
-          default: {
-            setError("Something unexpected occurred.");
-            return;
-          }
+    if (!result.success) {
+      switch (result.error.code) {
+        case errorCodes.invalidEmail: {
+          setEmail({
+            value: email.value,
+            error: true,
+          });
+          setError(null);
+          return;
+        }
+        case errorCodes.invalidPassword: {
+          setPassword({
+            value: password.value,
+            error: true,
+          });
+          setError(null);
+          return;
+        }
+        case errorCodes.emailExists: {
+          setError("Email already exists");
+          return;
+        }
+        default: {
+          setError("Something unexpected occurred.");
+          return;
         }
       }
-
-      auth.dispatch({
-        type: "LOGIN",
-        payload: result.data,
-      });
-      navigate("/");
-    } catch {
-      setError("Something unexpected occurred.");
     }
+
+    auth.dispatch({
+      type: "LOGIN",
+      payload: result.data,
+    });
+    navigate("/");
   };
 
   return (

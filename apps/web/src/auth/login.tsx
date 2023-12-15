@@ -23,30 +23,26 @@ export const Login = (): JSX.Element => {
   const [error, setError] = useState<string | null>();
 
   const handleLogin = async (): Promise<void> => {
-    try {
-      const result = await login(form);
+    const result = await login(form);
 
-      if (!result.success) {
-        switch (result.error.code) {
-          case errorCodes.unauthorized: {
-            setError("Invalid email or password");
-            return;
-          }
-          default: {
-            setError("Something unexpected occurred.");
-            return;
-          }
+    if (!result.success) {
+      switch (result.error.code) {
+        case errorCodes.unauthorized: {
+          setError("Invalid email or password");
+          return;
+        }
+        default: {
+          setError("Something unexpected occurred.");
+          return;
         }
       }
-
-      auth.dispatch({
-        type: "LOGIN",
-        payload: result.data,
-      });
-      navigate("/");
-    } catch {
-      setError("Something unexpected occurred.");
     }
+
+    auth.dispatch({
+      type: "LOGIN",
+      payload: result.data,
+    });
+    navigate("/");
   };
 
   return (
