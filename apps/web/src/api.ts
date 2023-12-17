@@ -6,23 +6,37 @@ import {
   Login,
   Register,
 } from "common/dtos/v1";
-import { Result, err, ok } from "./utils";
-
-const INTERNAL_APP_FETCH_ERROR = {
-  code: "INTERNAL_APP_FETCH_ERROR",
-  message: "Something unexpected occurred ",
-} as const;
 
 export const getImageSrc = (path: string): string => path;
 
-const getApiUrl = (path: string): string => {
-  const origin = location.origin;
-  return `${origin.endsWith("/") ? origin.slice(0, -1) : origin}/api/${
-    path.startsWith("/") ? path.slice(1) : path
-  }`;
+type Params = Record<
+  string,
+  string | number | boolean | (string | number | boolean)[]
+>;
+
+const getApiUrl = (path: string, params?: Params): string => {
+  const url = new URL(
+    `/api${path.startsWith("/") ? path : `/${path}`}`,
+    location.origin,
+  );
+
+  if (!params) {
+    return url.toString();
+  }
+
+  for (const [key, value] of Object.entries(params)) {
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        url.searchParams.append(key, item.toString());
+      }
+    } else {
+      url.searchParams.append(key, value.toString());
+    }
+  }
+  return url.toString();
 };
 
-type FetchState<T> =
+type FetchState<TData> =
   | {
       status: "idle";
       error: null;
@@ -41,18 +55,18 @@ type FetchState<T> =
   | {
       status: "success";
       error: null;
-      data: T;
+      data: TData;
     };
 
-type FetchAction<T> =
+type FetchAction<TData> =
   | { type: "INIT" }
-  | { type: "SUCCESS"; payload: T }
+  | { type: "SUCCESS"; payload: TData }
   | { type: "ERROR"; payload: ApiError };
 
-const fetchReducer = <T>(
-  state: FetchState<T>,
-  action: FetchAction<T>,
-): FetchState<T> => {
+const fetchReducer = <TData>(
+  state: FetchState<TData>,
+  action: FetchAction<TData>,
+): FetchState<TData> => {
   switch (action.type) {
     case "INIT": {
       return {
@@ -78,36 +92,21 @@ const fetchReducer = <T>(
   }
 };
 
-interface UseFetchOptions {
-  params?: Record<
-    string,
-    string | number | boolean | (string | number | boolean)[]
-  >;
+interface UseQueryFetch {
+  params?: Params;
 }
 
-const useFetch = <T>(
+const useQuery = <TData>(
   path: string,
-  options?: UseFetchOptions,
-): FetchState<T> => {
-  const [state, dispatch] = useReducer(fetchReducer<T>, {
+  fetchOptions?: UseQueryFetch,
+): FetchState<TData> => {
+  const [state, dispatch] = useReducer(fetchReducer<TData>, {
     status: "idle",
     error: null,
     data: null,
   });
 
-  const urlBuilder = new URL(getApiUrl(path));
-  if (options?.params) {
-    for (const [key, value] of Object.entries(options.params)) {
-      if (Array.isArray(value)) {
-        for (const item of value) {
-          urlBuilder.searchParams.append(key, item.toString());
-        }
-      } else {
-        urlBuilder.searchParams.append(key, value.toString());
-      }
-    }
-  }
-  const url = urlBuilder.toString();
+  const url = getApiUrl(path, fetchOptions?.params);
 
   useEffect(() => {
     let ignore = false;
@@ -116,12 +115,15 @@ const useFetch = <T>(
       dispatch({ type: "INIT" });
 
       const response = await fetch(url);
-      const data: unknown = await response.json();
+      const text = await response.text();
 
-      if (!response.ok && !ignore) {
-        dispatch({ type: "ERROR", payload: data as ApiError });
+      if (response.ok && !ignore) {
+        const data =
+          text.length > 0 ? (JSON.parse(text) as TData) : (undefined as TData);
+        dispatch({ type: "SUCCESS", payload: data });
       } else if (!ignore) {
-        dispatch({ type: "SUCCESS", payload: data as T });
+        const error = JSON.parse(text) as ApiError;
+        dispatch({ type: "ERROR", payload: error });
       }
     };
 
@@ -135,73 +137,90 @@ const useFetch = <T>(
   return state;
 };
 
-export const useFetchBoardgames = (
+interface UseMutationFetch {
+  method: "GET" | "POST" | "PUT";
+  params?: Params;
+}
+
+interface UseMutationOptions<TData> {
+  onSuccess?: (data: TData) => void;
+  onError?: (error: ApiError) => void;
+}
+
+type UseMutation<TBody, TData> = FetchState<TData> & {
+  mutate: (body: TBody) => void;
+};
+
+const useMutation = <TBody, TData>(
+  path: string,
+  fetchOptions: UseMutationFetch,
+  options?: UseMutationOptions<TData>,
+): UseMutation<TBody, TData> => {
+  const [state, dispatch] = useReducer(fetchReducer<TData>, {
+    status: "idle",
+    error: null,
+    data: null,
+  });
+
+  const url = getApiUrl(path, fetchOptions.params);
+
+  const mutate = (body: TBody): void => {
+    const fetchData = async (): Promise<void> => {
+      dispatch({ type: "INIT" });
+
+      const response = await fetch(url, {
+        method: fetchOptions.method,
+        body: JSON.stringify(body),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+      const text = await response.text();
+
+      if (response.ok) {
+        const data =
+          text.length > 0 ? (JSON.parse(text) as TData) : (undefined as TData);
+        dispatch({ type: "SUCCESS", payload: data });
+        options?.onSuccess?.(data);
+      } else {
+        const error = JSON.parse(text) as ApiError;
+        dispatch({ type: "ERROR", payload: error });
+        options?.onError?.(error);
+      }
+    };
+
+    void fetchData();
+  };
+
+  return { ...state, mutate };
+};
+
+export const useBoardgamesQuery = (
   params: GetBoardgames["querystring"],
 ): FetchState<GetBoardgames["response"][200]> => {
-  return useFetch("/v1/boardgames", {
-    params,
-  });
+  return useQuery("/v1/boardgames", { params });
 };
 
-export const useFetchClassifications = (): FetchState<
+export const useClassificationsQuery = (): FetchState<
   GetClassifications["response"][200]
 > => {
-  return useFetch("/v1/classifications");
+  return useQuery("/v1/classifications");
 };
 
-type FetchResult<T> = Result<T, ApiError>;
-
-export const register = async (
-  body: Register["body"],
-): Promise<FetchResult<Register["response"][200]>> => {
-  try {
-    const response = await fetch(getApiUrl("/v1/auth/register"), {
-      method: "POST",
-      body: JSON.stringify(body),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data: unknown = await response.json();
-    if (!response.ok) {
-      return err(data as ApiError);
-    }
-    return ok(data as Register["response"][200]);
-  } catch {
-    return err(INTERNAL_APP_FETCH_ERROR);
-  }
+export const useRegisterMutation = (
+  options?: UseMutationOptions<Register["response"][200]>,
+): UseMutation<Register["body"], Register["response"][200]> => {
+  return useMutation("/v1/auth/register", { method: "POST" }, options);
 };
 
-export const login = async (
-  body: Login["body"],
-): Promise<FetchResult<Login["response"][200]>> => {
-  try {
-    const response = await fetch(getApiUrl("/v1/auth/login"), {
-      method: "POST",
-      body: JSON.stringify(body),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    const data: unknown = await response.json();
-    if (!response.ok) {
-      return err(data as ApiError);
-    }
-    return ok(data as Login["response"][200]);
-  } catch {
-    return err(INTERNAL_APP_FETCH_ERROR);
-  }
+export const useLoginMutation = (
+  options?: UseMutationOptions<Login["response"][200]>,
+): UseMutation<Login["body"], Login["response"][200]> => {
+  return useMutation("/v1/auth/login", { method: "POST" }, options);
 };
 
-export const logout = async (): Promise<FetchResult<undefined>> => {
-  try {
-    const response = await fetch(getApiUrl("/v1/auth/logout"));
-    if (!response.ok) {
-      const data = (await response.json()) as ApiError;
-      return err(data);
-    }
-    return ok(undefined);
-  } catch {
-    return err(INTERNAL_APP_FETCH_ERROR);
-  }
+export const useLogoutMutation = (
+  options?: UseMutationOptions<undefined>,
+): UseMutation<void, undefined> => {
+  return useMutation("/v1/auth/logout", { method: "GET" }, options);
 };

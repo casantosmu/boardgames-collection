@@ -1,44 +1,33 @@
-type UndefinedToOptional<T extends Record<string, unknown>> = {
-  [P in keyof T as undefined extends T[P] ? P : never]?: Exclude<
-    T[P],
+type UndefinedToOptional<Type extends Record<string, unknown>> = {
+  [P in keyof Type as undefined extends Type[P] ? P : never]?: Exclude<
+    Type[P],
     undefined
   >;
 } & {
-  [P in keyof T as undefined extends T[P] ? never : P]: T[P];
+  [P in keyof Type as undefined extends Type[P] ? never : P]: Type[P];
 };
 
 export const removeUndefinedValuesFromObject = <
-  T extends { [P in keyof T]: unknown },
+  Type extends { [P in keyof Type]: unknown },
 >(
-  object: T,
-): UndefinedToOptional<T> => {
+  object: Type,
+): UndefinedToOptional<Type> => {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(object)) {
     if (value !== undefined) {
       result[key] = value;
     }
   }
-  return result as UndefinedToOptional<T>;
+  return result as UndefinedToOptional<Type>;
 };
 
-interface Ok<T> {
-  success: true;
-  data: T;
-}
+type ObjectKeys<Type extends { [P in keyof Type]: unknown }> = `${Exclude<
+  keyof Type,
+  symbol
+>}`;
 
-interface Err<E> {
-  success: false;
-  error: E;
-}
-
-export type Result<T, E> = Ok<T> | Err<E>;
-
-export const ok = <const T>(data: T): Ok<T> => ({
-  success: true,
-  data,
-});
-
-export const err = <const E>(error: E): Err<E> => ({
-  success: false,
-  error,
-});
+export const objectKeys = Object.keys as <
+  Type extends { [P in keyof Type]: unknown },
+>(
+  value: Type,
+) => ObjectKeys<Type>[];

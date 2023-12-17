@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type ChangeEvent, type FormEvent, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -11,63 +11,74 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate } from "react-router-dom";
 import { errorCodes, regexp } from "common";
-import { register } from "../api";
+import { z } from "zod";
+import { useRegisterMutation } from "../api";
+import { objectKeys } from "../utils";
 import { useAuth } from "./auth-context";
+
+const FormData = z.object({
+  email: z.string().regex(regexp.email.pattern),
+  password: z.string().regex(regexp.password.pattern),
+});
 
 export const Register = (): JSX.Element => {
   const navigate = useNavigate();
   const auth = useAuth();
 
-  const [email, setEmail] = useState({
-    value: "",
-    error: false,
+  const { status, error, mutate } = useRegisterMutation({
+    onSuccess(data) {
+      auth.dispatch({
+        type: "LOGIN",
+        payload: data,
+      });
+      navigate("/");
+    },
   });
-  const [password, setPassword] = useState({
-    value: "",
-    error: false,
+
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
   });
-  const [error, setError] = useState<string | null>();
+  const [formError, setFormError] = useState({
+    email: false,
+    password: false,
+  });
 
-  const handleRegister = async (): Promise<void> => {
-    const result = await register({
-      email: email.value,
-      password: password.value,
-    });
-
-    if (!result.success) {
-      switch (result.error.code) {
-        case errorCodes.invalidEmail: {
-          setEmail({
-            value: email.value,
-            error: true,
-          });
-          setError(null);
-          return;
-        }
-        case errorCodes.invalidPassword: {
-          setPassword({
-            value: password.value,
-            error: true,
-          });
-          setError(null);
-          return;
-        }
-        case errorCodes.emailExists: {
-          setError("Email already exists");
-          return;
-        }
-        default: {
-          setError("Something unexpected occurred.");
-          return;
-        }
-      }
+  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    const field = event.target.name as keyof typeof formData;
+    const value = event.target.value;
+    if (formError[field]) {
+      const validation = FormData.shape[field].safeParse(value);
+      setFormError({
+        ...formError,
+        [field]: !validation.success,
+      });
     }
-
-    auth.dispatch({
-      type: "LOGIN",
-      payload: result.data,
+    setFormData({
+      ...formData,
+      [field]: value,
     });
-    navigate("/");
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    const validation = FormData.safeParse(formData);
+    if (validation.success) {
+      const resetFormError = { ...formError };
+      for (const key of objectKeys(formError)) {
+        resetFormError[key] = false;
+      }
+      setFormError(resetFormError);
+      setFormData(validation.data);
+      mutate(validation.data);
+    } else {
+      const errors = validation.error.flatten();
+      const resetFormError = { ...formError };
+      for (const key of objectKeys(errors.fieldErrors)) {
+        resetFormError[key] = true;
+      }
+      setFormError(resetFormError);
+    }
   };
 
   return (
@@ -86,69 +97,54 @@ export const Register = (): JSX.Element => {
         <Typography component="h1" variant="h5">
           Register
         </Typography>
-        <Box
-          component="form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleRegister();
-          }}
-          noValidate
-          sx={{ mt: 1 }}
-        >
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
           <TextField
             margin="normal"
             required
             fullWidth
             id="email"
-            label="Email Address"
             name="email"
+            label="Email Address"
             autoComplete="email"
-            error={email.error}
-            value={email.value}
+            error={formError.email}
+            value={formData.email}
             helperText={
-              email.error ? "Please enter a valid email address." : undefined
+              formError.email
+                ? "Please enter a valid email address."
+                : undefined
             }
-            onChange={(event) => {
-              setEmail({
-                value: event.target.value,
-                error: false,
-              });
-              setError(null);
-            }}
+            onChange={handleChange}
           />
           <TextField
             margin="normal"
             required
             fullWidth
+            id="password"
             name="password"
             label="Password"
             type="password"
-            id="password"
-            autoComplete="current-password"
-            error={password.error}
-            value={password.value}
+            autoComplete="new-password"
+            error={formError.password}
+            value={formData.password}
             helperText={
-              password.error ? regexp.password.description : undefined
+              formError.password ? regexp.password.description : undefined
             }
-            onChange={(event) => {
-              setPassword({
-                value: event.target.value,
-                error: false,
-              });
-              setError(null);
-            }}
+            onChange={handleChange}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={status === "loading"}
           >
             Register
           </Button>
           {error && (
             <Alert variant="outlined" severity="error" sx={{ mb: 2 }}>
-              {error}
+              {error.code === errorCodes.emailExists
+                ? "Email already exists"
+                : "Something unexpected occurred."}
             </Alert>
           )}
         </Box>

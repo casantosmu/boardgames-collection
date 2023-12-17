@@ -37,9 +37,9 @@ import { z } from "zod";
 import { useQueryParams } from "./query-params";
 import {
   getImageSrc,
-  logout,
-  useFetchBoardgames,
-  useFetchClassifications,
+  useBoardgamesQuery,
+  useClassificationsQuery,
+  useLogoutMutation,
 } from "./api";
 import { removeUndefinedValuesFromObject } from "./utils";
 import { useAuth } from "./auth/auth-context";
@@ -121,9 +121,9 @@ const ListToolbar = ({
 }: ListToolbarProps): JSX.Element => {
   const auth = useAuth();
 
+  const [alert, setAlert] = useState<AlterState | null>(null);
   const [menuElement, setMenuElement] = useState<HTMLElement | null>(null);
   const [search, setSearch] = useState(initialSearchValue ?? "");
-  const [alert, setAlert] = useState<AlterState | null>(null);
 
   const handleCloseAlert = (): void => {
     setAlert(null);
@@ -133,24 +133,25 @@ const ListToolbar = ({
     setMenuElement(null);
   };
 
-  const handleLogout = async (): Promise<void> => {
-    const result = await logout();
-    if (!result.success) {
+  const { status, mutate } = useLogoutMutation({
+    onSuccess() {
+      auth.dispatch({ type: "LOGOUT" });
+      setAlert({
+        severity: "success",
+        title: "Logged out",
+        message: "You are now logged out of your account.",
+      });
+      handleCloseMenu();
+    },
+    onError() {
       setAlert({
         severity: "error",
         title: "Error",
         message: "Something unexpected occurred.",
       });
-      return;
-    }
-    auth.dispatch({ type: "LOGOUT" });
-    handleCloseMenu();
-    setAlert({
-      severity: "success",
-      title: "Logged out",
-      message: "You are now logged out of your account.",
-    });
-  };
+      handleCloseMenu();
+    },
+  });
 
   return (
     <>
@@ -158,15 +159,11 @@ const ListToolbar = ({
         <Snackbar
           open={!!alert}
           autoHideDuration={6000}
-          onClose={() => {
-            handleCloseAlert();
-          }}
+          onClose={handleCloseAlert}
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
         >
           <Alert
-            onClose={() => {
-              handleCloseAlert();
-            }}
+            onClose={handleCloseAlert}
             severity={alert.severity}
             sx={{ width: "100%" }}
           >
@@ -188,9 +185,7 @@ const ListToolbar = ({
             edge="start"
             color="inherit"
             aria-label="open filters"
-            onClick={() => {
-              onClickFiltersIcon();
-            }}
+            onClick={onClickFiltersIcon}
             sx={{ display: { md: "none" }, mr: 2 }}
           >
             <FilterListIcon />
@@ -266,8 +261,9 @@ const ListToolbar = ({
               >
                 <MenuItem
                   onClick={() => {
-                    void handleLogout();
+                    mutate();
                   }}
+                  disabled={status === "loading"}
                 >
                   Logout
                 </MenuItem>
@@ -646,10 +642,10 @@ const parseQueryParams = (params: Record<string, unknown>): QueryParams => ({
 export const Boardgames = (): JSX.Element => {
   const [queryParams, setQueryParams] = useQueryParams(parseQueryParams);
 
-  const fetchBoardgamesParams = removeUndefinedValuesFromObject(queryParams);
-  const fetchBoardgames = useFetchBoardgames(fetchBoardgamesParams);
+  const boardgamesQueryParams = removeUndefinedValuesFromObject(queryParams);
+  const boardgamesQuery = useBoardgamesQuery(boardgamesQueryParams);
 
-  const fetchClassification = useFetchClassifications();
+  const classificationsQuery = useClassificationsQuery();
 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -682,7 +678,7 @@ export const Boardgames = (): JSX.Element => {
   };
 
   let body;
-  if (fetchBoardgames.status === "error") {
+  if (boardgamesQuery.status === "error") {
     body = (
       <Box
         sx={{
@@ -697,8 +693,8 @@ export const Boardgames = (): JSX.Element => {
       </Box>
     );
   } else if (
-    fetchBoardgames.status === "idle" ||
-    fetchBoardgames.status === "loading"
+    boardgamesQuery.status === "idle" ||
+    boardgamesQuery.status === "loading"
   ) {
     body = (
       <Box
@@ -713,11 +709,11 @@ export const Boardgames = (): JSX.Element => {
   } else {
     body = (
       <>
-        <BoardgamesList boardgames={fetchBoardgames.data.data} />
+        <BoardgamesList boardgames={boardgamesQuery.data.data} />
         <TablePagination
           component="div"
           rowsPerPageOptions={[10, 25, 50]}
-          count={fetchBoardgames.data.metadata.count}
+          count={boardgamesQuery.data.metadata.count}
           rowsPerPage={queryParams.rowsPerPage}
           page={queryParams.page}
           onPageChange={(_, newPage) => {
@@ -739,7 +735,7 @@ export const Boardgames = (): JSX.Element => {
   let sidebarBodyStatus;
   let sidebarBodyDesktop;
   let sidebarBodyMobile;
-  if (fetchClassification.status === "error") {
+  if (classificationsQuery.status === "error") {
     sidebarBodyStatus = (
       <Box
         sx={{
@@ -754,8 +750,8 @@ export const Boardgames = (): JSX.Element => {
       </Box>
     );
   } else if (
-    fetchClassification.status === "idle" ||
-    fetchClassification.status === "loading"
+    classificationsQuery.status === "idle" ||
+    classificationsQuery.status === "loading"
   ) {
     sidebarBodyStatus = (
       <Box
@@ -779,7 +775,7 @@ export const Boardgames = (): JSX.Element => {
           handleOnFilterPlayers(value);
         }}
         classificationsValues={queryParams}
-        classificationsOptions={fetchClassification.data.data}
+        classificationsOptions={classificationsQuery.data.data}
         onFilterClassification={(kind, value) => {
           handleOnFilterClassification(kind, value);
         }}
@@ -793,7 +789,7 @@ export const Boardgames = (): JSX.Element => {
           handleOnFilterPlayers(value);
         }}
         classificationsValues={queryParams}
-        classificationsOptions={fetchClassification.data.data}
+        classificationsOptions={classificationsQuery.data.data}
         onFilterClassification={(kind, value) => {
           handleOnFilterClassification(kind, value);
         }}
