@@ -2,19 +2,11 @@
   "name": "common",
   "version": "1.0.0",
   "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "type": "module",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
-    },
-    "./dtos/v1": {
-      "types": "./dist/dtos/v1/index.d.ts",
-      "import": "./dist/dtos/v1/index.js"
-    }
-  },
   "scripts": {
-    "clear": "rm -fr dist",
+    "clear": "rm -fr dist node_modules",
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit"

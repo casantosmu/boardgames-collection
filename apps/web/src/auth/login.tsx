@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { type FormEvent, type ChangeEvent, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -12,37 +12,35 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate, Link as LinkRouter } from "react-router-dom";
 import { errorCodes } from "common";
-import { login } from "../api";
+import { useLoginMutation } from "../api";
 import { useAuth } from "./auth-context";
 
 export const Login = (): JSX.Element => {
   const navigate = useNavigate();
   const auth = useAuth();
 
+  const { status, error, mutate } = useLoginMutation({
+    onSuccess(data) {
+      auth.dispatch({
+        type: "LOGIN",
+        payload: data,
+      });
+      navigate("/");
+    },
+  });
+
   const [form, setForm] = useState({ email: "", password: "" });
-  const [error, setError] = useState<string | null>();
 
-  const handleLogin = async (): Promise<void> => {
-    const result = await login(form);
-
-    if (!result.success) {
-      switch (result.error.code) {
-        case errorCodes.unauthorized: {
-          setError("Invalid email or password");
-          return;
-        }
-        default: {
-          setError("Something unexpected occurred.");
-          return;
-        }
-      }
-    }
-
-    auth.dispatch({
-      type: "LOGIN",
-      payload: result.data,
+  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    setForm({
+      ...form,
+      [event.target.name]: event.target.value,
     });
-    navigate("/");
+  };
+
+  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
+    event.preventDefault();
+    mutate(form);
   };
 
   return (
@@ -61,61 +59,44 @@ export const Login = (): JSX.Element => {
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
-        <Box
-          component="form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            void handleLogin();
-          }}
-          noValidate
-          sx={{ mt: 1 }}
-        >
+        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
           <TextField
             margin="normal"
             required
             fullWidth
             id="email"
-            label="Email Address"
             name="email"
+            label="Email Address"
             autoComplete="email"
             value={form.email}
-            onChange={(event) => {
-              setForm({
-                ...form,
-                email: event.target.value,
-              });
-              setError(null);
-            }}
+            onChange={handleChange}
           />
           <TextField
             margin="normal"
             required
             fullWidth
+            id="password"
             name="password"
             label="Password"
             type="password"
-            id="password"
             autoComplete="current-password"
             value={form.password}
-            onChange={(event) => {
-              setForm({
-                ...form,
-                password: event.target.value,
-              });
-              setError(null);
-            }}
+            onChange={handleChange}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
+            disabled={status === "loading"}
           >
             Sign In
           </Button>
           {error && (
             <Alert variant="outlined" severity="error" sx={{ mb: 2 }}>
-              {error}
+              {error.code === errorCodes.unauthorized
+                ? "Invalid email or password"
+                : "Something unexpected occurred."}
             </Alert>
           )}
           <Link component={LinkRouter} to="/register" variant="body2">
