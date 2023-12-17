@@ -8,7 +8,6 @@ import { kyselyPlugin } from "./plugins/kysely.js";
 import { sessionPlugin } from "./plugins/session.js";
 import { authRoutes } from "./routes/auth.js";
 import { boardgamesRoutes } from "./routes/boardgames.js";
-import { classificationsRoutes } from "./routes/classifications.js";
 import { pingRoutes } from "./routes/ping.js";
 
 if (!process.env["PG_URL"]) {
@@ -53,9 +52,6 @@ export const buildApp = async (): Promise<FastifyInstance> => {
 
   // Routes
   await app.register(boardgamesRoutes, {
-    prefix: "/v1",
-  });
-  await app.register(classificationsRoutes, {
     prefix: "/v1",
   });
   await app.register(authRoutes, {
