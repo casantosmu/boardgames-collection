@@ -5,11 +5,12 @@ import {
   Box,
   Button,
   Container,
+  Link,
   TextField,
   Typography,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { useNavigate } from "react-router-dom";
+import { Navigate, Link as LinkRouter, useNavigate } from "react-router-dom";
 import { errorCodes, regexp } from "common";
 import { z } from "zod";
 import { useRegisterMutation } from "../api";
@@ -81,6 +82,10 @@ export const Register = (): JSX.Element => {
     }
   };
 
+  if (auth.state) {
+    return <Navigate to="/" replace />;
+  }
+
   return (
     <Container component="main" maxWidth="xs">
       <Box
@@ -147,6 +152,9 @@ export const Register = (): JSX.Element => {
                 : "Something unexpected occurred."}
             </Alert>
           )}
+          <Link component={LinkRouter} to="/login" variant="body2">
+            Already have an account? Sign in
+          </Link>
         </Box>
       </Box>
     </Container>
