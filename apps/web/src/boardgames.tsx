@@ -682,7 +682,7 @@ export const Boardgames = (): JSX.Element => {
   };
 
   let body;
-  if (fetchBoardgames.error) {
+  if (fetchBoardgames.status === "error") {
     body = (
       <Box
         sx={{
@@ -696,7 +696,10 @@ export const Boardgames = (): JSX.Element => {
         </Alert>
       </Box>
     );
-  } else if (fetchBoardgames.loading) {
+  } else if (
+    fetchBoardgames.status === "idle" ||
+    fetchBoardgames.status === "loading"
+  ) {
     body = (
       <Box
         sx={{
@@ -736,7 +739,7 @@ export const Boardgames = (): JSX.Element => {
   let sidebarBodyStatus;
   let sidebarBodyDesktop;
   let sidebarBodyMobile;
-  if (fetchClassification.error) {
+  if (fetchClassification.status === "error") {
     sidebarBodyStatus = (
       <Box
         sx={{
@@ -750,7 +753,10 @@ export const Boardgames = (): JSX.Element => {
         </Alert>
       </Box>
     );
-  } else if (fetchClassification.loading) {
+  } else if (
+    fetchClassification.status === "idle" ||
+    fetchClassification.status === "loading"
+  ) {
     sidebarBodyStatus = (
       <Box
         sx={{

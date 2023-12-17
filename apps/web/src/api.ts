@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useReducer } from "react";
 import {
   GetBoardgames,
   GetClassifications,
@@ -22,22 +22,61 @@ const getApiUrl = (path: string): string => {
   }`;
 };
 
-type UseFetchResult<T> =
+type FetchState<T> =
   | {
-      loading: true;
+      status: "idle";
       error: null;
       data: null;
     }
   | {
-      loading: false;
+      status: "loading";
+      error: null;
+      data: null;
+    }
+  | {
+      status: "error";
       error: ApiError;
       data: null;
     }
   | {
-      loading: false;
+      status: "success";
       error: null;
       data: T;
     };
+
+type FetchAction<T> =
+  | { type: "INIT" }
+  | { type: "SUCCESS"; payload: T }
+  | { type: "ERROR"; payload: ApiError };
+
+const fetchReducer = <T>(
+  state: FetchState<T>,
+  action: FetchAction<T>,
+): FetchState<T> => {
+  switch (action.type) {
+    case "INIT": {
+      return {
+        status: "loading",
+        error: null,
+        data: null,
+      };
+    }
+    case "ERROR": {
+      return {
+        status: "error",
+        error: action.payload,
+        data: null,
+      };
+    }
+    case "SUCCESS": {
+      return {
+        status: "success",
+        error: null,
+        data: action.payload,
+      };
+    }
+  }
+};
 
 interface UseFetchOptions {
   params?: Record<
@@ -49,9 +88,12 @@ interface UseFetchOptions {
 const useFetch = <T>(
   path: string,
   options?: UseFetchOptions,
-): UseFetchResult<T> => {
-  const [data, setData] = useState<T | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
+): FetchState<T> => {
+  const [state, dispatch] = useReducer(fetchReducer<T>, {
+    status: "idle",
+    error: null,
+    data: null,
+  });
 
   const urlBuilder = new URL(getApiUrl(path));
   if (options?.params) {
@@ -70,57 +112,38 @@ const useFetch = <T>(
   useEffect(() => {
     let ignore = false;
 
-    const doFetch = async (): Promise<void> => {
-      setData(null);
+    const fetchData = async (): Promise<void> => {
+      dispatch({ type: "INIT" });
 
       const response = await fetch(url);
       const data: unknown = await response.json();
 
       if (!response.ok && !ignore) {
-        setError(data as ApiError);
+        dispatch({ type: "ERROR", payload: data as ApiError });
       } else if (!ignore) {
-        setData(data as T);
+        dispatch({ type: "SUCCESS", payload: data as T });
       }
     };
 
-    void doFetch();
+    void fetchData();
+
     return () => {
       ignore = true;
     };
   }, [url]);
 
-  if (error) {
-    return {
-      loading: false,
-      error,
-      data: null,
-    };
-  }
-
-  if (data === null) {
-    return {
-      loading: true,
-      error: null,
-      data: null,
-    };
-  }
-
-  return {
-    loading: false,
-    error: null,
-    data,
-  };
+  return state;
 };
 
 export const useFetchBoardgames = (
   params: GetBoardgames["querystring"],
-): UseFetchResult<GetBoardgames["response"][200]> => {
+): FetchState<GetBoardgames["response"][200]> => {
   return useFetch("/v1/boardgames", {
     params,
   });
 };
 
-export const useFetchClassifications = (): UseFetchResult<
+export const useFetchClassifications = (): FetchState<
   GetClassifications["response"][200]
 > => {
   return useFetch("/v1/classifications");
