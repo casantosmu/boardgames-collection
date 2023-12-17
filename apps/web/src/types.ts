@@ -1,18 +1,3 @@
-export interface Type {
-  id: number;
-  name: string;
-}
-
-export interface Category {
-  id: number;
-  name: string;
-}
-
-export interface Mechanism {
-  id: number;
-  name: string;
-}
-
 export type Classification = "types" | "categories" | "mechanisms";
 
 interface Images {

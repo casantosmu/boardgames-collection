@@ -195,12 +195,6 @@ export const useBoardgamesQuery = (
   return useQuery("/v1/boardgames", { params });
 };
 
-export const useClassificationsQuery = (): FetchState<
-  DtosV1["GetCLassifications"]["Response"][200]
-> => {
-  return useQuery("/v1/classifications");
-};
-
 export const useRegisterMutation = (
   options?: UseMutationOptions<DtosV1["Register"]["Response"][200]>,
 ): UseMutation<

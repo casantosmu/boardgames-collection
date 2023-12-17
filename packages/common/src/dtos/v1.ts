@@ -113,32 +113,6 @@ export const DtosV1 = {
       }),
     },
   },
-  GetClassifications: {
-    Response: {
-      200: Type.Object({
-        data: Type.Object({
-          types: Type.Array(
-            Type.Object({
-              id: Type.Integer(),
-              name: Type.String(),
-            }),
-          ),
-          categories: Type.Array(
-            Type.Object({
-              id: Type.Integer(),
-              name: Type.String(),
-            }),
-          ),
-          mechanisms: Type.Array(
-            Type.Object({
-              id: Type.Integer(),
-              name: Type.String(),
-            }),
-          ),
-        }),
-      }),
-    },
-  },
 };
 
 export type DtosV1 = {
@@ -159,11 +133,6 @@ export type DtosV1 = {
     Querystring: Static<typeof DtosV1.GetBoardgames.Querystring>;
     Response: {
       200: Static<(typeof DtosV1.GetBoardgames.Response)[200]>;
-    };
-  };
-  GetCLassifications: {
-    Response: {
-      200: Static<(typeof DtosV1.GetClassifications.Response)[200]>;
     };
   };
 };
