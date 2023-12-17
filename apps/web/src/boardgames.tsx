@@ -53,11 +53,11 @@ import type {
 } from "./types";
 
 const filtersSchemas = {
-  rowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
-  page: z.coerce.number().int().nonnegative().catch(0),
-  search: z.string().trim().optional().catch(undefined),
-  players: z.coerce.number().int().positive().optional().catch(undefined),
-  classification: z.array(z.coerce.number().int()).optional().catch(undefined),
+  RowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
+  Page: z.coerce.number().int().nonnegative().catch(0),
+  Search: z.string().trim().optional().catch(undefined),
+  Players: z.coerce.number().int().positive().optional().catch(undefined),
+  Classification: z.array(z.coerce.number().int()).optional().catch(undefined),
 };
 
 const Search = styled("div")(({ theme }) => ({
@@ -210,7 +210,7 @@ const ListToolbar = ({
             <StyledInputBase
               onKeyUp={(event) => {
                 if (event.key === "Enter") {
-                  const value = filtersSchemas.search.parse(search);
+                  const value = filtersSchemas.Search.parse(search);
                   onSearch(value);
                   setSearch(value ?? "");
                 }
@@ -360,10 +360,10 @@ const FiltersSidebarForm = ({
 
   const handleOnSubmitPlayers = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    const minPlayers = filtersSchemas.players.parse(players.minPlayers);
-    const maxPlayers = filtersSchemas.players.parse(players.maxPlayers);
-    const minBestPlayers = filtersSchemas.players.parse(players.minBestPlayers);
-    const maxBestPlayers = filtersSchemas.players.parse(players.maxBestPlayers);
+    const minPlayers = filtersSchemas.Players.parse(players.minPlayers);
+    const maxPlayers = filtersSchemas.Players.parse(players.maxPlayers);
+    const minBestPlayers = filtersSchemas.Players.parse(players.minBestPlayers);
+    const maxBestPlayers = filtersSchemas.Players.parse(players.maxBestPlayers);
     onFilterPlayers({
       minPlayers,
       maxPlayers,
@@ -627,16 +627,16 @@ interface QueryParams {
 }
 
 const parseQueryParams = (params: Record<string, unknown>): QueryParams => ({
-  page: filtersSchemas.page.parse(params["page"]),
-  rowsPerPage: filtersSchemas.rowsPerPage.parse(params["rowsPerPage"]),
-  search: filtersSchemas.search.parse(params["search"]),
-  minPlayers: filtersSchemas.players.parse(params["minPlayers"]),
-  maxPlayers: filtersSchemas.players.parse(params["maxPlayers"]),
-  minBestPlayers: filtersSchemas.players.parse(params["minBestPlayers"]),
-  maxBestPlayers: filtersSchemas.players.parse(params["maxBestPlayers"]),
-  types: filtersSchemas.classification.parse(params["types"]),
-  categories: filtersSchemas.classification.parse(params["categories"]),
-  mechanisms: filtersSchemas.classification.parse(params["mechanisms"]),
+  page: filtersSchemas.Page.parse(params["page"]),
+  rowsPerPage: filtersSchemas.RowsPerPage.parse(params["rowsPerPage"]),
+  search: filtersSchemas.Search.parse(params["search"]),
+  minPlayers: filtersSchemas.Players.parse(params["minPlayers"]),
+  maxPlayers: filtersSchemas.Players.parse(params["maxPlayers"]),
+  minBestPlayers: filtersSchemas.Players.parse(params["minBestPlayers"]),
+  maxBestPlayers: filtersSchemas.Players.parse(params["maxBestPlayers"]),
+  types: filtersSchemas.Classification.parse(params["types"]),
+  categories: filtersSchemas.Classification.parse(params["categories"]),
+  mechanisms: filtersSchemas.Classification.parse(params["mechanisms"]),
 });
 
 export const Boardgames = (): JSX.Element => {

@@ -1,6 +1,6 @@
 import { Type, type Static } from "@sinclair/typebox";
 
-export const Errors = {
+export const errorsDtos = {
   400: Type.Object(
     {
       message: Type.String(),
@@ -38,14 +38,14 @@ export const Errors = {
   ),
 };
 
-export type ApiError = Static<(typeof Errors)[keyof typeof Errors]>;
+export type ApiError = Static<(typeof errorsDtos)[keyof typeof errorsDtos]>;
 
-export const Register = {
-  body: Type.Object({
+export const registerDtos = {
+  Body: Type.Object({
     email: Type.String(),
     password: Type.String(),
   }),
-  response: {
+  Response: {
     200: Type.Object({
       id: Type.Integer(),
       email: Type.String(),
@@ -53,19 +53,19 @@ export const Register = {
   },
 };
 
-export type Register = {
-  body: Static<typeof Register.body>;
-  response: {
-    200: Static<(typeof Register.response)[200]>;
+export type RegisterDtos = {
+  Body: Static<typeof registerDtos.Body>;
+  Response: {
+    200: Static<(typeof registerDtos.Response)[200]>;
   };
 };
 
-export const Login = {
-  body: Type.Object({
+export const loginDtos = {
+  Body: Type.Object({
     email: Type.String(),
     password: Type.String(),
   }),
-  response: {
+  Response: {
     200: Type.Object({
       id: Type.Integer(),
       email: Type.String(),
@@ -73,15 +73,15 @@ export const Login = {
   },
 };
 
-export type Login = {
-  body: Static<typeof Login.body>;
-  response: {
-    200: Static<(typeof Login.response)[200]>;
+export type LoginDtos = {
+  Body: Static<typeof loginDtos.Body>;
+  Response: {
+    200: Static<(typeof loginDtos.Response)[200]>;
   };
 };
 
-export const GetBoardgames = {
-  querystring: Type.Object({
+export const getBoardgamesDtos = {
+  Querystring: Type.Object({
     rowsPerPage: Type.Integer({ minimum: 1, maximum: 100, default: 25 }),
     page: Type.Integer({ minimum: 0, default: 0 }),
     search: Type.Optional(Type.String()),
@@ -93,7 +93,7 @@ export const GetBoardgames = {
     categories: Type.Optional(Type.Array(Type.Integer())),
     mechanisms: Type.Optional(Type.Array(Type.Integer())),
   }),
-  response: {
+  Response: {
     200: Type.Object({
       metadata: Type.Object({
         count: Type.Integer(),
@@ -132,15 +132,15 @@ export const GetBoardgames = {
   },
 };
 
-export type GetBoardgames = {
-  querystring: Static<typeof GetBoardgames.querystring>;
-  response: {
-    200: Static<(typeof GetBoardgames.response)[200]>;
+export type GetBoardgamesDtos = {
+  Querystring: Static<typeof getBoardgamesDtos.Querystring>;
+  Response: {
+    200: Static<(typeof getBoardgamesDtos.Response)[200]>;
   };
 };
 
-export const GetClassifications = {
-  response: {
+export const getClassificationsDtos = {
+  Response: {
     200: Type.Object({
       data: Type.Object({
         types: Type.Array(
@@ -166,8 +166,8 @@ export const GetClassifications = {
   },
 };
 
-export type GetClassifications = {
-  response: {
-    200: Static<(typeof GetClassifications.response)[200]>;
+export type GetClassificationsDtos = {
+  Response: {
+    200: Static<(typeof getClassificationsDtos.Response)[200]>;
   };
 };

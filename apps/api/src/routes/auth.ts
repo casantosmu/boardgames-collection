@@ -1,7 +1,7 @@
 import { compare as bcryptCompare, hash as bcryptHash } from "bcrypt";
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { errorCodes, regexp } from "common";
-import { Errors, Login, Register } from "common/dtos/v1";
+import { errorsDtos, loginDtos, registerDtos } from "common/dtos/v1";
 
 const SALT_ROUNDS = 10;
 
@@ -12,10 +12,10 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         summary: "Registers a new user and returns authentication information",
         tags: ["auth"],
-        body: Register.body,
+        body: registerDtos.Body,
         response: {
           200: {
-            ...Register.response[200],
+            ...registerDtos.Response[200],
             description: "Success",
             headers: {
               "Set-Cookie": {
@@ -24,9 +24,9 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               },
             },
           },
-          400: Errors[400],
-          409: Errors[409],
-          500: Errors[500],
+          400: errorsDtos[400],
+          409: errorsDtos[409],
+          500: errorsDtos[500],
         },
       },
     },
@@ -77,10 +77,10 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         summary: "Logs in and returns the authentication cookie",
         tags: ["auth"],
-        body: Login.body,
+        body: loginDtos.Body,
         response: {
           200: {
-            ...Login.response[200],
+            ...loginDtos.Response[200],
             description: "Success",
             headers: {
               "Set-Cookie": {
@@ -89,8 +89,8 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               },
             },
           },
-          401: Errors[401],
-          500: Errors[500],
+          401: errorsDtos[401],
+          500: errorsDtos[500],
         },
       },
     },
@@ -139,7 +139,7 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
             type: "null",
             description: "Success",
           },
-          500: Errors[500],
+          500: errorsDtos[500],
         },
       },
     },

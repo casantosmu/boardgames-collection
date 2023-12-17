@@ -1,10 +1,10 @@
 import { useEffect, useReducer } from "react";
 import {
-  GetBoardgames,
-  GetClassifications,
+  GetBoardgamesDtos,
+  GetClassificationsDtos,
   ApiError,
-  Login,
-  Register,
+  LoginDtos,
+  RegisterDtos,
 } from "common/dtos/v1";
 
 export const getImageSrc = (path: string): string => path;
@@ -196,26 +196,26 @@ const useMutation = <TBody, TData>(
 };
 
 export const useBoardgamesQuery = (
-  params: GetBoardgames["querystring"],
-): FetchState<GetBoardgames["response"][200]> => {
+  params: GetBoardgamesDtos["Querystring"],
+): FetchState<GetBoardgamesDtos["Response"][200]> => {
   return useQuery("/v1/boardgames", { params });
 };
 
 export const useClassificationsQuery = (): FetchState<
-  GetClassifications["response"][200]
+  GetClassificationsDtos["Response"][200]
 > => {
   return useQuery("/v1/classifications");
 };
 
 export const useRegisterMutation = (
-  options?: UseMutationOptions<Register["response"][200]>,
-): UseMutation<Register["body"], Register["response"][200]> => {
+  options?: UseMutationOptions<RegisterDtos["Response"][200]>,
+): UseMutation<RegisterDtos["Body"], RegisterDtos["Response"][200]> => {
   return useMutation("/v1/auth/register", { method: "POST" }, options);
 };
 
 export const useLoginMutation = (
-  options?: UseMutationOptions<Login["response"][200]>,
-): UseMutation<Login["body"], Login["response"][200]> => {
+  options?: UseMutationOptions<LoginDtos["Response"][200]>,
+): UseMutation<LoginDtos["Body"], LoginDtos["Response"][200]> => {
   return useMutation("/v1/auth/login", { method: "POST" }, options);
 };
 
