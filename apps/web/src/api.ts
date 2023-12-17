@@ -1,11 +1,5 @@
 import { useEffect, useReducer } from "react";
-import {
-  GetBoardgamesDtos,
-  GetClassificationsDtos,
-  ApiError,
-  LoginDtos,
-  RegisterDtos,
-} from "common/dtos/v1";
+import { DtosV1 } from "common";
 
 export const getImageSrc = (path: string): string => path;
 
@@ -49,7 +43,7 @@ type FetchState<TData> =
     }
   | {
       status: "error";
-      error: ApiError;
+      error: DtosV1["ApiError"];
       data: null;
     }
   | {
@@ -61,7 +55,7 @@ type FetchState<TData> =
 type FetchAction<TData> =
   | { type: "INIT" }
   | { type: "SUCCESS"; payload: TData }
-  | { type: "ERROR"; payload: ApiError };
+  | { type: "ERROR"; payload: DtosV1["ApiError"] };
 
 const fetchReducer = <TData>(
   state: FetchState<TData>,
@@ -122,7 +116,7 @@ const useQuery = <TData>(
           text.length > 0 ? (JSON.parse(text) as TData) : (undefined as TData);
         dispatch({ type: "SUCCESS", payload: data });
       } else if (!ignore) {
-        const error = JSON.parse(text) as ApiError;
+        const error = JSON.parse(text) as DtosV1["ApiError"];
         dispatch({ type: "ERROR", payload: error });
       }
     };
@@ -144,7 +138,7 @@ interface UseMutationFetch {
 
 interface UseMutationOptions<TData> {
   onSuccess?: (data: TData) => void;
-  onError?: (error: ApiError) => void;
+  onError?: (error: DtosV1["ApiError"]) => void;
 }
 
 type UseMutation<TBody, TData> = FetchState<TData> & {
@@ -183,7 +177,7 @@ const useMutation = <TBody, TData>(
         dispatch({ type: "SUCCESS", payload: data });
         options?.onSuccess?.(data);
       } else {
-        const error = JSON.parse(text) as ApiError;
+        const error = JSON.parse(text) as DtosV1["ApiError"];
         dispatch({ type: "ERROR", payload: error });
         options?.onError?.(error);
       }
@@ -196,26 +190,29 @@ const useMutation = <TBody, TData>(
 };
 
 export const useBoardgamesQuery = (
-  params: GetBoardgamesDtos["Querystring"],
-): FetchState<GetBoardgamesDtos["Response"][200]> => {
+  params: DtosV1["GetBoardgames"]["Querystring"],
+): FetchState<DtosV1["GetBoardgames"]["Response"][200]> => {
   return useQuery("/v1/boardgames", { params });
 };
 
 export const useClassificationsQuery = (): FetchState<
-  GetClassificationsDtos["Response"][200]
+  DtosV1["GetCLassifications"]["Response"][200]
 > => {
   return useQuery("/v1/classifications");
 };
 
 export const useRegisterMutation = (
-  options?: UseMutationOptions<RegisterDtos["Response"][200]>,
-): UseMutation<RegisterDtos["Body"], RegisterDtos["Response"][200]> => {
+  options?: UseMutationOptions<DtosV1["Register"]["Response"][200]>,
+): UseMutation<
+  DtosV1["Register"]["Body"],
+  DtosV1["Register"]["Response"][200]
+> => {
   return useMutation("/v1/auth/register", { method: "POST" }, options);
 };
 
 export const useLoginMutation = (
-  options?: UseMutationOptions<LoginDtos["Response"][200]>,
-): UseMutation<LoginDtos["Body"], LoginDtos["Response"][200]> => {
+  options?: UseMutationOptions<DtosV1["Login"]["Response"][200]>,
+): UseMutation<DtosV1["Login"]["Body"], DtosV1["Login"]["Response"][200]> => {
   return useMutation("/v1/auth/login", { method: "POST" }, options);
 };
 

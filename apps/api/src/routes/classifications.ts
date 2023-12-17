@@ -1,5 +1,5 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
-import { errorsDtos, getClassificationsDtos } from "common/dtos/v1";
+import { dtosV1 } from "common";
 
 export const classificationsRoutes: FastifyPluginAsyncTypebox = async (
   fastify,
@@ -12,10 +12,10 @@ export const classificationsRoutes: FastifyPluginAsyncTypebox = async (
         tags: ["classifications"],
         response: {
           200: {
-            ...getClassificationsDtos.Response[200],
+            ...dtosV1.getClassifications.Response[200],
             description: "Success",
           },
-          500: errorsDtos[500],
+          500: dtosV1.errors[500],
         },
       },
     },

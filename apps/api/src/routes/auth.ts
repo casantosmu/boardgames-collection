@@ -1,7 +1,6 @@
 import { compare as bcryptCompare, hash as bcryptHash } from "bcrypt";
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
-import { errorCodes, regexp } from "common";
-import { errorsDtos, loginDtos, registerDtos } from "common/dtos/v1";
+import { errorCodes, regexp, dtosV1 } from "common";
 
 const SALT_ROUNDS = 10;
 
@@ -12,10 +11,10 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         summary: "Registers a new user and returns authentication information",
         tags: ["auth"],
-        body: registerDtos.Body,
+        body: dtosV1.register.Body,
         response: {
           200: {
-            ...registerDtos.Response[200],
+            ...dtosV1.register.Response[200],
             description: "Success",
             headers: {
               "Set-Cookie": {
@@ -24,9 +23,9 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               },
             },
           },
-          400: errorsDtos[400],
-          409: errorsDtos[409],
-          500: errorsDtos[500],
+          400: dtosV1.errors[400],
+          409: dtosV1.errors[409],
+          500: dtosV1.errors[500],
         },
       },
     },
@@ -77,10 +76,10 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         summary: "Logs in and returns the authentication cookie",
         tags: ["auth"],
-        body: loginDtos.Body,
+        body: dtosV1.login.Body,
         response: {
           200: {
-            ...loginDtos.Response[200],
+            ...dtosV1.login.Response[200],
             description: "Success",
             headers: {
               "Set-Cookie": {
@@ -89,8 +88,8 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               },
             },
           },
-          401: errorsDtos[401],
-          500: errorsDtos[500],
+          401: dtosV1.errors[401],
+          500: dtosV1.errors[500],
         },
       },
     },
@@ -139,7 +138,7 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
             type: "null",
             description: "Success",
           },
-          500: errorsDtos[500],
+          500: dtosV1.errors[500],
         },
       },
     },

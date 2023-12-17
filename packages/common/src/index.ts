@@ -1,3 +1,5 @@
+export { type DtosV1, dtosV1 } from "./dtos/v1.js";
+
 export const regexp = {
   password: {
     pattern: /^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*\W)(?!.* ).{8,16}$/,
