@@ -1,4 +1,4 @@
-import * as path from "node:path";
+import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promises as fs } from "node:fs";
 import pg from "pg";

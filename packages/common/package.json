@@ -2,11 +2,17 @@
   "name": "common",
   "version": "1.0.0",
   "private": true,
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
   "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./*": "./generated/*.json"
+  },
   "scripts": {
-    "clear": "rm -fr dist node_modules",
+    "codegen": "node --env-file=.env scripts/codegen.js",
+    "clear": "rm -fr dist node_modules generated",
     "build": "tsc",
     "dev": "tsc --watch --preserveWatchOutput",
     "typecheck": "tsc --noEmit"
@@ -15,6 +21,7 @@
     "@sinclair/typebox": "^0.31.28"
   },
   "devDependencies": {
+    "pg": "^8.11.3",
     "tsconfig": "workspace:^",
     "typescript": "^5.3.3"
   }

@@ -12,3 +12,6 @@ logs
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# code generation
+generated
