@@ -1,4 +1,4 @@
-export { type DtosV1, dtosV1 } from "./dtos/v1.js";
+export { DtosV1 } from "./dtos/v1.js";
 
 export const regexp = {
   password: {

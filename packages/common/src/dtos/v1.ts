@@ -1,7 +1,7 @@
 import { Type, type Static } from "@sinclair/typebox";
 
-export const dtosV1 = {
-  errors: {
+export const DtosV1 = {
+  Errors: {
     400: Type.Object(
       {
         message: Type.String(),
@@ -38,7 +38,7 @@ export const dtosV1 = {
       { description: "Internal Server Error" },
     ),
   },
-  register: {
+  Register: {
     Body: Type.Object({
       email: Type.String(),
       password: Type.String(),
@@ -50,7 +50,7 @@ export const dtosV1 = {
       }),
     },
   },
-  login: {
+  Login: {
     Body: Type.Object({
       email: Type.String(),
       password: Type.String(),
@@ -62,7 +62,7 @@ export const dtosV1 = {
       }),
     },
   },
-  getBoardgames: {
+  GetBoardgames: {
     Querystring: Type.Object({
       rowsPerPage: Type.Integer({ minimum: 1, maximum: 100, default: 25 }),
       page: Type.Integer({ minimum: 0, default: 0 }),
@@ -113,7 +113,7 @@ export const dtosV1 = {
       }),
     },
   },
-  getClassifications: {
+  GetClassifications: {
     Response: {
       200: Type.Object({
         data: Type.Object({
@@ -142,28 +142,28 @@ export const dtosV1 = {
 };
 
 export type DtosV1 = {
-  ApiError: Static<(typeof dtosV1.errors)[keyof typeof dtosV1.errors]>;
+  ApiError: Static<(typeof DtosV1.Errors)[keyof typeof DtosV1.Errors]>;
   Register: {
-    Body: Static<typeof dtosV1.register.Body>;
+    Body: Static<typeof DtosV1.Register.Body>;
     Response: {
-      200: Static<(typeof dtosV1.register.Response)[200]>;
+      200: Static<(typeof DtosV1.Register.Response)[200]>;
     };
   };
   Login: {
-    Body: Static<typeof dtosV1.login.Body>;
+    Body: Static<typeof DtosV1.Login.Body>;
     Response: {
-      200: Static<(typeof dtosV1.login.Response)[200]>;
+      200: Static<(typeof DtosV1.Login.Response)[200]>;
     };
   };
   GetBoardgames: {
-    Querystring: Static<typeof dtosV1.getBoardgames.Querystring>;
+    Querystring: Static<typeof DtosV1.GetBoardgames.Querystring>;
     Response: {
-      200: Static<(typeof dtosV1.getBoardgames.Response)[200]>;
+      200: Static<(typeof DtosV1.GetBoardgames.Response)[200]>;
     };
   };
   GetCLassifications: {
     Response: {
-      200: Static<(typeof dtosV1.getClassifications.Response)[200]>;
+      200: Static<(typeof DtosV1.GetClassifications.Response)[200]>;
     };
   };
 };

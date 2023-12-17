@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from "fastify";
 import { sql } from "db-main-kysely";
-import { dtosV1 } from "common";
+import { DtosV1 } from "common";
 
 export const pingRoutes: FastifyPluginAsync = async (fastify) => {
   fastify.post(
@@ -14,7 +14,7 @@ export const pingRoutes: FastifyPluginAsync = async (fastify) => {
             type: "null",
             description: "Success",
           },
-          500: dtosV1.errors[500],
+          500: DtosV1.Errors[500],
         },
       },
     },
