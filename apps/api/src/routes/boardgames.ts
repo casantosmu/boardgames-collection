@@ -1,6 +1,6 @@
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { jsonArrayFrom } from "db-main-kysely";
-import { errors, getBoardgames } from "common/dtos/v1";
+import { Errors, GetBoardgames } from "common/dtos/v1";
 
 export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
   fastify.get(
@@ -9,13 +9,13 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         summary: "Get a list of boardgames in the collection",
         tags: ["boardgames"],
-        querystring: getBoardgames.querystring,
+        querystring: GetBoardgames.querystring,
         response: {
           200: {
-            ...getBoardgames.response[200],
+            ...GetBoardgames.response[200],
             description: "Success",
           },
-          500: errors[500],
+          500: Errors[500],
         },
       },
     },

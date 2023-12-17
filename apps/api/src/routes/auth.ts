@@ -1,7 +1,7 @@
 import { compare as bcryptCompare, hash as bcryptHash } from "bcrypt";
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
 import { errorCodes, regexp } from "common";
-import { errors, login, register } from "common/dtos/v1";
+import { Errors, Login, Register } from "common/dtos/v1";
 
 const SALT_ROUNDS = 10;
 
@@ -12,10 +12,10 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         summary: "Registers a new user and returns authentication information",
         tags: ["auth"],
-        body: register.body,
+        body: Register.body,
         response: {
           200: {
-            ...register.response[200],
+            ...Register.response[200],
             description: "Success",
             headers: {
               "Set-Cookie": {
@@ -24,9 +24,9 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               },
             },
           },
-          400: errors[400],
-          409: errors[409],
-          500: errors[500],
+          400: Errors[400],
+          409: Errors[409],
+          500: Errors[500],
         },
       },
     },
@@ -77,10 +77,10 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       schema: {
         summary: "Logs in and returns the authentication cookie",
         tags: ["auth"],
-        body: login.body,
+        body: Login.body,
         response: {
           200: {
-            ...login.response[200],
+            ...Login.response[200],
             description: "Success",
             headers: {
               "Set-Cookie": {
@@ -89,8 +89,8 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               },
             },
           },
-          401: errors[401],
-          500: errors[500],
+          401: Errors[401],
+          500: Errors[500],
         },
       },
     },
@@ -139,7 +139,7 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
             type: "null",
             description: "Success",
           },
-          500: errors[500],
+          500: Errors[500],
         },
       },
     },

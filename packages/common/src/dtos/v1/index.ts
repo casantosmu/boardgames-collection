@@ -1,6 +1,6 @@
 import { Type, type Static } from "@sinclair/typebox";
 
-export const errors = {
+export const Errors = {
   400: Type.Object(
     {
       message: Type.String(),
@@ -38,9 +38,9 @@ export const errors = {
   ),
 };
 
-export type ApiError = Static<(typeof errors)[keyof typeof errors]>;
+export type ApiError = Static<(typeof Errors)[keyof typeof Errors]>;
 
-export const register = {
+export const Register = {
   body: Type.Object({
     email: Type.String(),
     password: Type.String(),
@@ -51,16 +51,16 @@ export const register = {
       email: Type.String(),
     }),
   },
-} as const;
+};
 
 export type Register = {
-  body: Static<typeof register.body>;
+  body: Static<typeof Register.body>;
   response: {
-    200: Static<(typeof register.response)[200]>;
+    200: Static<(typeof Register.response)[200]>;
   };
 };
 
-export const login = {
+export const Login = {
   body: Type.Object({
     email: Type.String(),
     password: Type.String(),
@@ -71,16 +71,16 @@ export const login = {
       email: Type.String(),
     }),
   },
-} as const;
+};
 
 export type Login = {
-  body: Static<typeof login.body>;
+  body: Static<typeof Login.body>;
   response: {
-    200: Static<(typeof login.response)[200]>;
+    200: Static<(typeof Login.response)[200]>;
   };
 };
 
-export const getBoardgames = {
+export const GetBoardgames = {
   querystring: Type.Object({
     rowsPerPage: Type.Integer({ minimum: 1, maximum: 100, default: 25 }),
     page: Type.Integer({ minimum: 0, default: 0 }),
@@ -130,16 +130,16 @@ export const getBoardgames = {
       ),
     }),
   },
-} as const;
+};
 
 export type GetBoardgames = {
-  querystring: Static<typeof getBoardgames.querystring>;
+  querystring: Static<typeof GetBoardgames.querystring>;
   response: {
-    200: Static<(typeof getBoardgames.response)[200]>;
+    200: Static<(typeof GetBoardgames.response)[200]>;
   };
 };
 
-export const getClassifications = {
+export const GetClassifications = {
   response: {
     200: Type.Object({
       data: Type.Object({
@@ -164,10 +164,10 @@ export const getClassifications = {
       }),
     }),
   },
-} as const;
+};
 
 export type GetClassifications = {
   response: {
-    200: Static<(typeof getClassifications.response)[200]>;
+    200: Static<(typeof GetClassifications.response)[200]>;
   };
 };
