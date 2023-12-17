@@ -34,23 +34,12 @@ import {
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
 import { z } from "zod";
+import classifications from "common/classifications";
 import { useQueryParams } from "./query-params";
-import {
-  getImageSrc,
-  useBoardgamesQuery,
-  useClassificationsQuery,
-  useLogoutMutation,
-} from "./api";
+import { getImageSrc, useBoardgamesQuery, useLogoutMutation } from "./api";
 import { removeUndefinedValuesFromObject } from "./utils";
 import { useAuth } from "./auth/auth-context";
-import type {
-  Type,
-  Category,
-  Mechanism,
-  Classification,
-  PlayersRange,
-  Boardgame,
-} from "./types";
+import type { Classification, PlayersRange, Boardgame } from "./types";
 
 const filtersSchemas = {
   RowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
@@ -289,12 +278,6 @@ interface FiltersClassificationsValues {
   mechanisms: number[] | undefined;
 }
 
-interface FiltersClassificationsOptions {
-  types: Type[];
-  categories: Category[];
-  mechanisms: Mechanism[];
-}
-
 interface FiltersSidebarProps {
   /** Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.  */
   kind: string;
@@ -302,7 +285,6 @@ interface FiltersSidebarProps {
   initialPlayers: FiltersPlayers;
   onFilterPlayers: (value: FiltersPlayers) => void;
   classificationsValues: FiltersClassificationsValues;
-  classificationsOptions: FiltersClassificationsOptions;
   onFilterClassification: (kind: Classification, value: number[]) => void;
 }
 
@@ -312,7 +294,6 @@ const FiltersSidebarForm = ({
   initialPlayers,
   onFilterPlayers,
   classificationsValues,
-  classificationsOptions,
   onFilterClassification,
 }: FiltersSidebarProps): JSX.Element => {
   const [players, setPlayers] = useState({
@@ -324,7 +305,7 @@ const FiltersSidebarForm = ({
 
   const typesValues =
     classificationsValues.types?.map((id) => {
-      const options = classificationsOptions.types;
+      const options = classifications.types;
       const foundOption = options.find((option) => id === option.id);
       if (!foundOption) {
         throw new Error(
@@ -336,7 +317,7 @@ const FiltersSidebarForm = ({
 
   const categoriesValues =
     classificationsValues.categories?.map((id) => {
-      const options = classificationsOptions.categories;
+      const options = classifications.categories;
       const foundOption = options.find((option) => id === option.id);
       if (!foundOption) {
         throw new Error(
@@ -348,7 +329,7 @@ const FiltersSidebarForm = ({
 
   const mechanismsValues =
     classificationsValues.mechanisms?.map((id) => {
-      const options = classificationsOptions.mechanisms;
+      const options = classifications.mechanisms;
       const foundOption = options.find((option) => id === option.id);
       if (!foundOption) {
         throw new Error(
@@ -479,7 +460,7 @@ const FiltersSidebarForm = ({
           multiple
           id={`${kind}-types`}
           value={typesValues}
-          options={classificationsOptions.types}
+          options={classifications.types}
           getOptionLabel={(option) => option.name}
           renderInput={(params) => (
             // @ts-expect-error MUI error
@@ -497,7 +478,7 @@ const FiltersSidebarForm = ({
           multiple
           id={`${kind}-categories`}
           value={categoriesValues}
-          options={classificationsOptions.categories}
+          options={classifications.categories}
           getOptionLabel={(option) => option.name}
           renderInput={(params) => (
             // @ts-expect-error MUI error
@@ -515,7 +496,7 @@ const FiltersSidebarForm = ({
           multiple
           id={`${kind}-mechanisms`}
           value={mechanismsValues}
-          options={classificationsOptions.mechanisms}
+          options={classifications.mechanisms}
           getOptionLabel={(option) => option.name}
           renderInput={(params) => (
             // @ts-expect-error MUI error
@@ -645,8 +626,6 @@ export const Boardgames = (): JSX.Element => {
   const boardgamesQueryParams = removeUndefinedValuesFromObject(queryParams);
   const boardgamesQuery = useBoardgamesQuery(boardgamesQueryParams);
 
-  const classificationsQuery = useClassificationsQuery();
-
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handleToggleFilters = (): void => {
@@ -732,71 +711,6 @@ export const Boardgames = (): JSX.Element => {
     );
   }
 
-  let sidebarBodyStatus;
-  let sidebarBodyDesktop;
-  let sidebarBodyMobile;
-  if (classificationsQuery.status === "error") {
-    sidebarBodyStatus = (
-      <Box
-        sx={{
-          paddingY: 5,
-          paddingX: 2,
-        }}
-      >
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          Something unexpected occurred.
-        </Alert>
-      </Box>
-    );
-  } else if (
-    classificationsQuery.status === "idle" ||
-    classificationsQuery.status === "loading"
-  ) {
-    sidebarBodyStatus = (
-      <Box
-        sx={{
-          paddingY: 5,
-          paddingX: 2,
-        }}
-      >
-        <LinearProgress />
-      </Box>
-    );
-  } else {
-    sidebarBodyMobile = (
-      <FiltersSidebarForm
-        kind="mobile"
-        onClose={() => {
-          handleToggleFilters();
-        }}
-        initialPlayers={queryParams}
-        onFilterPlayers={(value) => {
-          handleOnFilterPlayers(value);
-        }}
-        classificationsValues={queryParams}
-        classificationsOptions={classificationsQuery.data.data}
-        onFilterClassification={(kind, value) => {
-          handleOnFilterClassification(kind, value);
-        }}
-      />
-    );
-    sidebarBodyDesktop = (
-      <FiltersSidebarForm
-        kind="desktop"
-        initialPlayers={queryParams}
-        onFilterPlayers={(value) => {
-          handleOnFilterPlayers(value);
-        }}
-        classificationsValues={queryParams}
-        classificationsOptions={classificationsQuery.data.data}
-        onFilterClassification={(kind, value) => {
-          handleOnFilterClassification(kind, value);
-        }}
-      />
-    );
-  }
-
   return (
     <Box sx={{ display: "flex" }}>
       <ListToolbar
@@ -830,7 +744,20 @@ export const Boardgames = (): JSX.Element => {
           },
         }}
       >
-        {sidebarBodyMobile ?? sidebarBodyStatus}
+        <FiltersSidebarForm
+          kind="mobile"
+          onClose={() => {
+            handleToggleFilters();
+          }}
+          initialPlayers={queryParams}
+          onFilterPlayers={(value) => {
+            handleOnFilterPlayers(value);
+          }}
+          classificationsValues={queryParams}
+          onFilterClassification={(kind, value) => {
+            handleOnFilterClassification(kind, value);
+          }}
+        />
       </Drawer>
       {/* Desktop sidebar filters */}
       <Drawer
@@ -845,7 +772,17 @@ export const Boardgames = (): JSX.Element => {
           },
         }}
       >
-        {sidebarBodyDesktop ?? sidebarBodyStatus}
+        <FiltersSidebarForm
+          kind="desktop"
+          initialPlayers={queryParams}
+          onFilterPlayers={(value) => {
+            handleOnFilterPlayers(value);
+          }}
+          classificationsValues={queryParams}
+          onFilterClassification={(kind, value) => {
+            handleOnFilterClassification(kind, value);
+          }}
+        />
       </Drawer>
       <Box
         component="main"
