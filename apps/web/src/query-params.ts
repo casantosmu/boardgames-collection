@@ -28,7 +28,7 @@ export const useQueryParams = <
   },
 >(
   transform: (params: Record<string, unknown>) => TQueryParams,
-): [TQueryParams, (params: Partial<TQueryParams>) => void] => {
+): [TQueryParams, (params: Record<string, unknown>) => void] => {
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -36,7 +36,7 @@ export const useQueryParams = <
     urlSearchParamsToObject(new URLSearchParams(location.search)),
   );
 
-  const setQueryParams = (params: Partial<TQueryParams>): void => {
+  const setQueryParams = (params: Record<string, unknown>): void => {
     const urlSearchParams = new URLSearchParams(location.search);
     const queryParams = transform(
       Object.assign(urlSearchParamsToObject(urlSearchParams), params),
