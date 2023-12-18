@@ -1,4 +1,10 @@
-import { FormEvent, useState } from "react";
+import {
+  useState,
+  type ChangeEvent,
+  type FormEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+} from "react";
 import {
   Alert,
   AlertTitle,
@@ -7,7 +13,7 @@ import {
   TablePagination,
   styled,
   InputBase,
-  Toolbar,
+  Toolbar as MUIToolbar,
   Typography,
   IconButton,
   Divider,
@@ -40,14 +46,6 @@ import { getImageSrc, useBoardgamesQuery, useLogoutMutation } from "./api";
 import { removeUndefinedValuesFromObject } from "./utils";
 import { useAuth } from "./auth/auth-context";
 import type { Classification, PlayersRange, Boardgame } from "./types";
-
-const filtersSchemas = {
-  RowsPerPage: z.coerce.number().int().positive().max(100).catch(25),
-  Page: z.coerce.number().int().nonnegative().catch(0),
-  Search: z.string().trim().optional().catch(undefined),
-  Players: z.coerce.number().int().positive().optional().catch(undefined),
-  Classification: z.array(z.coerce.number().int()).optional().catch(undefined),
-};
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -97,29 +95,49 @@ interface AlterState {
   message: string;
 }
 
-interface ListToolbarProps {
-  initialSearchValue: string | undefined;
-  onSearch: (value: string | undefined) => void;
+interface ToolbarProps {
+  searchQuery: string;
+  onSearchSubmit: (value: string) => void;
   onClickFiltersIcon: () => void;
 }
 
-const ListToolbar = ({
-  initialSearchValue,
-  onSearch,
+const Toolbar = ({
+  searchQuery,
+  onSearchSubmit,
   onClickFiltersIcon,
-}: ListToolbarProps): JSX.Element => {
+}: ToolbarProps): JSX.Element => {
   const auth = useAuth();
 
   const [alert, setAlert] = useState<AlterState | null>(null);
+  const [search, setSearch] = useState(searchQuery);
+  const [previousSearch, setPreviousSearch] = useState(searchQuery);
   const [menuElement, setMenuElement] = useState<HTMLElement | null>(null);
-  const [search, setSearch] = useState(initialSearchValue ?? "");
+
+  if (searchQuery !== previousSearch) {
+    setPreviousSearch(searchQuery);
+    setSearch(searchQuery);
+  }
 
   const handleCloseAlert = (): void => {
     setAlert(null);
   };
 
+  const handleSearchSubmit = (event: KeyboardEvent<HTMLInputElement>): void => {
+    if (event.key === "Enter") {
+      onSearchSubmit(search);
+    }
+  };
+
+  const handleSearchChange = (event: ChangeEvent<HTMLInputElement>): void => {
+    setSearch(event.target.value);
+  };
+
   const handleCloseMenu = (): void => {
     setMenuElement(null);
+  };
+
+  const handleOpenMenu = (event: MouseEvent<HTMLButtonElement>): void => {
+    setMenuElement(event.currentTarget);
   };
 
   const { status, mutate } = useLogoutMutation({
@@ -146,7 +164,7 @@ const ListToolbar = ({
     <>
       {alert && (
         <Snackbar
-          open={!!alert}
+          open={Boolean(alert)}
           autoHideDuration={6000}
           onClose={handleCloseAlert}
           anchorOrigin={{ vertical: "top", horizontal: "right" }}
@@ -168,7 +186,7 @@ const ListToolbar = ({
           width: { md: `calc(100% - ${SIDEBAR_WITH}px)` },
         }}
       >
-        <Toolbar>
+        <MUIToolbar>
           <IconButton
             size="large"
             edge="start"
@@ -197,23 +215,15 @@ const ListToolbar = ({
               <SearchIcon />
             </SearchIconWrapper>
             <StyledInputBase
-              onKeyUp={(event) => {
-                if (event.key === "Enter") {
-                  const value = filtersSchemas.Search.parse(search);
-                  onSearch(value);
-                  setSearch(value ?? "");
-                }
-              }}
-              onChange={(event) => {
-                setSearch(event.target.value);
-              }}
+              onKeyUp={handleSearchSubmit}
+              onChange={handleSearchChange}
               placeholder="Search…"
               value={search}
               inputProps={{ "aria-label": "search" }}
             />
           </Search>
           <Box sx={{ flexGrow: 1 }} />
-          {auth.state?.id === undefined ? (
+          {auth.state === null ? (
             <Button color="inherit" component={Link} to="/login">
               Login
             </Button>
@@ -224,9 +234,7 @@ const ListToolbar = ({
                 aria-label="user menu"
                 aria-controls="menu-appbar"
                 aria-haspopup="true"
-                onClick={(event) => {
-                  setMenuElement(event.currentTarget);
-                }}
+                onClick={handleOpenMenu}
                 color="inherit"
               >
                 <AccountCircle />
@@ -244,9 +252,7 @@ const ListToolbar = ({
                   horizontal: "right",
                 }}
                 open={Boolean(menuElement)}
-                onClose={() => {
-                  handleCloseMenu();
-                }}
+                onClose={handleCloseMenu}
               >
                 <MenuItem
                   onClick={() => {
@@ -259,118 +265,123 @@ const ListToolbar = ({
               </Menu>
             </div>
           )}
-        </Toolbar>
+        </MUIToolbar>
       </AppBar>
     </>
   );
 };
 
-interface FiltersPlayers {
-  minPlayers: number | undefined;
-  maxPlayers: number | undefined;
-  minBestPlayers: number | undefined;
-  maxBestPlayers: number | undefined;
+interface ClassificationInputProps {
+  id: string;
+  label: string;
+  values: number[];
+  options: Classification[];
+  onChange: (value: number[]) => void;
 }
 
-interface FiltersClassificationsValues {
-  types: number[] | undefined;
-  categories: number[] | undefined;
-  mechanisms: number[] | undefined;
-}
+const ClassificationInput = ({
+  id,
+  label,
+  values,
+  options,
+  onChange,
+}: ClassificationInputProps): JSX.Element => {
+  const handleChange = (value: Classification[]): void => {
+    onChange(value.map((type) => type.id));
+  };
 
-interface FiltersSidebarProps {
-  /** Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.  */
-  kind: string;
-  onClose?: () => void;
-  initialPlayers: FiltersPlayers;
-  onFilterPlayers: (value: FiltersPlayers) => void;
-  classificationsValues: FiltersClassificationsValues;
-  onFilterClassification: (kind: Classification, value: number[]) => void;
-}
-
-const FiltersSidebarForm = ({
-  kind,
-  onClose,
-  initialPlayers,
-  onFilterPlayers,
-  classificationsValues,
-  onFilterClassification,
-}: FiltersSidebarProps): JSX.Element => {
-  const [players, setPlayers] = useState({
-    minPlayers: initialPlayers.minPlayers?.toString() ?? "",
-    maxPlayers: initialPlayers.maxPlayers?.toString() ?? "",
-    minBestPlayers: initialPlayers.minBestPlayers?.toString() ?? "",
-    maxBestPlayers: initialPlayers.maxBestPlayers?.toString() ?? "",
+  const valuesWithLabel = values.map((valueId) => {
+    const foundOption = options.find((option) => valueId === option.id);
+    if (!foundOption) {
+      throw new Error(
+        `No option found on ${id} for ${valueId}: ${JSON.stringify(options)}`,
+      );
+    }
+    return foundOption;
   });
 
-  const typesValues =
-    classificationsValues.types?.map((id) => {
-      const options = classifications.types;
-      const foundOption = options.find((option) => id === option.id);
-      if (!foundOption) {
-        throw new Error(
-          `No option found for type ${id}: ${JSON.stringify(options)}`,
-        );
-      }
-      return foundOption;
-    }) ?? [];
+  return (
+    <Autocomplete
+      multiple
+      id={id}
+      value={valuesWithLabel}
+      options={options}
+      getOptionLabel={(option) => option.name}
+      renderInput={(params) => (
+        // @ts-expect-error MUI error
+        <TextField {...params} variant="standard" label={label} />
+      )}
+      onChange={(_, value) => {
+        handleChange(value);
+      }}
+    />
+  );
+};
 
-  const categoriesValues =
-    classificationsValues.categories?.map((id) => {
-      const options = classifications.categories;
-      const foundOption = options.find((option) => id === option.id);
-      if (!foundOption) {
-        throw new Error(
-          `No option found for category ${id}: ${JSON.stringify(options)}`,
-        );
-      }
-      return foundOption;
-    }) ?? [];
+type PlayerField =
+  | "minPlayers"
+  | "maxPlayers"
+  | "minBestPlayers"
+  | "maxBestPlayers";
 
-  const mechanismsValues =
-    classificationsValues.mechanisms?.map((id) => {
-      const options = classifications.mechanisms;
-      const foundOption = options.find((option) => id === option.id);
-      if (!foundOption) {
-        throw new Error(
-          `No option found for mechanism ${id}: ${JSON.stringify(options)}`,
-        );
-      }
-      return foundOption;
-    }) ?? [];
+type ClassificationField = "types" | "categories" | "mechanisms";
 
-  const handleOnSubmitPlayers = (event: FormEvent<HTMLFormElement>): void => {
+type PlayersFilter = Record<PlayerField, string>;
+
+type ClassificationsFilter = Record<ClassificationField, number[]>;
+
+type FiltersValue = Partial<ClassificationsFilter & PlayersFilter>;
+
+interface FiltersProps {
+  /** Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.  */
+  kind: string;
+  playersQuery: PlayersFilter;
+  classificationsQuery: ClassificationsFilter;
+  onFilterSubmit: (value: FiltersValue) => void;
+}
+
+const Filters = ({
+  kind,
+  playersQuery,
+  classificationsQuery,
+  onFilterSubmit,
+}: FiltersProps): JSX.Element => {
+  const [players, setPlayers] = useState(playersQuery);
+  const [previousPlayers, setPreviousPlayers] = useState(playersQuery);
+
+  if (playersQuery !== previousPlayers) {
+    setPreviousPlayers(playersQuery);
+    setPlayers(playersQuery);
+  }
+
+  const handlePlayersSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
-    const minPlayers = filtersSchemas.Players.parse(players.minPlayers);
-    const maxPlayers = filtersSchemas.Players.parse(players.maxPlayers);
-    const minBestPlayers = filtersSchemas.Players.parse(players.minBestPlayers);
-    const maxBestPlayers = filtersSchemas.Players.parse(players.maxBestPlayers);
-    onFilterPlayers({
-      minPlayers,
-      maxPlayers,
-      minBestPlayers,
-      maxBestPlayers,
-    });
+    onFilterSubmit(players);
+  };
+
+  const handlePlayersChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setPlayers({
-      minPlayers: minPlayers?.toString() ?? "",
-      maxPlayers: maxPlayers?.toString() ?? "",
-      minBestPlayers: minBestPlayers?.toString() ?? "",
-      maxBestPlayers: maxBestPlayers?.toString() ?? "",
+      ...players,
+      [event.target.name]: event.target.value,
     });
-    onClose?.();
+  };
+
+  const handleClassificationChange = (
+    filed: ClassificationField,
+    value: number[],
+  ): void => {
+    onFilterSubmit({ [filed]: value });
   };
 
   return (
     <>
-      <Toolbar />
+      <MUIToolbar />
       <Divider />
       <Box
         component="form"
         noValidate
         autoComplete="off"
-        onSubmit={(event) => {
-          handleOnSubmitPlayers(event);
-        }}
+        onSubmit={handlePlayersSubmit}
         sx={{ paddingTop: 2, paddingX: 1 }}
       >
         <Typography variant="subtitle2" gutterBottom>
@@ -379,29 +390,21 @@ const FiltersSidebarForm = ({
         <Stack direction="row" spacing={1}>
           <TextField
             id={`${kind}-min-players`}
+            name="minPlayers"
             label="Min"
             variant="outlined"
             size="small"
-            onChange={(event) => {
-              setPlayers({
-                ...players,
-                minPlayers: event.target.value,
-              });
-            }}
+            onChange={handlePlayersChange}
             value={players.minPlayers}
             inputProps={{ "aria-label": "Min players" }}
           />
           <TextField
             id={`${kind}-max-players`}
+            name="maxPlayers"
             label="Max"
             variant="outlined"
             size="small"
-            onChange={(event) => {
-              setPlayers({
-                ...players,
-                maxPlayers: event.target.value,
-              });
-            }}
+            onChange={handlePlayersChange}
             value={players.maxPlayers}
             inputProps={{ "aria-label": "Max players" }}
           />
@@ -412,9 +415,7 @@ const FiltersSidebarForm = ({
         component="form"
         noValidate
         autoComplete="off"
-        onSubmit={(event) => {
-          handleOnSubmitPlayers(event);
-        }}
+        onSubmit={handlePlayersSubmit}
         sx={{ paddingTop: 2, paddingX: 1 }}
       >
         <Typography variant="subtitle2" gutterBottom>
@@ -423,29 +424,21 @@ const FiltersSidebarForm = ({
         <Stack direction="row" spacing={1}>
           <TextField
             id={`${kind}-min-best-players`}
+            name="minBestPlayers"
             label="Min"
             variant="outlined"
             size="small"
-            onChange={(event) => {
-              setPlayers({
-                ...players,
-                minBestPlayers: event.target.value,
-              });
-            }}
+            onChange={handlePlayersChange}
             value={players.minBestPlayers}
             inputProps={{ "aria-label": "Min best players" }}
           />
           <TextField
             id={`${kind}-max-best-players`}
+            name="maxBestPlayers"
             label="Max"
             variant="outlined"
             size="small"
-            onChange={(event) => {
-              setPlayers({
-                ...players,
-                maxBestPlayers: event.target.value,
-              });
-            }}
+            onChange={handlePlayersChange}
             value={players.maxBestPlayers}
             inputProps={{ "aria-label": "Max best players" }}
           />
@@ -456,59 +449,37 @@ const FiltersSidebarForm = ({
         <Typography variant="subtitle2" gutterBottom>
           Classifications
         </Typography>
-        <Autocomplete
-          multiple
+        <ClassificationInput
           id={`${kind}-types`}
-          value={typesValues}
+          label="Types"
+          values={classificationsQuery.types}
           options={classifications.types}
-          getOptionLabel={(option) => option.name}
-          renderInput={(params) => (
-            // @ts-expect-error MUI error
-            <TextField {...params} variant="standard" label="Types" />
-          )}
-          onChange={(event, value) => {
-            onFilterClassification(
-              "types",
-              value.map((type) => type.id),
-            );
+          onChange={(value) => {
+            handleClassificationChange("types", value);
           }}
         />
-        <Autocomplete
-          sx={{ paddingTop: 2 }}
-          multiple
-          id={`${kind}-categories`}
-          value={categoriesValues}
-          options={classifications.categories}
-          getOptionLabel={(option) => option.name}
-          renderInput={(params) => (
-            // @ts-expect-error MUI error
-            <TextField {...params} variant="standard" label="Categories" />
-          )}
-          onChange={(event, value) => {
-            onFilterClassification(
-              "categories",
-              value.map((type) => type.id),
-            );
-          }}
-        />
-        <Autocomplete
-          sx={{ paddingTop: 2 }}
-          multiple
-          id={`${kind}-mechanisms`}
-          value={mechanismsValues}
-          options={classifications.mechanisms}
-          getOptionLabel={(option) => option.name}
-          renderInput={(params) => (
-            // @ts-expect-error MUI error
-            <TextField {...params} variant="standard" label="Mechanisms" />
-          )}
-          onChange={(event, value) => {
-            onFilterClassification(
-              "mechanisms",
-              value.map((type) => type.id),
-            );
-          }}
-        />
+        <Box sx={{ paddingTop: 2 }}>
+          <ClassificationInput
+            id={`${kind}-categories`}
+            label="Categories"
+            values={classificationsQuery.categories}
+            options={classifications.categories}
+            onChange={(value) => {
+              handleClassificationChange("categories", value);
+            }}
+          />
+        </Box>
+        <Box sx={{ paddingTop: 2 }}>
+          <ClassificationInput
+            id={`${kind}-mechanisms`}
+            label="Mechanisms"
+            values={classificationsQuery.mechanisms}
+            options={classifications.mechanisms}
+            onChange={(value) => {
+              handleClassificationChange("mechanisms", value);
+            }}
+          />
+        </Box>
       </Box>
     </>
   );
@@ -552,12 +523,7 @@ const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
             primary={
               <>
                 {boardgame.name}{" "}
-                <Box
-                  sx={{
-                    color: "text.secondary",
-                    display: "inline",
-                  }}
-                >
+                <Box sx={{ color: "text.secondary", display: "inline" }}>
                   ({boardgame.yearPublished})
                 </Box>
               </>
@@ -594,31 +560,44 @@ const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
   );
 };
 
-interface QueryParams {
-  page: number;
-  rowsPerPage: number;
-  search: string | undefined;
-  minPlayers: number | undefined;
-  maxPlayers: number | undefined;
-  minBestPlayers: number | undefined;
-  maxBestPlayers: number | undefined;
-  types: number[] | undefined;
-  categories: number[] | undefined;
-  mechanisms: number[] | undefined;
-}
+const PageQuerySchema = z.coerce.number().int().nonnegative().catch(0);
 
-const parseQueryParams = (params: Record<string, unknown>): QueryParams => ({
-  page: filtersSchemas.Page.parse(params["page"]),
-  rowsPerPage: filtersSchemas.RowsPerPage.parse(params["rowsPerPage"]),
-  search: filtersSchemas.Search.parse(params["search"]),
-  minPlayers: filtersSchemas.Players.parse(params["minPlayers"]),
-  maxPlayers: filtersSchemas.Players.parse(params["maxPlayers"]),
-  minBestPlayers: filtersSchemas.Players.parse(params["minBestPlayers"]),
-  maxBestPlayers: filtersSchemas.Players.parse(params["maxBestPlayers"]),
-  types: filtersSchemas.Classification.parse(params["types"]),
-  categories: filtersSchemas.Classification.parse(params["categories"]),
-  mechanisms: filtersSchemas.Classification.parse(params["mechanisms"]),
+const RowsPerPageQuerySchema = z.coerce
+  .number()
+  .int()
+  .positive()
+  .max(100)
+  .catch(25);
+
+const SearchQuerySchema = z.string().trim().optional().catch(undefined);
+
+const PlayerQuerySchema = z.coerce
+  .number()
+  .int()
+  .positive()
+  .optional()
+  .catch(undefined);
+
+const ClassificationQuerySchema = z
+  .array(z.coerce.number().int().nonnegative())
+  .optional()
+  .catch(undefined);
+
+const QueryParamsSchema = z.object({
+  page: PageQuerySchema,
+  rowsPerPage: RowsPerPageQuerySchema,
+  search: SearchQuerySchema,
+  minPlayers: PlayerQuerySchema,
+  maxPlayers: PlayerQuerySchema,
+  minBestPlayers: PlayerQuerySchema,
+  maxBestPlayers: PlayerQuerySchema,
+  types: ClassificationQuerySchema,
+  categories: ClassificationQuerySchema,
+  mechanisms: ClassificationQuerySchema,
 });
+
+const parseQueryParams = (params: unknown): z.infer<typeof QueryParamsSchema> =>
+  QueryParamsSchema.parse(params);
 
 export const Boardgames = (): JSX.Element => {
   const [queryParams, setQueryParams] = useQueryParams(parseQueryParams);
@@ -628,43 +607,41 @@ export const Boardgames = (): JSX.Element => {
 
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const handlePageChange = (page: number): void => {
+    setQueryParams({ page });
+  };
+
+  const handleRowsPerPageChange = (
+    event: ChangeEvent<HTMLInputElement>,
+  ): void => {
+    setQueryParams({
+      rowsPerPage: event.target.value,
+      page: 0,
+    });
+  };
+
+  const handleSearchSubmit = (value: string): void => {
+    setQueryParams({
+      search: value,
+      page: 0,
+    });
+  };
+
   const handleToggleFilters = (): void => {
     setFiltersOpen(!filtersOpen);
   };
 
-  const handleOnFilterPlayers = ({
-    minPlayers,
-    maxPlayers,
-    minBestPlayers,
-    maxBestPlayers,
-  }: FiltersPlayers): void => {
+  const handleFiltersSubmit = (value: FiltersValue): void => {
     setQueryParams({
+      ...value,
       page: 0,
-      minPlayers,
-      maxPlayers,
-      minBestPlayers,
-      maxBestPlayers,
-    });
-  };
-
-  const handleOnFilterClassification = (
-    kind: Classification,
-    value: number[],
-  ): void => {
-    setQueryParams({
-      [kind]: value,
     });
   };
 
   let body;
   if (boardgamesQuery.status === "error") {
     body = (
-      <Box
-        sx={{
-          paddingY: 5,
-          paddingX: 2,
-        }}
-      >
+      <Box sx={{ paddingY: 5, paddingX: 2 }}>
         <Alert severity="error">
           <AlertTitle>Error</AlertTitle>
           Something unexpected occurred. Please try refreshing the page.
@@ -676,12 +653,7 @@ export const Boardgames = (): JSX.Element => {
     boardgamesQuery.status === "loading"
   ) {
     body = (
-      <Box
-        sx={{
-          paddingY: 5,
-          paddingX: 2,
-        }}
-      >
+      <Box sx={{ paddingY: 5, paddingX: 2 }}>
         <LinearProgress />
       </Box>
     );
@@ -695,46 +667,41 @@ export const Boardgames = (): JSX.Element => {
           count={boardgamesQuery.data.metadata.count}
           rowsPerPage={queryParams.rowsPerPage}
           page={queryParams.page}
-          onPageChange={(_, newPage) => {
-            setQueryParams({
-              page: newPage,
-            });
+          onPageChange={(_, page) => {
+            handlePageChange(page);
           }}
-          onRowsPerPageChange={(event) => {
-            setQueryParams({
-              rowsPerPage: Number.parseInt(event.target.value, 10),
-              page: 0,
-            });
-          }}
+          onRowsPerPageChange={handleRowsPerPageChange}
         />
       </>
     );
   }
 
+  const players = {
+    minPlayers: queryParams.minPlayers?.toString() ?? "",
+    maxPlayers: queryParams.maxPlayers?.toString() ?? "",
+    minBestPlayers: queryParams.minBestPlayers?.toString() ?? "",
+    maxBestPlayers: queryParams.maxBestPlayers?.toString() ?? "",
+  };
+
+  const classifications = {
+    types: queryParams.types ?? [],
+    categories: queryParams.categories ?? [],
+    mechanisms: queryParams.mechanisms ?? [],
+  };
+
   return (
     <Box sx={{ display: "flex" }}>
-      <ListToolbar
-        initialSearchValue={queryParams.search}
-        onSearch={(value) => {
-          setQueryParams({
-            search: value,
-            page: 0,
-          });
-        }}
-        onClickFiltersIcon={() => {
-          handleToggleFilters();
-        }}
+      <Toolbar
+        searchQuery={queryParams.search ?? ""}
+        onSearchSubmit={handleSearchSubmit}
+        onClickFiltersIcon={handleToggleFilters}
       />
       {/* Mobile sidebar filters */}
       <Drawer
         variant="temporary"
         open={filtersOpen}
-        onClose={() => {
-          handleToggleFilters();
-        }}
-        ModalProps={{
-          keepMounted: true,
-        }}
+        onClose={handleToggleFilters}
+        ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": {
@@ -744,18 +711,13 @@ export const Boardgames = (): JSX.Element => {
           },
         }}
       >
-        <FiltersSidebarForm
+        <Filters
           kind="mobile"
-          onClose={() => {
+          playersQuery={players}
+          classificationsQuery={classifications}
+          onFilterSubmit={(value) => {
+            handleFiltersSubmit(value);
             handleToggleFilters();
-          }}
-          initialPlayers={queryParams}
-          onFilterPlayers={(value) => {
-            handleOnFilterPlayers(value);
-          }}
-          classificationsValues={queryParams}
-          onFilterClassification={(kind, value) => {
-            handleOnFilterClassification(kind, value);
           }}
         />
       </Drawer>
@@ -772,23 +734,18 @@ export const Boardgames = (): JSX.Element => {
           },
         }}
       >
-        <FiltersSidebarForm
+        <Filters
           kind="desktop"
-          initialPlayers={queryParams}
-          onFilterPlayers={(value) => {
-            handleOnFilterPlayers(value);
-          }}
-          classificationsValues={queryParams}
-          onFilterClassification={(kind, value) => {
-            handleOnFilterClassification(kind, value);
-          }}
+          playersQuery={players}
+          classificationsQuery={classifications}
+          onFilterSubmit={handleFiltersSubmit}
         />
       </Drawer>
       <Box
         component="main"
         sx={{ flexGrow: 1, height: "100vh", overflow: "auto" }}
       >
-        <Toolbar />
+        <MUIToolbar />
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
           {body}
         </Container>
