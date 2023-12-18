@@ -48,7 +48,7 @@ log "Applying database schemas and seeds..."
 pnpm migrate
 pnpm seed
 
-log "Building and running applications in development mode..."
+log "Code generation and building packages..."
 pnpm codegen
 pnpm build:packages
 
