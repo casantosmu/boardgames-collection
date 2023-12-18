@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -26,7 +28,7 @@ copy_env_file() {
     fi
 }
 
-cd "$PROJECT_DIR" || exit 1
+cd "$PROJECT_DIR"
 
 log "Verifying required tools..."
 check_command node
@@ -48,7 +50,7 @@ log "Applying database schemas and seeds..."
 pnpm migrate
 pnpm seed
 
-log "Building and running applications in development mode..."
+log "Code generation and building packages..."
 pnpm codegen
 pnpm build:packages
 

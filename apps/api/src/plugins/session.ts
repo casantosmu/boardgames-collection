@@ -47,9 +47,7 @@ const pluginCallback: FastifyPluginAsync<Options> = async (
     secret: options.secret,
     cookieName: options.cookieName,
     cookie: { secure: options.secure },
-    store: new RedisStore({
-      client: ioRedis,
-    }),
+    store: new RedisStore({ client: ioRedis }),
   });
 };
 

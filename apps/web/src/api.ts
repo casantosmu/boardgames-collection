@@ -53,9 +53,17 @@ type FetchState<TData> =
     };
 
 type FetchAction<TData> =
-  | { type: "INIT" }
-  | { type: "SUCCESS"; payload: TData }
-  | { type: "ERROR"; payload: DtosV1["ApiError"] };
+  | {
+      type: "INIT";
+    }
+  | {
+      type: "SUCCESS";
+      payload: TData;
+    }
+  | {
+      type: "ERROR";
+      payload: DtosV1["ApiError"];
+    };
 
 const fetchReducer = <TData>(
   state: FetchState<TData>,
@@ -112,12 +120,20 @@ const useQuery = <TData>(
       const text = await response.text();
 
       if (response.ok && !ignore) {
-        const data =
-          text.length > 0 ? (JSON.parse(text) as TData) : (undefined as TData);
-        dispatch({ type: "SUCCESS", payload: data });
+        let data: unknown;
+        if (text.length > 0) {
+          data = JSON.parse(text);
+        }
+        dispatch({
+          type: "SUCCESS",
+          payload: data as TData,
+        });
       } else if (!ignore) {
         const error = JSON.parse(text) as DtosV1["ApiError"];
-        dispatch({ type: "ERROR", payload: error });
+        dispatch({
+          type: "ERROR",
+          payload: error,
+        });
       }
     };
 
@@ -172,13 +188,21 @@ const useMutation = <TBody, TData>(
       const text = await response.text();
 
       if (response.ok) {
-        const data =
-          text.length > 0 ? (JSON.parse(text) as TData) : (undefined as TData);
-        dispatch({ type: "SUCCESS", payload: data });
-        options?.onSuccess?.(data);
+        let data: unknown;
+        if (text.length > 0) {
+          data = JSON.parse(text);
+        }
+        dispatch({
+          type: "SUCCESS",
+          payload: data as TData,
+        });
+        options?.onSuccess?.(data as TData);
       } else {
         const error = JSON.parse(text) as DtosV1["ApiError"];
-        dispatch({ type: "ERROR", payload: error });
+        dispatch({
+          type: "ERROR",
+          payload: error,
+        });
         options?.onError?.(error);
       }
     };

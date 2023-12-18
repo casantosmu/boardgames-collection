@@ -10,7 +10,7 @@ import {
   Typography,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { useNavigate, Link as LinkRouter } from "react-router-dom";
+import { useNavigate, Link as LinkRouter, Navigate } from "react-router-dom";
 import { errorCodes } from "common";
 import { useLoginMutation } from "../api";
 import { useAuth } from "./auth-context";
@@ -29,7 +29,10 @@ export const Login = (): JSX.Element => {
     },
   });
 
-  const [form, setForm] = useState({ email: "", password: "" });
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
     setForm({
@@ -42,6 +45,10 @@ export const Login = (): JSX.Element => {
     event.preventDefault();
     mutate(form);
   };
+
+  if (auth.state) {
+    return <Navigate to="/" replace />;
+  }
 
   return (
     <Container component="main" maxWidth="xs">
