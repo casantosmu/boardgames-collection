@@ -1,15 +1,15 @@
 import { createKyselyInstance } from "../index";
 import boardgames from "../seeds/boardgames.json";
 
-const DATABASE_URL = process.env["DATABASE_URL"];
+const PG_URL = process.env["PG_URL"];
 
-if (!DATABASE_URL) {
+if (!PG_URL) {
   throw new Error(
     "The 'DATABASE_URL' environment variable is required but not provided.",
   );
 }
 
-const db = createKyselyInstance(DATABASE_URL);
+const db = createKyselyInstance(PG_URL);
 
 try {
   await db.transaction().execute(async (trx) => {
