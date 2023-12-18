@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
@@ -26,7 +28,7 @@ copy_env_file() {
     fi
 }
 
-cd "$PROJECT_DIR" || exit 1
+cd "$PROJECT_DIR"
 
 log "Verifying required tools..."
 check_command node
