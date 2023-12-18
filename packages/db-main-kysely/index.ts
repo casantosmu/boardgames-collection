@@ -24,9 +24,7 @@ export const createKyselyInstance = (
 
   return new Kysely<DB>({
     dialect: new PostgresDialect({
-      pool: new pg.Pool({
-        connectionString,
-      }),
+      pool: new pg.Pool({ connectionString }),
     }),
     plugins: [new CamelCasePlugin()],
     ...(logger && {

@@ -37,29 +37,19 @@ export const buildApp = async (): Promise<FastifyInstance> => {
   // Plugins
   await app.register(gracefulShutdownPlugin);
   await app.register(errorsPlugin);
-  await app.register(kyselyPlugin, {
-    url: PG_URL,
-  });
+  await app.register(kyselyPlugin, { url: PG_URL });
   await app.register(sessionPlugin, {
     secret: SESSION_SECRET,
     secure: IS_PRODUCTION,
     cookieName: openapi.components.securitySchemes.cookieAuth.name,
   });
-  await app.register(fastifySwagger, {
-    openapi,
-  });
+  await app.register(fastifySwagger, { openapi });
   await app.register(fastifySwaggerUi);
 
   // Routes
-  await app.register(boardgamesRoutes, {
-    prefix: "/v1",
-  });
-  await app.register(authRoutes, {
-    prefix: "/v1",
-  });
-  await app.register(pingRoutes, {
-    prefix: "/v1",
-  });
+  await app.register(boardgamesRoutes, { prefix: "/v1" });
+  await app.register(authRoutes, { prefix: "/v1" });
+  await app.register(pingRoutes, { prefix: "/v1" });
 
   return app;
 };
