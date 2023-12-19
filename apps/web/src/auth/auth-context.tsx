@@ -12,9 +12,9 @@ interface User {
   email: string;
 }
 
-type State = User | null;
+type AuthState = User | null;
 
-type Action =
+type AuthAction =
   | {
       type: "LOGIN";
       payload: User;
@@ -23,7 +23,7 @@ type Action =
       type: "LOGOUT";
     };
 
-const authReducer = (state: State, action: Action): State => {
+const authReducer = (state: AuthState, action: AuthAction): AuthState => {
   switch (action.type) {
     case "LOGIN": {
       return action.payload;
@@ -34,14 +34,14 @@ const authReducer = (state: State, action: Action): State => {
   }
 };
 
-interface Context {
-  state: State;
-  dispatch: Dispatch<Action>;
+interface AuthContext {
+  state: AuthState;
+  dispatch: Dispatch<AuthAction>;
 }
 
-const AuthContext = createContext<Context | null>(null);
+const AuthContext = createContext<AuthContext | null>(null);
 
-const createInitialState = (): State => {
+const createInitialState = (): AuthState => {
   const value = localStorage.getItem("user");
   if (typeof value === "string") {
     return JSON.parse(value) as User;
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }: PropsWithChildren): JSX.Element => {
 };
 
 // eslint-disable-next-line react-refresh/only-export-components
-export const useAuth = (): Context => {
+export const useAuth = (): AuthContext => {
   const context = useContext(AuthContext);
   if (context === null) {
     throw new Error("useAuth must be used within a AuthProvider");

@@ -29,7 +29,6 @@ import {
   alpha,
   AppBar,
   Container,
-  Snackbar,
   MenuItem,
   Menu,
 } from "@mui/material";
@@ -45,6 +44,7 @@ import { useQueryParams } from "./query-params";
 import { getImageSrc, useBoardgamesQuery, useLogoutMutation } from "./api";
 import { removeUndefinedValuesFromObject } from "./utils";
 import { useAuth } from "./auth/auth-context";
+import { useToast } from "./toast-context";
 import type { Classification, PlayersRange, Boardgame } from "./types";
 
 const Search = styled("div")(({ theme }) => ({
@@ -89,12 +89,6 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 const SIDEBAR_WITH = 300;
 
-interface AlertState {
-  severity: "success" | "error";
-  title: string;
-  message: string;
-}
-
 interface ToolbarProps {
   searchQuery: string;
   onSearchSubmit: (value: string) => void;
@@ -107,8 +101,8 @@ const Toolbar = ({
   onClickFiltersIcon,
 }: ToolbarProps): JSX.Element => {
   const auth = useAuth();
+  const { handleOpenToast } = useToast();
 
-  const [alert, setAlert] = useState<AlertState | null>(null);
   const [search, setSearch] = useState(searchQuery);
   const [previousSearch, setPreviousSearch] = useState(searchQuery);
   const [menuElement, setMenuElement] = useState<HTMLElement | null>(null);
@@ -117,10 +111,6 @@ const Toolbar = ({
     setPreviousSearch(searchQuery);
     setSearch(searchQuery);
   }
-
-  const handleCloseAlert = (): void => {
-    setAlert(null);
-  };
 
   const handleSearchSubmit = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === "Enter") {
@@ -143,18 +133,20 @@ const Toolbar = ({
   const { status, mutate } = useLogoutMutation({
     onSuccess() {
       auth.dispatch({ type: "LOGOUT" });
-      setAlert({
+      handleOpenToast({
         severity: "success",
         title: "Logged out",
         message: "You are now logged out of your account.",
+        origin: { vertical: "top", horizontal: "right" },
       });
       handleCloseMenu();
     },
     onError() {
-      setAlert({
+      handleOpenToast({
         severity: "error",
         title: "Error",
         message: "Something unexpected occurred.",
+        origin: { vertical: "top", horizontal: "right" },
       });
       handleCloseMenu();
     },
@@ -162,23 +154,6 @@ const Toolbar = ({
 
   return (
     <>
-      {alert && (
-        <Snackbar
-          open={Boolean(alert)}
-          autoHideDuration={6000}
-          onClose={handleCloseAlert}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <Alert
-            onClose={handleCloseAlert}
-            severity={alert.severity}
-            sx={{ width: "100%" }}
-          >
-            <AlertTitle>{alert.title}</AlertTitle>
-            {alert.message}
-          </Alert>
-        </Snackbar>
-      )}
       <AppBar
         position="absolute"
         sx={{
