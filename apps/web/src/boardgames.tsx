@@ -40,7 +40,7 @@ import {
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import classifications from "common/generated/classifications";
-import { useQueryParams } from "./query-params";
+import { useQueryParams } from "./hooks/query-params";
 import { getImageSrc, useBoardgamesQuery, useLogoutMutation } from "./api";
 import { removeUndefinedValuesFromObject } from "./utils";
 import { useAuth } from "./auth/auth-context";
@@ -483,7 +483,7 @@ interface BoardgamesListProps {
 
 const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
   return (
-    <List aria-labelledby={"Boardgames"}>
+    <List aria-label={"Boardgames"}>
       {boardgames.map((boardgame) => (
         <ListItem key={boardgame.id}>
           <ListItemAvatar sx={{ width: 80 }}>
