@@ -1,5 +1,10 @@
 import { Alert, AlertTitle, Snackbar } from "@mui/material";
-import { PropsWithChildren, createContext, useContext, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  type PropsWithChildren,
+} from "react";
 
 interface ToastOrigin {
   vertical: "top" | "bottom";

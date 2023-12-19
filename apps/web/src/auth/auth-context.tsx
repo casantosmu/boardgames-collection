@@ -1,10 +1,10 @@
 import {
-  Dispatch,
-  PropsWithChildren,
   createContext,
   useContext,
   useEffect,
   useReducer,
+  type Dispatch,
+  type PropsWithChildren,
 } from "react";
 
 interface User {
