@@ -9,6 +9,7 @@ import { createTheme, CssBaseline, ThemeProvider } from "@mui/material";
 import { Boardgames } from "./boardgames.tsx";
 import { Login } from "./auth/login.tsx";
 import { AuthProvider } from "./auth/auth-context.tsx";
+import { ToastProvider } from "./toast-context.tsx";
 import { Register } from "./auth/register.tsx";
 
 import "@fontsource/roboto/300.css";
@@ -48,7 +49,9 @@ createRoot(rootElement).render(
     <ThemeProvider theme={defaultTheme}>
       <CssBaseline />
       <AuthProvider>
-        <RouterProvider router={router} />
+        <ToastProvider>
+          <RouterProvider router={router} />
+        </ToastProvider>
       </AuthProvider>
     </ThemeProvider>
   </React.StrictMode>,
