@@ -1,4 +1,3 @@
-import { type ChangeEvent, type FormEvent, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -14,10 +13,10 @@ import { Navigate, Link as LinkRouter, useNavigate } from "react-router-dom";
 import { errorCodes, regexp } from "common";
 import { z } from "zod";
 import { useRegisterMutation } from "../api";
-import { objectKeys } from "../utils";
+import { useForm } from "../hooks/form";
 import { useAuth } from "./auth-context";
 
-const FormData = z.object({
+const FormSchema = z.object({
   email: z.string().regex(regexp.email.pattern),
   password: z.string().regex(regexp.password.pattern),
 });
@@ -25,6 +24,14 @@ const FormData = z.object({
 export const Register = (): JSX.Element => {
   const navigate = useNavigate();
   const auth = useAuth();
+
+  const { inputs, errors, handleSubmit } = useForm({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    schema: FormSchema,
+  });
 
   const { status, error, mutate } = useRegisterMutation({
     onSuccess(data) {
@@ -35,52 +42,6 @@ export const Register = (): JSX.Element => {
       navigate("/");
     },
   });
-
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
-  const [formError, setFormError] = useState({
-    email: false,
-    password: false,
-  });
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    const field = event.target.name as keyof typeof formData;
-    const value = event.target.value;
-    if (formError[field]) {
-      const validation = FormData.shape[field].safeParse(value);
-      setFormError({
-        ...formError,
-        [field]: !validation.success,
-      });
-    }
-    setFormData({
-      ...formData,
-      [field]: value,
-    });
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    const validation = FormData.safeParse(formData);
-    if (validation.success) {
-      const resetFormError = { ...formError };
-      for (const key of objectKeys(formError)) {
-        resetFormError[key] = false;
-      }
-      setFormError(resetFormError);
-      setFormData(validation.data);
-      mutate(validation.data);
-    } else {
-      const errors = validation.error.flatten();
-      const resetFormError = { ...formError };
-      for (const key of objectKeys(errors.fieldErrors)) {
-        resetFormError[key] = true;
-      }
-      setFormError(resetFormError);
-    }
-  };
 
   if (auth.state) {
     return <Navigate to="/" replace />;
@@ -102,39 +63,34 @@ export const Register = (): JSX.Element => {
         <Typography component="h1" variant="h5">
           Register
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit(mutate)}
+          noValidate
+          sx={{ mt: 1 }}
+        >
           <TextField
+            {...inputs.email}
             margin="normal"
             required
             fullWidth
-            id="email"
-            name="email"
             label="Email Address"
             autoComplete="email"
-            error={formError.email}
-            value={formData.email}
             helperText={
-              formError.email
-                ? "Please enter a valid email address."
-                : undefined
+              errors.email ? "Please enter a valid email address." : undefined
             }
-            onChange={handleChange}
           />
           <TextField
+            {...inputs.password}
             margin="normal"
             required
             fullWidth
-            id="password"
-            name="password"
             label="Password"
             type="password"
             autoComplete="new-password"
-            error={formError.password}
-            value={formData.password}
             helperText={
-              formError.password ? regexp.password.description : undefined
+              errors.password ? regexp.password.description : undefined
             }
-            onChange={handleChange}
           />
           <Button
             type="submit"

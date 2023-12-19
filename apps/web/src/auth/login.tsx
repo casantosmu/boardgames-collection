@@ -1,4 +1,3 @@
-import { type FormEvent, type ChangeEvent, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -13,6 +12,7 @@ import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate, Link as LinkRouter, Navigate } from "react-router-dom";
 import { errorCodes } from "common";
 import { useLoginMutation } from "../api";
+import { useForm } from "../hooks/form";
 import { useAuth } from "./auth-context";
 
 export const Login = (): JSX.Element => {
@@ -29,22 +29,12 @@ export const Login = (): JSX.Element => {
     },
   });
 
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
+  const { inputs, handleSubmit } = useForm({
+    initialValues: {
+      email: "",
+      password: "",
+    },
   });
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setForm({
-      ...form,
-      [event.target.name]: event.target.value,
-    });
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    mutate(form);
-  };
 
   if (auth.state) {
     return <Navigate to="/" replace />;
@@ -66,29 +56,28 @@ export const Login = (): JSX.Element => {
         <Typography component="h1" variant="h5">
           Sign in
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit(mutate)}
+          noValidate
+          sx={{ mt: 1 }}
+        >
           <TextField
+            {...inputs.email}
             margin="normal"
             required
             fullWidth
-            id="email"
-            name="email"
             label="Email Address"
             autoComplete="email"
-            value={form.email}
-            onChange={handleChange}
           />
           <TextField
+            {...inputs.password}
             margin="normal"
             required
             fullWidth
-            id="password"
-            name="password"
             label="Password"
             type="password"
             autoComplete="current-password"
-            value={form.password}
-            onChange={handleChange}
           />
           <Button
             type="submit"
