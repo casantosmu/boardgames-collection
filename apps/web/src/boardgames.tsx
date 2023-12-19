@@ -89,7 +89,7 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
 
 const SIDEBAR_WITH = 300;
 
-interface AlterState {
+interface AlertState {
   severity: "success" | "error";
   title: string;
   message: string;
@@ -108,7 +108,7 @@ const Toolbar = ({
 }: ToolbarProps): JSX.Element => {
   const auth = useAuth();
 
-  const [alert, setAlert] = useState<AlterState | null>(null);
+  const [alert, setAlert] = useState<AlertState | null>(null);
   const [search, setSearch] = useState(searchQuery);
   const [previousSearch, setPreviousSearch] = useState(searchQuery);
   const [menuElement, setMenuElement] = useState<HTMLElement | null>(null);
