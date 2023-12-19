@@ -1,4 +1,4 @@
-import { type ZodObject, ZodString } from "zod";
+import { type ZodObject, type ZodString } from "zod";
 import { useState, type FormEvent, type ChangeEvent } from "react";
 import { objectKeys } from "../utils";
 
