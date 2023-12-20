@@ -59,7 +59,6 @@ export const ToastProvider = ({ children }: PropsWithChildren): JSX.Element => {
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useToast = (): ToastContext => {
   const context = useContext(ToastContext);
   if (context === null) {

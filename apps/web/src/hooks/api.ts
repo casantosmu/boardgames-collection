@@ -1,8 +1,6 @@
 import { useEffect, useReducer } from "react";
 import { DtosV1 } from "common";
 
-export const getImageSrc = (path: string): string => path;
-
 type Params = Record<
   string,
   string | number | boolean | (string | number | boolean)[]
@@ -30,7 +28,7 @@ const getApiUrl = (path: string, params?: Params): string => {
   return url.toString();
 };
 
-type FetchState<TData> =
+export type FetchState<TData> =
   | {
       status: "idle";
       error: null;
@@ -98,7 +96,7 @@ interface UseQueryFetch {
   params?: Params;
 }
 
-const useQuery = <TData>(
+export const useQuery = <TData>(
   path: string,
   fetchOptions?: UseQueryFetch,
 ): FetchState<TData> => {
@@ -152,16 +150,16 @@ interface UseMutationFetch {
   params?: Params;
 }
 
-interface UseMutationOptions<TData> {
+export interface UseMutationOptions<TData> {
   onSuccess?: (data: TData) => void;
   onError?: (error: DtosV1["ApiError"]) => void;
 }
 
-type UseMutation<TBody, TData> = FetchState<TData> & {
+export type UseMutation<TBody, TData> = FetchState<TData> & {
   mutate: (body: TBody) => void;
 };
 
-const useMutation = <TBody, TData>(
+export const useMutation = <TBody, TData>(
   path: string,
   fetchOptions: UseMutationFetch,
   options?: UseMutationOptions<TData>,
@@ -211,31 +209,4 @@ const useMutation = <TBody, TData>(
   };
 
   return { ...state, mutate };
-};
-
-export const useBoardgamesQuery = (
-  params: DtosV1["GetBoardgames"]["Querystring"],
-): FetchState<DtosV1["GetBoardgames"]["Response"][200]> => {
-  return useQuery("/v1/boardgames", { params });
-};
-
-export const useRegisterMutation = (
-  options?: UseMutationOptions<DtosV1["Register"]["Response"][200]>,
-): UseMutation<
-  DtosV1["Register"]["Body"],
-  DtosV1["Register"]["Response"][200]
-> => {
-  return useMutation("/v1/auth/register", { method: "POST" }, options);
-};
-
-export const useLoginMutation = (
-  options?: UseMutationOptions<DtosV1["Login"]["Response"][200]>,
-): UseMutation<DtosV1["Login"]["Body"], DtosV1["Login"]["Response"][200]> => {
-  return useMutation("/v1/auth/login", { method: "POST" }, options);
-};
-
-export const useLogoutMutation = (
-  options?: UseMutationOptions<undefined>,
-): UseMutation<void, undefined> => {
-  return useMutation("/v1/auth/logout", { method: "GET" }, options);
 };

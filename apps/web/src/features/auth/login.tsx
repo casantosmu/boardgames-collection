@@ -9,37 +9,30 @@ import {
   Typography,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { Navigate, Link as LinkRouter, useNavigate } from "react-router-dom";
-import { errorCodes, regexp } from "common";
-import { z } from "zod";
-import { useRegisterMutation } from "../api";
-import { useForm } from "../hooks/form";
-import { useAuth } from "./auth-context";
+import { useNavigate, Link as LinkRouter, Navigate } from "react-router-dom";
+import { errorCodes } from "common";
+import { useForm } from "../../hooks/form";
+import { useAuth } from "../../providers/auth";
+import { useLoginMutation } from "./api";
 
-const FormSchema = z.object({
-  email: z.string().regex(regexp.email.pattern),
-  password: z.string().regex(regexp.password.pattern),
-});
-
-export const Register = (): JSX.Element => {
+export const Login = (): JSX.Element => {
   const navigate = useNavigate();
   const auth = useAuth();
 
-  const { inputs, errors, handleSubmit } = useForm({
-    initialValues: {
-      email: "",
-      password: "",
-    },
-    schema: FormSchema,
-  });
-
-  const { status, error, mutate } = useRegisterMutation({
+  const { status, error, mutate } = useLoginMutation({
     onSuccess(data) {
       auth.dispatch({
         type: "LOGIN",
         payload: data,
       });
       navigate("/");
+    },
+  });
+
+  const { inputs, handleSubmit } = useForm({
+    initialValues: {
+      email: "",
+      password: "",
     },
   });
 
@@ -61,7 +54,7 @@ export const Register = (): JSX.Element => {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Register
+          Sign in
         </Typography>
         <Box
           component="form"
@@ -76,9 +69,6 @@ export const Register = (): JSX.Element => {
             fullWidth
             label="Email Address"
             autoComplete="email"
-            helperText={
-              errors.email ? "Please enter a valid email address." : undefined
-            }
           />
           <TextField
             {...inputs.password}
@@ -87,10 +77,7 @@ export const Register = (): JSX.Element => {
             fullWidth
             label="Password"
             type="password"
-            autoComplete="new-password"
-            helperText={
-              errors.password ? regexp.password.description : undefined
-            }
+            autoComplete="current-password"
           />
           <Button
             type="submit"
@@ -99,17 +86,17 @@ export const Register = (): JSX.Element => {
             sx={{ mt: 3, mb: 2 }}
             disabled={status === "loading"}
           >
-            Register
+            Sign In
           </Button>
           {error && (
             <Alert variant="outlined" severity="error" sx={{ mb: 2 }}>
-              {error.code === errorCodes.emailExists
-                ? "Email already exists"
+              {error.code === errorCodes.unauthorized
+                ? "Invalid email or password"
                 : "Something unexpected occurred."}
             </Alert>
           )}
-          <Link component={LinkRouter} to="/login" variant="body2">
-            Already have an account? Sign in
+          <Link component={LinkRouter} to="/register" variant="body2">
+            {"Don't have an account? Sign Up"}
           </Link>
         </Box>
       </Box>
