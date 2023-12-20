@@ -40,12 +40,13 @@ import {
 import { Link } from "react-router-dom";
 import { z } from "zod";
 import classifications from "common/generated/classifications";
-import { useQueryParams } from "./hooks/query-params";
-import { getImageSrc, useBoardgamesQuery, useLogoutMutation } from "./api";
-import { removeUndefinedValuesFromObject } from "./utils";
-import { useAuth } from "./auth/auth-context";
-import { useToast } from "./toast-context";
-import type { Classification, PlayersRange, Boardgame } from "./types";
+import { useQueryParams } from "../../hooks/query-params";
+import { useLogoutMutation } from "../auth/api";
+import { removeUndefinedValuesFromObject } from "../../utils";
+import { useAuth } from "../../providers/auth";
+import { useToast } from "../../providers/toast";
+import type { Classification, PlayersRange, Boardgame } from "../../types";
+import { useBoardgamesQuery } from "./api";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -491,7 +492,7 @@ const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
               height={64}
               width={64}
               alt={boardgame.name}
-              src={getImageSrc(boardgame.images["96x96"])}
+              src={boardgame.images["96x96"]}
             />
           </ListItemAvatar>
           <ListItemText

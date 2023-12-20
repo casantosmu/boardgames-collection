@@ -61,7 +61,6 @@ export const AuthProvider = ({ children }: PropsWithChildren): JSX.Element => {
   );
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContext => {
   const context = useContext(AuthContext);
   if (context === null) {

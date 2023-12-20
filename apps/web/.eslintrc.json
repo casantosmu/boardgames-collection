@@ -12,5 +12,13 @@
     // https://github.com/sindresorhus/eslint-plugin-unicorn/issues/2149
     "unicorn/prefer-top-level-await": "off"
   },
+  "overrides": [
+    {
+      "files": ["src/providers/**/*"],
+      "rules": {
+        "react-refresh/only-export-components": ["off"]
+      }
+    }
+  ],
   "ignorePatterns": ["/vite.config.ts"]
 }
