@@ -1,4 +1,7 @@
-export type Classification = "types" | "categories" | "mechanisms";
+export interface Classification {
+  id: number;
+  name: string;
+}
 
 interface Images {
   "96x96": string;

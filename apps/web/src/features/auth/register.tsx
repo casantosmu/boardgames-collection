@@ -1,4 +1,3 @@
-import { type FormEvent, type ChangeEvent, useState } from "react";
 import {
   Alert,
   Avatar,
@@ -10,16 +9,31 @@ import {
   Typography,
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
-import { useNavigate, Link as LinkRouter, Navigate } from "react-router-dom";
-import { errorCodes } from "common";
-import { useLoginMutation } from "../api";
-import { useAuth } from "./auth-context";
+import { Navigate, Link as LinkRouter, useNavigate } from "react-router-dom";
+import { errorCodes, regexp } from "common";
+import { z } from "zod";
+import { useForm } from "../../hooks/form";
+import { useAuth } from "../../providers/auth";
+import { useRegisterMutation } from "./api";
 
-export const Login = (): JSX.Element => {
+const FormSchema = z.object({
+  email: z.string().regex(regexp.email.pattern),
+  password: z.string().regex(regexp.password.pattern),
+});
+
+export const Register = (): JSX.Element => {
   const navigate = useNavigate();
   const auth = useAuth();
 
-  const { status, error, mutate } = useLoginMutation({
+  const { inputs, errors, handleSubmit } = useForm({
+    initialValues: {
+      email: "",
+      password: "",
+    },
+    schema: FormSchema,
+  });
+
+  const { status, error, mutate } = useRegisterMutation({
     onSuccess(data) {
       auth.dispatch({
         type: "LOGIN",
@@ -28,23 +42,6 @@ export const Login = (): JSX.Element => {
       navigate("/");
     },
   });
-
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
-
-  const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setForm({
-      ...form,
-      [event.target.name]: event.target.value,
-    });
-  };
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    mutate(form);
-  };
 
   if (auth.state) {
     return <Navigate to="/" replace />;
@@ -64,31 +61,36 @@ export const Login = (): JSX.Element => {
           <LockOutlinedIcon />
         </Avatar>
         <Typography component="h1" variant="h5">
-          Sign in
+          Register
         </Typography>
-        <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
+        <Box
+          component="form"
+          onSubmit={handleSubmit(mutate)}
+          noValidate
+          sx={{ mt: 1 }}
+        >
           <TextField
+            {...inputs.email}
             margin="normal"
             required
             fullWidth
-            id="email"
-            name="email"
             label="Email Address"
             autoComplete="email"
-            value={form.email}
-            onChange={handleChange}
+            helperText={
+              errors.email ? "Please enter a valid email address." : undefined
+            }
           />
           <TextField
+            {...inputs.password}
             margin="normal"
             required
             fullWidth
-            id="password"
-            name="password"
             label="Password"
             type="password"
-            autoComplete="current-password"
-            value={form.password}
-            onChange={handleChange}
+            autoComplete="new-password"
+            helperText={
+              errors.password ? regexp.password.description : undefined
+            }
           />
           <Button
             type="submit"
@@ -97,17 +99,17 @@ export const Login = (): JSX.Element => {
             sx={{ mt: 3, mb: 2 }}
             disabled={status === "loading"}
           >
-            Sign In
+            Register
           </Button>
           {error && (
             <Alert variant="outlined" severity="error" sx={{ mb: 2 }}>
-              {error.code === errorCodes.unauthorized
-                ? "Invalid email or password"
+              {error.code === errorCodes.emailExists
+                ? "Email already exists"
                 : "Something unexpected occurred."}
             </Alert>
           )}
-          <Link component={LinkRouter} to="/register" variant="body2">
-            {"Don't have an account? Sign Up"}
+          <Link component={LinkRouter} to="/login" variant="body2">
+            Already have an account? Sign in
           </Link>
         </Box>
       </Box>
