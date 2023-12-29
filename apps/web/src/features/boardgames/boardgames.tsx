@@ -37,16 +37,16 @@ import {
   AccountCircle,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
-import { z } from "zod";
 import classifications from "common/generated/classifications";
 import { useQueryParams } from "../../hooks/query-params";
 import { useLogoutMutation } from "../auth/api";
-import { removeUndefinedValuesFromObject } from "../../utils";
+import { objectKeys, removeUndefinedValuesFromObject } from "../../utils";
 import { useAuth } from "../../providers/auth";
 import { useToast } from "../../providers/toast";
-import type { Classification, PlayersRange, Boardgame } from "../../types";
 import { useForm } from "../../hooks/form";
 import { useBoardgamesQuery } from "./api";
+import { parseQueryParams, type QueryParamsSchema } from "./query-params";
+import { buildPlayersRangeString } from "./utils";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -241,6 +241,11 @@ const Toolbar = ({
   );
 };
 
+interface Classification {
+  id: number;
+  name: string;
+}
+
 interface ClassificationInputProps {
   id: string;
   label: string;
@@ -296,17 +301,16 @@ type PlayerField =
 
 type ClassificationField = "types" | "categories" | "mechanisms";
 
-type PlayersFilter = Record<PlayerField, string>;
-
-type ClassificationsFilter = Record<ClassificationField, number[]>;
-
-type FiltersValue = Partial<ClassificationsFilter & PlayersFilter>;
+type FiltersValue = Partial<
+  Record<ClassificationField, number[] | undefined> &
+    Record<PlayerField, string | undefined>
+>;
 
 interface FiltersProps {
   /** Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.  */
   kind: string;
-  playersQuery: PlayersFilter;
-  classificationsQuery: ClassificationsFilter;
+  playersQuery: Record<PlayerField, string>;
+  classificationsQuery: Record<ClassificationField, number[]>;
   onFilterSubmit: (value: FiltersValue) => void;
 }
 
@@ -326,6 +330,17 @@ const Filters = ({
     reset(playersQuery);
   }
 
+  const handleClear = (): void => {
+    const filters: FiltersValue = {};
+    for (const key of objectKeys(playersQuery)) {
+      filters[key] = undefined;
+    }
+    for (const key of objectKeys(classificationsQuery)) {
+      filters[key] = undefined;
+    }
+    onFilterSubmit(filters);
+  };
+
   const handleClassificationChange = (
     filed: ClassificationField,
     value: number[],
@@ -338,11 +353,23 @@ const Filters = ({
       <MUIToolbar />
       <Divider />
       <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          paddingX: 1,
+          paddingTop: 1,
+        }}
+      >
+        <Button size="small" onClick={handleClear}>
+          Clear
+        </Button>
+      </Box>
+      <Box
         component="form"
         noValidate
         autoComplete="off"
         onSubmit={handleSubmit(onFilterSubmit)}
-        sx={{ paddingTop: 2, paddingX: 1 }}
+        sx={{ paddingX: 1 }}
       >
         <Typography variant="subtitle2" gutterBottom>
           Players
@@ -437,137 +464,129 @@ const Filters = ({
   );
 };
 
-const buildPlayersRangeString = (
-  { min, max }: PlayersRange,
-  separator: string,
-): string => {
-  if (min === max) {
-    return `${min}`;
-  }
-  if (max === null) {
-    return `${min}+`;
-  }
-  const range = [];
-  for (let index = min; index <= max; index++) {
-    range.push(index);
-  }
-  return range.join(separator);
-};
-
 interface BoardgamesListProps {
-  boardgames: Boardgame[];
+  queryParams: QueryParamsSchema;
+  onPageChange: (page: number) => void;
+  onRowsPerPageChange: (rows: string) => void;
 }
 
-const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
-  return (
-    <List aria-label={"Boardgames"}>
-      {boardgames.map((boardgame) => (
-        <ListItem key={boardgame.id}>
-          <ListItemAvatar sx={{ width: 80 }}>
-            <img
-              height={64}
-              width={64}
-              alt={boardgame.name}
-              src={boardgame.images["96x96"]}
-            />
-          </ListItemAvatar>
-          <ListItemText
-            primary={
-              <>
-                {boardgame.name}{" "}
-                <Box sx={{ color: "text.secondary", display: "inline" }}>
-                  ({boardgame.yearPublished})
-                </Box>
-              </>
-            }
-            primaryTypographyProps={{ component: "div" }}
-            secondary={
-              <>
-                {boardgame.shortDescription}
-                <Box sx={{ paddingTop: 1 }}>
-                  Rating: {boardgame.rate.toFixed(2)}
-                </Box>
-                <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
-                <Box>
-                  Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
-                  Min
-                </Box>
-                <Box>Age: {boardgame.minAge}+</Box>
-                <Box>
-                  Players: {buildPlayersRangeString(boardgame.players, ", ")}
-                </Box>
-                <Box>
-                  Best players:{" "}
-                  {boardgame.bestPlayers
-                    .map((minMax) => buildPlayersRangeString(minMax, ", "))
-                    .join(", ")}
-                </Box>
-              </>
-            }
-            secondaryTypographyProps={{ component: "div" }}
-          />
-        </ListItem>
-      ))}
-    </List>
-  );
-};
-
-const PageQuerySchema = z.coerce.number().int().nonnegative().catch(0);
-
-const RowsPerPageQuerySchema = z.coerce
-  .number()
-  .int()
-  .positive()
-  .max(100)
-  .catch(25);
-
-const SearchQuerySchema = z.string().trim().optional().catch(undefined);
-
-const PlayerQuerySchema = z.coerce
-  .number()
-  .int()
-  .positive()
-  .optional()
-  .catch(undefined);
-
-const ClassificationQuerySchema = z
-  .array(z.coerce.number().int().nonnegative())
-  .optional()
-  .catch(undefined);
-
-const QueryParamsSchema = z.object({
-  page: PageQuerySchema,
-  rowsPerPage: RowsPerPageQuerySchema,
-  search: SearchQuerySchema,
-  minPlayers: PlayerQuerySchema,
-  maxPlayers: PlayerQuerySchema,
-  minBestPlayers: PlayerQuerySchema,
-  maxBestPlayers: PlayerQuerySchema,
-  types: ClassificationQuerySchema,
-  categories: ClassificationQuerySchema,
-  mechanisms: ClassificationQuerySchema,
-});
-
-const parseQueryParams = (params: unknown): z.infer<typeof QueryParamsSchema> =>
-  QueryParamsSchema.parse(params);
-
-export const Boardgames = (): JSX.Element => {
-  const [queryParams, setQueryParams] = useQueryParams(parseQueryParams);
-
+const BoardgamesList = ({
+  queryParams,
+  onPageChange,
+  onRowsPerPageChange,
+}: BoardgamesListProps): JSX.Element => {
   const boardgamesQueryParams = removeUndefinedValuesFromObject(queryParams);
   const boardgamesQuery = useBoardgamesQuery(boardgamesQueryParams);
 
+  const handlePageChange = (page: number): void => {
+    onPageChange(page);
+  };
+
+  const handleRowsPerPageChange = (
+    event: ChangeEvent<HTMLInputElement>,
+  ): void => {
+    onRowsPerPageChange(event.target.value);
+  };
+
+  if (boardgamesQuery.status === "error") {
+    return (
+      <Box sx={{ paddingY: 5, paddingX: 2 }}>
+        <Alert severity="error">
+          <AlertTitle>Error</AlertTitle>
+          Something unexpected occurred. Please try refreshing the page.
+        </Alert>
+      </Box>
+    );
+  }
+
+  if (
+    boardgamesQuery.status === "idle" ||
+    boardgamesQuery.status === "loading"
+  ) {
+    return (
+      <Box sx={{ paddingY: 5, paddingX: 2 }}>
+        <LinearProgress />
+      </Box>
+    );
+  }
+
+  return (
+    <>
+      <List aria-label={"Boardgames"}>
+        {boardgamesQuery.data.data.map((boardgame) => (
+          <ListItem key={boardgame.id}>
+            <ListItemAvatar sx={{ width: 80 }}>
+              <img
+                height={64}
+                width={64}
+                alt={boardgame.name}
+                src={boardgame.images["96x96"]}
+              />
+            </ListItemAvatar>
+            <ListItemText
+              primary={
+                <>
+                  {boardgame.name}{" "}
+                  <Box sx={{ color: "text.secondary", display: "inline" }}>
+                    ({boardgame.yearPublished})
+                  </Box>
+                </>
+              }
+              primaryTypographyProps={{ component: "div" }}
+              secondary={
+                <>
+                  {boardgame.shortDescription}
+                  <Box sx={{ paddingTop: 1 }}>
+                    Rating: {boardgame.rate.toFixed(2)}
+                  </Box>
+                  <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
+                  <Box>
+                    Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
+                    Min
+                  </Box>
+                  <Box>Age: {boardgame.minAge}+</Box>
+                  <Box>
+                    Players: {buildPlayersRangeString(boardgame.players, ", ")}
+                  </Box>
+                  <Box>
+                    Best players:{" "}
+                    {boardgame.bestPlayers
+                      .map((minMax) => buildPlayersRangeString(minMax, ", "))
+                      .join(", ")}
+                  </Box>
+                </>
+              }
+              secondaryTypographyProps={{ component: "div" }}
+            />
+          </ListItem>
+        ))}
+      </List>
+      <TablePagination
+        component="div"
+        rowsPerPageOptions={[10, 25, 50]}
+        count={boardgamesQuery.data.metadata.count}
+        rowsPerPage={queryParams.rowsPerPage}
+        page={queryParams.page}
+        onPageChange={(_, page) => {
+          handlePageChange(page);
+        }}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+    </>
+  );
+};
+
+export const Boardgames = (): JSX.Element => {
+  const [queryParams, setQueryParams] = useQueryParams(parseQueryParams);
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handlePageChange = (page: number): void => {
     setQueryParams({ page });
   };
 
-  const handleRowsPerPageChange = (
-    event: ChangeEvent<HTMLInputElement>,
-  ): void => {
+  const handleRowsPerPageChange = (rowsPerPage: string): void => {
     setQueryParams({
-      rowsPerPage: event.target.value,
+      rowsPerPage,
       page: 0,
     });
   };
@@ -589,44 +608,6 @@ export const Boardgames = (): JSX.Element => {
       page: 0,
     });
   };
-
-  let body;
-  if (boardgamesQuery.status === "error") {
-    body = (
-      <Box sx={{ paddingY: 5, paddingX: 2 }}>
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          Something unexpected occurred. Please try refreshing the page.
-        </Alert>
-      </Box>
-    );
-  } else if (
-    boardgamesQuery.status === "idle" ||
-    boardgamesQuery.status === "loading"
-  ) {
-    body = (
-      <Box sx={{ paddingY: 5, paddingX: 2 }}>
-        <LinearProgress />
-      </Box>
-    );
-  } else {
-    body = (
-      <>
-        <BoardgamesList boardgames={boardgamesQuery.data.data} />
-        <TablePagination
-          component="div"
-          rowsPerPageOptions={[10, 25, 50]}
-          count={boardgamesQuery.data.metadata.count}
-          rowsPerPage={queryParams.rowsPerPage}
-          page={queryParams.page}
-          onPageChange={(_, page) => {
-            handlePageChange(page);
-          }}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
-      </>
-    );
-  }
 
   const search = queryParams.search ?? "";
 
@@ -702,7 +683,11 @@ export const Boardgames = (): JSX.Element => {
       >
         <MUIToolbar />
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          {body}
+          <BoardgamesList
+            queryParams={queryParams}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+          />
         </Container>
       </Box>
     </Box>
