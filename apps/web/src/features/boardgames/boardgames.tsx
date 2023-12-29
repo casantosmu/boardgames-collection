@@ -1,7 +1,6 @@
 import {
   useState,
   type ChangeEvent,
-  type FormEvent,
   type KeyboardEvent,
   type MouseEvent,
 } from "react";
@@ -46,6 +45,7 @@ import { removeUndefinedValuesFromObject } from "../../utils";
 import { useAuth } from "../../providers/auth";
 import { useToast } from "../../providers/toast";
 import type { Classification, PlayersRange, Boardgame } from "../../types";
+import { useForm } from "../../hooks/form";
 import { useBoardgamesQuery } from "./api";
 
 const Search = styled("div")(({ theme }) => ({
@@ -105,13 +105,7 @@ const Toolbar = ({
   const { handleOpenToast } = useToast();
 
   const [search, setSearch] = useState(searchQuery);
-  const [previousSearch, setPreviousSearch] = useState(searchQuery);
   const [menuElement, setMenuElement] = useState<HTMLElement | null>(null);
-
-  if (searchQuery !== previousSearch) {
-    setPreviousSearch(searchQuery);
-    setSearch(searchQuery);
-  }
 
   const handleSearchSubmit = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === "Enter") {
@@ -322,25 +316,15 @@ const Filters = ({
   classificationsQuery,
   onFilterSubmit,
 }: FiltersProps): JSX.Element => {
-  const [players, setPlayers] = useState(playersQuery);
+  const { inputs, handleSubmit, reset } = useForm({
+    initialValues: playersQuery,
+  });
   const [previousPlayers, setPreviousPlayers] = useState(playersQuery);
 
   if (playersQuery !== previousPlayers) {
     setPreviousPlayers(playersQuery);
-    setPlayers(playersQuery);
+    reset(playersQuery);
   }
-
-  const handlePlayersSubmit = (event: FormEvent<HTMLFormElement>): void => {
-    event.preventDefault();
-    onFilterSubmit(players);
-  };
-
-  const handlePlayersChange = (event: ChangeEvent<HTMLInputElement>): void => {
-    setPlayers({
-      ...players,
-      [event.target.name]: event.target.value,
-    });
-  };
 
   const handleClassificationChange = (
     filed: ClassificationField,
@@ -357,7 +341,7 @@ const Filters = ({
         component="form"
         noValidate
         autoComplete="off"
-        onSubmit={handlePlayersSubmit}
+        onSubmit={handleSubmit(onFilterSubmit)}
         sx={{ paddingTop: 2, paddingX: 1 }}
       >
         <Typography variant="subtitle2" gutterBottom>
@@ -365,23 +349,19 @@ const Filters = ({
         </Typography>
         <Stack direction="row" spacing={1}>
           <TextField
+            {...inputs.minPlayers}
             id={`${kind}-min-players`}
-            name="minPlayers"
             label="Min"
             variant="outlined"
             size="small"
-            onChange={handlePlayersChange}
-            value={players.minPlayers}
             inputProps={{ "aria-label": "Min players" }}
           />
           <TextField
+            {...inputs.maxPlayers}
             id={`${kind}-max-players`}
-            name="maxPlayers"
             label="Max"
             variant="outlined"
             size="small"
-            onChange={handlePlayersChange}
-            value={players.maxPlayers}
             inputProps={{ "aria-label": "Max players" }}
           />
           <Button type="submit">Go</Button>
@@ -391,7 +371,7 @@ const Filters = ({
         component="form"
         noValidate
         autoComplete="off"
-        onSubmit={handlePlayersSubmit}
+        onSubmit={handleSubmit(onFilterSubmit)}
         sx={{ paddingTop: 2, paddingX: 1 }}
       >
         <Typography variant="subtitle2" gutterBottom>
@@ -399,23 +379,19 @@ const Filters = ({
         </Typography>
         <Stack direction="row" spacing={1}>
           <TextField
+            {...inputs.minBestPlayers}
             id={`${kind}-min-best-players`}
-            name="minBestPlayers"
             label="Min"
             variant="outlined"
             size="small"
-            onChange={handlePlayersChange}
-            value={players.minBestPlayers}
             inputProps={{ "aria-label": "Min best players" }}
           />
           <TextField
+            {...inputs.maxBestPlayers}
             id={`${kind}-max-best-players`}
-            name="maxBestPlayers"
             label="Max"
             variant="outlined"
             size="small"
-            onChange={handlePlayersChange}
-            value={players.maxBestPlayers}
             inputProps={{ "aria-label": "Max best players" }}
           />
           <Button type="submit">Go</Button>
@@ -652,6 +628,8 @@ export const Boardgames = (): JSX.Element => {
     );
   }
 
+  const search = queryParams.search ?? "";
+
   const players = {
     minPlayers: queryParams.minPlayers?.toString() ?? "",
     maxPlayers: queryParams.maxPlayers?.toString() ?? "",
@@ -668,7 +646,8 @@ export const Boardgames = (): JSX.Element => {
   return (
     <Box sx={{ display: "flex" }}>
       <Toolbar
-        searchQuery={queryParams.search ?? ""}
+        key={search}
+        searchQuery={search}
         onSearchSubmit={handleSearchSubmit}
         onClickFiltersIcon={handleToggleFilters}
       />
