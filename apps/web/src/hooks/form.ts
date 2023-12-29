@@ -31,6 +31,7 @@ interface Form<TValues extends Values> {
   handleSubmit: (
     onSuccess: (data: TValues) => void,
   ) => (event: FormEvent<HTMLFormElement>) => void;
+  reset: (data: TValues) => void;
 }
 
 interface FormProps<TValues extends Values> {
@@ -87,6 +88,10 @@ export const useForm = <TValues extends Values>({
       }
     };
 
+  const reset = (data: TValues): void => {
+    setData(data);
+  };
+
   const inputs = {} as Inputs<TValues>;
   for (const key of objectKeys(initialValues)) {
     inputs[key] = {
@@ -97,5 +102,5 @@ export const useForm = <TValues extends Values>({
     };
   }
 
-  return { inputs, errors, handleSubmit };
+  return { inputs, errors, handleSubmit, reset };
 };
