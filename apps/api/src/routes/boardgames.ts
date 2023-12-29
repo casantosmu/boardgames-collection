@@ -31,6 +31,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         types,
         categories,
         mechanisms,
+        weight,
       } = request.query;
 
       return fastify.kysely.transaction().execute(async (trx) => {
@@ -145,6 +146,14 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
                 ),
               ),
             ),
+          );
+        }
+
+        if (weight !== undefined) {
+          query = query.where(
+            (eb) => eb.fn("floor", ["b.complexity"]),
+            "=",
+            weight,
           );
         }
 

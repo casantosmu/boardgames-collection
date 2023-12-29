@@ -3,10 +3,7 @@ interface PlayersRange {
   max: number | null;
 }
 
-export const buildPlayersRangeString = (
-  { min, max }: PlayersRange,
-  separator: string,
-): string => {
+export const buildPlayersRangeString = ({ min, max }: PlayersRange): string => {
   if (min === max) {
     return `${min}`;
   }
@@ -17,5 +14,5 @@ export const buildPlayersRangeString = (
   for (let index = min; index <= max; index++) {
     range.push(index);
   }
-  return range.join(separator);
+  return range.join(", ");
 };

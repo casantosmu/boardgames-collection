@@ -74,6 +74,7 @@ export const DtosV1 = {
       types: Type.Optional(Type.Array(Type.Integer())),
       categories: Type.Optional(Type.Array(Type.Integer())),
       mechanisms: Type.Optional(Type.Array(Type.Integer())),
+      weight: Type.Optional(Type.Integer({ minimum: 0, maximum: 5 })),
     }),
     Response: {
       200: Type.Object({

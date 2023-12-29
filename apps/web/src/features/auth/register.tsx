@@ -26,7 +26,7 @@ export const Register = (): JSX.Element => {
   const auth = useAuth();
 
   const { inputs, errors, handleSubmit } = useForm({
-    initialValues: {
+    values: {
       email: "",
       password: "",
     },
