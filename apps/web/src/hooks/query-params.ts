@@ -44,6 +44,7 @@ export const useQueryParams = <
     for (const [key, value] of Object.entries(queryParams)) {
       if (value === undefined) {
         urlSearchParams.delete(key);
+        urlSearchParams.delete(`${key}[]`);
       } else if (Array.isArray(value)) {
         urlSearchParams.delete(`${key}[]`);
         for (const item of value) {

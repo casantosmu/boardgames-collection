@@ -41,7 +41,7 @@ import { z } from "zod";
 import classifications from "common/generated/classifications";
 import { useQueryParams } from "../../hooks/query-params";
 import { useLogoutMutation } from "../auth/api";
-import { removeUndefinedValuesFromObject } from "../../utils";
+import { objectKeys, removeUndefinedValuesFromObject } from "../../utils";
 import { useAuth } from "../../providers/auth";
 import { useToast } from "../../providers/toast";
 import type { Classification, PlayersRange, Boardgame } from "../../types";
@@ -296,17 +296,16 @@ type PlayerField =
 
 type ClassificationField = "types" | "categories" | "mechanisms";
 
-type PlayersFilter = Record<PlayerField, string>;
-
-type ClassificationsFilter = Record<ClassificationField, number[]>;
-
-type FiltersValue = Partial<ClassificationsFilter & PlayersFilter>;
+type FiltersValue = Partial<
+  Record<ClassificationField, number[] | undefined> &
+    Record<PlayerField, string | undefined>
+>;
 
 interface FiltersProps {
   /** Same HTML is render in parallel for desktop and mobile. Kind allows to have unique id form values.  */
   kind: string;
-  playersQuery: PlayersFilter;
-  classificationsQuery: ClassificationsFilter;
+  playersQuery: Record<PlayerField, string>;
+  classificationsQuery: Record<ClassificationField, number[]>;
   onFilterSubmit: (value: FiltersValue) => void;
 }
 
@@ -326,6 +325,17 @@ const Filters = ({
     reset(playersQuery);
   }
 
+  const handleClear = (): void => {
+    const filters: FiltersValue = {};
+    for (const key of objectKeys(playersQuery)) {
+      filters[key] = undefined;
+    }
+    for (const key of objectKeys(classificationsQuery)) {
+      filters[key] = undefined;
+    }
+    onFilterSubmit(filters);
+  };
+
   const handleClassificationChange = (
     filed: ClassificationField,
     value: number[],
@@ -337,6 +347,18 @@ const Filters = ({
     <>
       <MUIToolbar />
       <Divider />
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "flex-end",
+          paddingX: 1,
+          paddingTop: 1,
+        }}
+      >
+        <Button size="small" onClick={handleClear}>
+          Clear
+        </Button>
+      </Box>
       <Box
         component="form"
         noValidate
