@@ -16,9 +16,7 @@ export const up = async (db: Kysely<any>): Promise<void> => {
     .addColumn("year_published", "int2", (col) => col.notNull())
     .addColumn("description", "text", (col) => col.notNull())
     .addColumn("short_description", "text")
-    .addColumn("complexity", "real", (col) =>
-      col.notNull().check(sql`complexity >= 0`),
-    )
+    .addColumn("weight", "real", (col) => col.notNull().check(sql`weight >= 0`))
     .addColumn("min_age", "integer", (col) =>
       col.notNull().check(sql`min_age >= 0`),
     )

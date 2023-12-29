@@ -30,6 +30,10 @@ import {
   Container,
   MenuItem,
   Menu,
+  FormControl,
+  InputLabel,
+  Select,
+  type SelectChangeEvent,
 } from "@mui/material";
 import {
   Search as SearchIcon,
@@ -92,7 +96,7 @@ const SIDEBAR_WITH = 300;
 
 interface ToolbarProps {
   searchQuery: string;
-  onSearchSubmit: (value: string) => void;
+  onSearchSubmit: (value: string | undefined) => void;
   onClickFiltersIcon: () => void;
 }
 
@@ -109,7 +113,7 @@ const Toolbar = ({
 
   const handleSearchSubmit = (event: KeyboardEvent<HTMLInputElement>): void => {
     if (event.key === "Enter") {
-      onSearchSubmit(search);
+      onSearchSubmit(search.trim() || undefined);
     }
   };
 
@@ -303,7 +307,7 @@ type ClassificationField = "types" | "categories" | "mechanisms";
 
 type FiltersValue = Partial<
   Record<ClassificationField, number[] | undefined> &
-    Record<PlayerField, string | undefined>
+    Record<PlayerField, string | undefined> & { weight: string | undefined }
 >;
 
 interface FiltersProps {
@@ -311,6 +315,7 @@ interface FiltersProps {
   kind: string;
   playersQuery: Record<PlayerField, string>;
   classificationsQuery: Record<ClassificationField, number[]>;
+  weightQuery: string;
   onFilterSubmit: (value: FiltersValue) => void;
 }
 
@@ -318,20 +323,17 @@ const Filters = ({
   kind,
   playersQuery,
   classificationsQuery,
+  weightQuery,
   onFilterSubmit,
 }: FiltersProps): JSX.Element => {
-  const { inputs, handleSubmit, reset } = useForm({
-    initialValues: playersQuery,
+  const { inputs, handleSubmit } = useForm({
+    values: playersQuery,
   });
-  const [previousPlayers, setPreviousPlayers] = useState(playersQuery);
-
-  if (playersQuery !== previousPlayers) {
-    setPreviousPlayers(playersQuery);
-    reset(playersQuery);
-  }
 
   const handleClear = (): void => {
-    const filters: FiltersValue = {};
+    const filters: FiltersValue = {
+      weight: undefined,
+    };
     for (const key of objectKeys(playersQuery)) {
       filters[key] = undefined;
     }
@@ -346,6 +348,12 @@ const Filters = ({
     value: number[],
   ): void => {
     onFilterSubmit({ [filed]: value });
+  };
+
+  const handleWeightChange = (event: SelectChangeEvent): void => {
+    onFilterSubmit({
+      weight: event.target.value || undefined,
+    });
   };
 
   return (
@@ -399,7 +407,7 @@ const Filters = ({
         noValidate
         autoComplete="off"
         onSubmit={handleSubmit(onFilterSubmit)}
-        sx={{ paddingTop: 2, paddingX: 1 }}
+        sx={{ paddingTop: 2, paddingX: 1, paddingBottom: 2 }}
       >
         <Typography variant="subtitle2" gutterBottom>
           Best players
@@ -424,7 +432,8 @@ const Filters = ({
           <Button type="submit">Go</Button>
         </Stack>
       </Box>
-      <Box sx={{ paddingTop: 2, paddingX: 1 }}>
+      <Divider />
+      <Box sx={{ paddingTop: 2, paddingX: 1, paddingBottom: 2 }}>
         <Typography variant="subtitle2" gutterBottom>
           Classifications
         </Typography>
@@ -460,6 +469,25 @@ const Filters = ({
           />
         </Box>
       </Box>
+      <Divider />
+      <Box sx={{ paddingTop: 2, paddingX: 1 }}>
+        <FormControl fullWidth>
+          <InputLabel id={`${kind}-weight-label`}>Weight</InputLabel>
+          <Select
+            labelId={`${kind}-weight-label`}
+            id={`${kind}-weight`}
+            value={weightQuery}
+            label="Weight"
+            onChange={handleWeightChange}
+          >
+            <MenuItem value={""}>None</MenuItem>
+            <MenuItem value={"1"}>1</MenuItem>
+            <MenuItem value={"2"}>2</MenuItem>
+            <MenuItem value={"3"}>3</MenuItem>
+            <MenuItem value={"4"}>4</MenuItem>
+          </Select>
+        </FormControl>
+      </Box>
     </>
   );
 };
@@ -467,7 +495,7 @@ const Filters = ({
 interface BoardgamesListProps {
   queryParams: QueryParamsSchema;
   onPageChange: (page: number) => void;
-  onRowsPerPageChange: (rows: string) => void;
+  onRowsPerPageChange: (rowsPerPage: string) => void;
 }
 
 const BoardgamesList = ({
@@ -539,19 +567,19 @@ const BoardgamesList = ({
                   <Box sx={{ paddingTop: 1 }}>
                     Rating: {boardgame.rate.toFixed(2)}
                   </Box>
-                  <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
+                  <Box>Weight: {boardgame.weight.toFixed(2)}/5</Box>
                   <Box>
                     Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
                     Min
                   </Box>
                   <Box>Age: {boardgame.minAge}+</Box>
                   <Box>
-                    Players: {buildPlayersRangeString(boardgame.players, ", ")}
+                    Players: {buildPlayersRangeString(boardgame.players)}
                   </Box>
                   <Box>
                     Best players:{" "}
                     {boardgame.bestPlayers
-                      .map((minMax) => buildPlayersRangeString(minMax, ", "))
+                      .map((minMax) => buildPlayersRangeString(minMax))
                       .join(", ")}
                   </Box>
                 </>
@@ -591,7 +619,7 @@ export const Boardgames = (): JSX.Element => {
     });
   };
 
-  const handleSearchSubmit = (value: string): void => {
+  const handleSearchSubmit = (value: string | undefined): void => {
     setQueryParams({
       search: value,
       page: 0,
@@ -624,6 +652,8 @@ export const Boardgames = (): JSX.Element => {
     mechanisms: queryParams.mechanisms ?? [],
   };
 
+  const weight = queryParams.weight?.toString() ?? "";
+
   return (
     <Box sx={{ display: "flex" }}>
       <Toolbar
@@ -651,6 +681,7 @@ export const Boardgames = (): JSX.Element => {
           kind="mobile"
           playersQuery={players}
           classificationsQuery={classifications}
+          weightQuery={weight}
           onFilterSubmit={(value) => {
             handleFiltersSubmit(value);
             handleToggleFilters();
@@ -674,6 +705,7 @@ export const Boardgames = (): JSX.Element => {
           kind="desktop"
           playersQuery={players}
           classificationsQuery={classifications}
+          weightQuery={weight}
           onFilterSubmit={handleFiltersSubmit}
         />
       </Drawer>

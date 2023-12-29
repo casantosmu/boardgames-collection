@@ -31,6 +31,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
         types,
         categories,
         mechanisms,
+        weight,
       } = request.query;
 
       return fastify.kysely.transaction().execute(async (trx) => {
@@ -43,7 +44,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
             "b.yearPublished",
             "b.description",
             "b.shortDescription",
-            "b.complexity",
+            "b.weight",
             "b.minAge",
             "b.minPlayers",
             "b.maxPlayers",
@@ -148,6 +149,14 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
           );
         }
 
+        if (weight !== undefined) {
+          query = query.where(
+            (eb) => eb.fn("floor", ["b.weight"]),
+            "=",
+            weight,
+          );
+        }
+
         const [data, metadata] = await Promise.all([
           query
             .limit(rowsPerPage)
@@ -171,7 +180,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               yearPublished,
               description,
               shortDescription,
-              complexity,
+              weight,
               minAge,
               minPlayers,
               maxPlayers,
@@ -189,7 +198,7 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
               },
               description,
               shortDescription,
-              complexity,
+              weight,
               minAge,
               players: {
                 min: minPlayers,

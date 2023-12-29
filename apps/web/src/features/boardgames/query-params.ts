@@ -9,7 +9,7 @@ const RowsPerPageQuerySchema = z.coerce
   .max(100)
   .catch(25);
 
-const SearchQuerySchema = z.string().trim().optional().catch(undefined);
+const SearchQuerySchema = z.string().optional().catch(undefined);
 
 const PlayerQuerySchema = z.coerce
   .number()
@@ -20,6 +20,14 @@ const PlayerQuerySchema = z.coerce
 
 const ClassificationQuerySchema = z
   .array(z.coerce.number().int().nonnegative())
+  .optional()
+  .catch(undefined);
+
+const WeightQuerySchema = z.coerce
+  .number()
+  .int()
+  .min(0)
+  .max(5)
   .optional()
   .catch(undefined);
 
@@ -34,6 +42,7 @@ export const QueryParamsSchema = z.object({
   types: ClassificationQuerySchema,
   categories: ClassificationQuerySchema,
   mechanisms: ClassificationQuerySchema,
+  weight: WeightQuerySchema,
 });
 
 export type QueryParamsSchema = z.infer<typeof QueryParamsSchema>;
