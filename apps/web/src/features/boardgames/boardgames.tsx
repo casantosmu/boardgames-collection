@@ -44,7 +44,6 @@ import { useLogoutMutation } from "../auth/api";
 import { objectKeys, removeUndefinedValuesFromObject } from "../../utils";
 import { useAuth } from "../../providers/auth";
 import { useToast } from "../../providers/toast";
-import type { Classification, PlayersRange, Boardgame } from "../../types";
 import { useForm } from "../../hooks/form";
 import { useBoardgamesQuery } from "./api";
 
@@ -241,6 +240,11 @@ const Toolbar = ({
   );
 };
 
+interface Classification {
+  id: number;
+  name: string;
+}
+
 interface ClassificationInputProps {
   id: string;
   label: string;
@@ -364,7 +368,7 @@ const Filters = ({
         noValidate
         autoComplete="off"
         onSubmit={handleSubmit(onFilterSubmit)}
-        sx={{ paddingTop: 2, paddingX: 1 }}
+        sx={{ paddingX: 1 }}
       >
         <Typography variant="subtitle2" gutterBottom>
           Players
@@ -459,6 +463,11 @@ const Filters = ({
   );
 };
 
+interface PlayersRange {
+  min: number;
+  max: number | null;
+}
+
 const buildPlayersRangeString = (
   { min, max }: PlayersRange,
   separator: string,
@@ -477,60 +486,114 @@ const buildPlayersRangeString = (
 };
 
 interface BoardgamesListProps {
-  boardgames: Boardgame[];
+  queryParams: z.infer<typeof QueryParamsSchema>;
+  onPageChange: (page: number) => void;
+  onRowsPerPageChange: (rows: string) => void;
 }
 
-const BoardgamesList = ({ boardgames }: BoardgamesListProps): JSX.Element => {
+const BoardgamesList = ({
+  queryParams,
+  onPageChange,
+  onRowsPerPageChange,
+}: BoardgamesListProps): JSX.Element => {
+  const boardgamesQueryParams = removeUndefinedValuesFromObject(queryParams);
+  const boardgamesQuery = useBoardgamesQuery(boardgamesQueryParams);
+
+  const handlePageChange = (page: number): void => {
+    onPageChange(page);
+  };
+
+  const handleRowsPerPageChange = (
+    event: ChangeEvent<HTMLInputElement>,
+  ): void => {
+    onRowsPerPageChange(event.target.value);
+  };
+
+  if (boardgamesQuery.status === "error") {
+    return (
+      <Box sx={{ paddingY: 5, paddingX: 2 }}>
+        <Alert severity="error">
+          <AlertTitle>Error</AlertTitle>
+          Something unexpected occurred. Please try refreshing the page.
+        </Alert>
+      </Box>
+    );
+  }
+
+  if (
+    boardgamesQuery.status === "idle" ||
+    boardgamesQuery.status === "loading"
+  ) {
+    return (
+      <Box sx={{ paddingY: 5, paddingX: 2 }}>
+        <LinearProgress />
+      </Box>
+    );
+  }
+
   return (
-    <List aria-label={"Boardgames"}>
-      {boardgames.map((boardgame) => (
-        <ListItem key={boardgame.id}>
-          <ListItemAvatar sx={{ width: 80 }}>
-            <img
-              height={64}
-              width={64}
-              alt={boardgame.name}
-              src={boardgame.images["96x96"]}
+    <>
+      <List aria-label={"Boardgames"}>
+        {boardgamesQuery.data.data.map((boardgame) => (
+          <ListItem key={boardgame.id}>
+            <ListItemAvatar sx={{ width: 80 }}>
+              <img
+                height={64}
+                width={64}
+                alt={boardgame.name}
+                src={boardgame.images["96x96"]}
+              />
+            </ListItemAvatar>
+            <ListItemText
+              primary={
+                <>
+                  {boardgame.name}{" "}
+                  <Box sx={{ color: "text.secondary", display: "inline" }}>
+                    ({boardgame.yearPublished})
+                  </Box>
+                </>
+              }
+              primaryTypographyProps={{ component: "div" }}
+              secondary={
+                <>
+                  {boardgame.shortDescription}
+                  <Box sx={{ paddingTop: 1 }}>
+                    Rating: {boardgame.rate.toFixed(2)}
+                  </Box>
+                  <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
+                  <Box>
+                    Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
+                    Min
+                  </Box>
+                  <Box>Age: {boardgame.minAge}+</Box>
+                  <Box>
+                    Players: {buildPlayersRangeString(boardgame.players, ", ")}
+                  </Box>
+                  <Box>
+                    Best players:{" "}
+                    {boardgame.bestPlayers
+                      .map((minMax) => buildPlayersRangeString(minMax, ", "))
+                      .join(", ")}
+                  </Box>
+                </>
+              }
+              secondaryTypographyProps={{ component: "div" }}
             />
-          </ListItemAvatar>
-          <ListItemText
-            primary={
-              <>
-                {boardgame.name}{" "}
-                <Box sx={{ color: "text.secondary", display: "inline" }}>
-                  ({boardgame.yearPublished})
-                </Box>
-              </>
-            }
-            primaryTypographyProps={{ component: "div" }}
-            secondary={
-              <>
-                {boardgame.shortDescription}
-                <Box sx={{ paddingTop: 1 }}>
-                  Rating: {boardgame.rate.toFixed(2)}
-                </Box>
-                <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
-                <Box>
-                  Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
-                  Min
-                </Box>
-                <Box>Age: {boardgame.minAge}+</Box>
-                <Box>
-                  Players: {buildPlayersRangeString(boardgame.players, ", ")}
-                </Box>
-                <Box>
-                  Best players:{" "}
-                  {boardgame.bestPlayers
-                    .map((minMax) => buildPlayersRangeString(minMax, ", "))
-                    .join(", ")}
-                </Box>
-              </>
-            }
-            secondaryTypographyProps={{ component: "div" }}
-          />
-        </ListItem>
-      ))}
-    </List>
+          </ListItem>
+        ))}
+      </List>
+      <TablePagination
+        component="div"
+        rowsPerPageOptions={[10, 25, 50]}
+        count={boardgamesQuery.data.metadata.count}
+        rowsPerPage={queryParams.rowsPerPage}
+        page={queryParams.page}
+        onPageChange={(_, page) => {
+          handlePageChange(page);
+        }}
+        onRowsPerPageChange={handleRowsPerPageChange}
+      />
+    </>
   );
 };
 
@@ -576,20 +639,15 @@ const parseQueryParams = (params: unknown): z.infer<typeof QueryParamsSchema> =>
 export const Boardgames = (): JSX.Element => {
   const [queryParams, setQueryParams] = useQueryParams(parseQueryParams);
 
-  const boardgamesQueryParams = removeUndefinedValuesFromObject(queryParams);
-  const boardgamesQuery = useBoardgamesQuery(boardgamesQueryParams);
-
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handlePageChange = (page: number): void => {
     setQueryParams({ page });
   };
 
-  const handleRowsPerPageChange = (
-    event: ChangeEvent<HTMLInputElement>,
-  ): void => {
+  const handleRowsPerPageChange = (rowsPerPage: string): void => {
     setQueryParams({
-      rowsPerPage: event.target.value,
+      rowsPerPage,
       page: 0,
     });
   };
@@ -611,44 +669,6 @@ export const Boardgames = (): JSX.Element => {
       page: 0,
     });
   };
-
-  let body;
-  if (boardgamesQuery.status === "error") {
-    body = (
-      <Box sx={{ paddingY: 5, paddingX: 2 }}>
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          Something unexpected occurred. Please try refreshing the page.
-        </Alert>
-      </Box>
-    );
-  } else if (
-    boardgamesQuery.status === "idle" ||
-    boardgamesQuery.status === "loading"
-  ) {
-    body = (
-      <Box sx={{ paddingY: 5, paddingX: 2 }}>
-        <LinearProgress />
-      </Box>
-    );
-  } else {
-    body = (
-      <>
-        <BoardgamesList boardgames={boardgamesQuery.data.data} />
-        <TablePagination
-          component="div"
-          rowsPerPageOptions={[10, 25, 50]}
-          count={boardgamesQuery.data.metadata.count}
-          rowsPerPage={queryParams.rowsPerPage}
-          page={queryParams.page}
-          onPageChange={(_, page) => {
-            handlePageChange(page);
-          }}
-          onRowsPerPageChange={handleRowsPerPageChange}
-        />
-      </>
-    );
-  }
 
   const search = queryParams.search ?? "";
 
@@ -724,7 +744,11 @@ export const Boardgames = (): JSX.Element => {
       >
         <MUIToolbar />
         <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-          {body}
+          <BoardgamesList
+            queryParams={queryParams}
+            onPageChange={handlePageChange}
+            onRowsPerPageChange={handleRowsPerPageChange}
+          />
         </Container>
       </Box>
     </Box>
