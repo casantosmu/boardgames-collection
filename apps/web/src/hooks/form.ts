@@ -31,27 +31,22 @@ interface Form<TValues extends Values> {
   handleSubmit: (
     onSuccess: (data: TValues) => void,
   ) => (event: FormEvent<HTMLFormElement>) => void;
+  reset: (data: TValues) => void;
 }
 
 interface FormProps<TValues extends Values> {
-  values: TValues;
+  initialValues: TValues;
   schema?: ZodObject<Record<keyof TValues, ZodString>>;
 }
 
 export const useForm = <TValues extends Values>({
-  values,
+  initialValues,
   schema,
 }: FormProps<TValues>): Form<TValues> => {
-  const [data, setData] = useState(values);
+  const [data, setData] = useState(initialValues);
   const [errors, setErrors] = useState(() => {
     return resetErrors(data);
   });
-  const [previousValues, setPreviousValues] = useState(values);
-
-  if (values !== previousValues) {
-    setPreviousValues(values);
-    setData(values);
-  }
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>): void => {
     const field = event.target.name as keyof TValues;
@@ -93,8 +88,12 @@ export const useForm = <TValues extends Values>({
       }
     };
 
+  const reset = (data: TValues): void => {
+    setData(data);
+  };
+
   const inputs = {} as Inputs<TValues>;
-  for (const key of objectKeys(values)) {
+  for (const key of objectKeys(initialValues)) {
     inputs[key] = {
       name: key,
       value: data[key],
@@ -103,5 +102,5 @@ export const useForm = <TValues extends Values>({
     };
   }
 
-  return { inputs, errors, handleSubmit };
+  return { inputs, errors, handleSubmit, reset };
 };
