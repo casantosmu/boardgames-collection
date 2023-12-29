@@ -66,10 +66,16 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
           query = query.where((eb) => {
             const ands = [];
             if (minPlayers !== undefined) {
-              ands.push(eb("b.minPlayers", "<=", minPlayers));
+              ands.push(
+                eb("b.minPlayers", "<=", minPlayers),
+                eb("b.maxPlayers", ">=", minPlayers),
+              );
             }
             if (maxPlayers !== undefined) {
-              ands.push(eb("b.maxPlayers", ">=", maxPlayers));
+              ands.push(
+                eb("b.minPlayers", "<=", maxPlayers),
+                eb("b.maxPlayers", ">=", maxPlayers),
+              );
             }
             return eb.and(ands);
           });
@@ -83,10 +89,16 @@ export const boardgamesRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
                 .where((eb) => {
                   const ands = [];
                   if (minBestPlayers !== undefined) {
-                    ands.push(eb("bp.minPlayers", "<=", minBestPlayers));
+                    ands.push(
+                      eb("bp.minPlayers", "<=", minBestPlayers),
+                      eb("bp.maxPlayers", ">=", minBestPlayers),
+                    );
                   }
                   if (maxBestPlayers !== undefined) {
-                    ands.push(eb("bp.maxPlayers", ">=", maxBestPlayers));
+                    ands.push(
+                      eb("bp.minPlayers", "<=", maxBestPlayers),
+                      eb("bp.maxPlayers", ">=", maxBestPlayers),
+                    );
                   }
                   return eb.and(ands);
                 }),
