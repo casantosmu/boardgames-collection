@@ -37,7 +37,6 @@ import {
   AccountCircle,
 } from "@mui/icons-material";
 import { Link } from "react-router-dom";
-import { z } from "zod";
 import classifications from "common/generated/classifications";
 import { useQueryParams } from "../../hooks/query-params";
 import { useLogoutMutation } from "../auth/api";
@@ -46,6 +45,8 @@ import { useAuth } from "../../providers/auth";
 import { useToast } from "../../providers/toast";
 import { useForm } from "../../hooks/form";
 import { useBoardgamesQuery } from "./api";
+import { parseQueryParams, type QueryParamsSchema } from "./query-params";
+import { buildPlayersRangeString } from "./utils";
 
 const Search = styled("div")(({ theme }) => ({
   position: "relative",
@@ -463,30 +464,8 @@ const Filters = ({
   );
 };
 
-interface PlayersRange {
-  min: number;
-  max: number | null;
-}
-
-const buildPlayersRangeString = (
-  { min, max }: PlayersRange,
-  separator: string,
-): string => {
-  if (min === max) {
-    return `${min}`;
-  }
-  if (max === null) {
-    return `${min}+`;
-  }
-  const range = [];
-  for (let index = min; index <= max; index++) {
-    range.push(index);
-  }
-  return range.join(separator);
-};
-
 interface BoardgamesListProps {
-  queryParams: z.infer<typeof QueryParamsSchema>;
+  queryParams: QueryParamsSchema;
   onPageChange: (page: number) => void;
   onRowsPerPageChange: (rows: string) => void;
 }
@@ -597,48 +576,8 @@ const BoardgamesList = ({
   );
 };
 
-const PageQuerySchema = z.coerce.number().int().nonnegative().catch(0);
-
-const RowsPerPageQuerySchema = z.coerce
-  .number()
-  .int()
-  .positive()
-  .max(100)
-  .catch(25);
-
-const SearchQuerySchema = z.string().trim().optional().catch(undefined);
-
-const PlayerQuerySchema = z.coerce
-  .number()
-  .int()
-  .positive()
-  .optional()
-  .catch(undefined);
-
-const ClassificationQuerySchema = z
-  .array(z.coerce.number().int().nonnegative())
-  .optional()
-  .catch(undefined);
-
-const QueryParamsSchema = z.object({
-  page: PageQuerySchema,
-  rowsPerPage: RowsPerPageQuerySchema,
-  search: SearchQuerySchema,
-  minPlayers: PlayerQuerySchema,
-  maxPlayers: PlayerQuerySchema,
-  minBestPlayers: PlayerQuerySchema,
-  maxBestPlayers: PlayerQuerySchema,
-  types: ClassificationQuerySchema,
-  categories: ClassificationQuerySchema,
-  mechanisms: ClassificationQuerySchema,
-});
-
-const parseQueryParams = (params: unknown): z.infer<typeof QueryParamsSchema> =>
-  QueryParamsSchema.parse(params);
-
 export const Boardgames = (): JSX.Element => {
   const [queryParams, setQueryParams] = useQueryParams(parseQueryParams);
-
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const handlePageChange = (page: number): void => {
