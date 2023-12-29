@@ -93,7 +93,7 @@ export const DtosV1 = {
             }),
             description: Type.String(),
             shortDescription: Type.Union([Type.String(), Type.Null()]),
-            complexity: Type.Number(),
+            weight: Type.Number(),
             minAge: Type.Integer(),
             players: Type.Object({
               min: Type.Integer(),

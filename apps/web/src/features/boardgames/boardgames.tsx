@@ -567,7 +567,7 @@ const BoardgamesList = ({
                   <Box sx={{ paddingTop: 1 }}>
                     Rating: {boardgame.rate.toFixed(2)}
                   </Box>
-                  <Box>Weight: {boardgame.complexity.toFixed(2)}/5</Box>
+                  <Box>Weight: {boardgame.weight.toFixed(2)}/5</Box>
                   <Box>
                     Duration: {boardgame.duration.min}/{boardgame.duration.max}{" "}
                     Min
