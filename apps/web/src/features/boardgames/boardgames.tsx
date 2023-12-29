@@ -327,6 +327,7 @@ const Filters = ({
   onFilterSubmit,
 }: FiltersProps): JSX.Element => {
   const { inputs, handleSubmit } = useForm({
+    initialValues: playersQuery,
     values: playersQuery,
   });
 

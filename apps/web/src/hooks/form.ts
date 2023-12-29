@@ -34,21 +34,23 @@ interface Form<TValues extends Values> {
 }
 
 interface FormProps<TValues extends Values> {
-  values: TValues;
+  initialValues: TValues;
+  values?: TValues;
   schema?: ZodObject<Record<keyof TValues, ZodString>>;
 }
 
 export const useForm = <TValues extends Values>({
+  initialValues,
   values,
   schema,
 }: FormProps<TValues>): Form<TValues> => {
-  const [data, setData] = useState(values);
+  const [data, setData] = useState(initialValues);
   const [errors, setErrors] = useState(() => {
     return resetErrors(data);
   });
   const [previousValues, setPreviousValues] = useState(values);
 
-  if (values !== previousValues) {
+  if (values && values !== previousValues) {
     setPreviousValues(values);
     setData(values);
   }
@@ -94,7 +96,7 @@ export const useForm = <TValues extends Values>({
     };
 
   const inputs = {} as Inputs<TValues>;
-  for (const key of objectKeys(values)) {
+  for (const key of objectKeys(initialValues)) {
     inputs[key] = {
       name: key,
       value: data[key],
