@@ -326,9 +326,15 @@ const Filters = ({
   weightQuery,
   onFilterSubmit,
 }: FiltersProps): JSX.Element => {
-  const { inputs, handleSubmit } = useForm({
-    values: playersQuery,
+  const { inputs, handleSubmit, reset } = useForm({
+    initialValues: playersQuery,
   });
+  const [previousPlayers, setPreviousPlayers] = useState(playersQuery);
+
+  if (playersQuery !== previousPlayers) {
+    setPreviousPlayers(playersQuery);
+    reset(playersQuery);
+  }
 
   const handleClear = (): void => {
     const filters: FiltersValue = {

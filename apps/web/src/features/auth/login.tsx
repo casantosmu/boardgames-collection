@@ -30,7 +30,7 @@ export const Login = (): JSX.Element => {
   });
 
   const { inputs, handleSubmit } = useForm({
-    values: {
+    initialValues: {
       email: "",
       password: "",
     },
