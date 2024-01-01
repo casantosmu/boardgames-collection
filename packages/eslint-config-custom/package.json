@@ -17,6 +17,6 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.5",
     "eslint-plugin-unicorn": "^50.0.1",
-    "eslint-plugin-vitest": "^0.3.17"
+    "eslint-plugin-vitest": "^0.3.20"
   }
 }
