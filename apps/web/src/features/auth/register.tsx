@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { Navigate, Link as LinkRouter, useNavigate } from "react-router-dom";
-import { errorCodes, regexp } from "common";
+import { ErrorCodes, regexp } from "common";
 import { z } from "zod";
 import { useForm } from "../../hooks/form";
 import { useAuth } from "../../providers/auth";
@@ -103,7 +103,7 @@ export const Register = (): JSX.Element => {
           </Button>
           {error && (
             <Alert variant="outlined" severity="error" sx={{ mb: 2 }}>
-              {error.code === errorCodes.emailExists
+              {error.code === ErrorCodes.emailExists
                 ? "Email already exists"
                 : "Something unexpected occurred."}
             </Alert>

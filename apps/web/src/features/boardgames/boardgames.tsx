@@ -288,7 +288,7 @@ const ClassificationInput = ({
       getOptionLabel={(option) => option.name}
       renderInput={(params) => (
         // @ts-expect-error MUI error
-        <TextField {...params} variant="standard" label={label} />
+        <TextField {...params} label={label} />
       )}
       onChange={(_, value) => {
         handleChange(value);

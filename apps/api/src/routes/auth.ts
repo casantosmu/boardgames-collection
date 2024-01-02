@@ -1,6 +1,6 @@
 import { compare as bcryptCompare, hash as bcryptHash } from "bcrypt";
 import type { FastifyPluginAsyncTypebox } from "@fastify/type-provider-typebox";
-import { errorCodes, regexp, DtosV1 } from "common";
+import { ErrorCodes, regexp, DtosV1 } from "common";
 
 const SALT_ROUNDS = 10;
 
@@ -35,13 +35,13 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       if (!regexp.email.pattern.test(email)) {
         return reply.errors.badRequest({
           message: `Invalid email: ${regexp.email.description}`,
-          code: errorCodes.invalidEmail,
+          code: ErrorCodes.invalidEmail,
         });
       }
       if (!regexp.password.pattern.test(password)) {
         return reply.errors.badRequest({
           message: `Invalid password: ${regexp.password.description}`,
-          code: errorCodes.invalidPassword,
+          code: ErrorCodes.invalidPassword,
         });
       }
 
@@ -53,7 +53,7 @@ export const authRoutes: FastifyPluginAsyncTypebox = async (fastify) => {
       if (emailExists) {
         return reply.errors.conflict({
           message: "Email already exists",
-          code: errorCodes.emailExists,
+          code: ErrorCodes.emailExists,
         });
       }
 
