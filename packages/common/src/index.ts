@@ -1,4 +1,5 @@
-export { DtosV1 } from "./dtos/v1.js";
+export { DtosV1 } from "./v1/dtos.js";
+export { ErrorCodes } from "./v1/error-codes.js";
 
 export const regexp = {
   password: {
@@ -12,17 +13,4 @@ export const regexp = {
     description:
       "Email address must adhere to a valid email format, following the standard specifications. It allows alphanumeric characters, dots, and hyphens in the domain, and requires the presence of an '@' symbol.",
   },
-};
-
-export const errorCodes = {
-  badRequest: "BAD_REQUEST",
-  unauthorized: "UNAUTHORIZED",
-  notFound: "NOT_FOUND",
-  conflict: "CONFLICT",
-  internalServerError: "INTERNAL_SERVER_ERROR",
-  validation: "VALIDATION",
-  invalidEmail: "INVALID_EMAIL",
-  invalidPassword: "INVALID_PASSWORD",
-  emailExists: "EMAIL_EXITS",
-  routeNotFound: "ROUTE_NOT_FOUND",
 };

@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync, FastifyReply } from "fastify";
 import fp from "fastify-plugin";
-import { errorCodes } from "common";
+import { ErrorCodes } from "common";
 
 declare module "fastify" {
   interface FastifyReply {
@@ -22,27 +22,27 @@ class ReplyErrors {
   constructor(private readonly reply: FastifyReply) {}
 
   badRequest({
-    code = errorCodes.badRequest,
+    code = ErrorCodes.badRequest,
     message = "Bad Request",
   }): FastifyReply {
     return this.reply.send(new ApiError(message, 400, code));
   }
 
   unauthorized({
-    code = errorCodes.unauthorized,
+    code = ErrorCodes.unauthorized,
     message = "Unauthorized",
   }): FastifyReply {
     return this.reply.send(new ApiError(message, 401, code));
   }
 
   notFound({
-    code = errorCodes.notFound,
+    code = ErrorCodes.notFound,
     message = "Not Found",
   }): FastifyReply {
     return this.reply.send(new ApiError(message, 404, code));
   }
 
-  conflict({ code = errorCodes.conflict, message = "Conflict" }): FastifyReply {
+  conflict({ code = ErrorCodes.conflict, message = "Conflict" }): FastifyReply {
     return this.reply.send(new ApiError(message, 409, code));
   }
 }
@@ -70,14 +70,14 @@ const pluginCallback: FastifyPluginAsync = async (fastify) => {
       request.log.warn(error);
       return reply.code(400).send({
         message: error.message,
-        code: errorCodes.validation,
+        code: ErrorCodes.validation,
       });
     }
 
     request.log.error(error);
     await reply.code(500).send({
       message: "Internal Server Error",
-      code: errorCodes.internalServerError,
+      code: ErrorCodes.internalServerError,
     });
     await fastify.close();
     process.exitCode = 1;
@@ -86,7 +86,7 @@ const pluginCallback: FastifyPluginAsync = async (fastify) => {
   fastify.setNotFoundHandler(async (request, reply) => {
     await reply.errors.notFound({
       message: "Route not found",
-      code: errorCodes.routeNotFound,
+      code: ErrorCodes.routeNotFound,
     });
   });
 };

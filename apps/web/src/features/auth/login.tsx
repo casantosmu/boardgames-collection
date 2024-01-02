@@ -10,7 +10,7 @@ import {
 } from "@mui/material";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { useNavigate, Link as LinkRouter, Navigate } from "react-router-dom";
-import { errorCodes } from "common";
+import { ErrorCodes } from "common";
 import { useForm } from "../../hooks/form";
 import { useAuth } from "../../providers/auth";
 import { useLoginMutation } from "./api";
@@ -90,7 +90,7 @@ export const Login = (): JSX.Element => {
           </Button>
           {error && (
             <Alert variant="outlined" severity="error" sx={{ mb: 2 }}>
-              {error.code === errorCodes.unauthorized
+              {error.code === ErrorCodes.unauthorized
                 ? "Invalid email or password"
                 : "Something unexpected occurred."}
             </Alert>
